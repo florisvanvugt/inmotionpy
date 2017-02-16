@@ -1,3 +1,6 @@
+default: run
+
+
 doc: readme.html
 	xdg-open readme.html
 
@@ -7,3 +10,10 @@ readme.html: readme.md
 
 clean:
 	rm -f readme.html
+
+
+
+
+run:
+	python3 run_simple.py
+
