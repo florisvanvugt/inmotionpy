@@ -235,3 +235,15 @@ if not os.path.isfile(robot_stop):
     print("ERROR: could not find executable %s"%robot_stop)
     
     
+
+
+
+
+
+
+
+
+
+
+# Perhaps a nicer way to read/write to processes:
+# http://stackoverflow.com/questions/19880190/interactive-input-output-using-python
