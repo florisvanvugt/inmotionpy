@@ -11,14 +11,18 @@ import os
 import subprocess
 import time
 import fcntl
+import sys
+
+
+
 
 
 # Locations of the robot executables
-robot_dir   = "./robot"
-robot_start = "./go"
-robot_stop  = "./stop"
+robot_dir   = os.getcwd()+"/robot" # we assume that a subdirectory of our script contains the robot code.
+robot_start = "%s/go"%robot_dir
+robot_stop  = "%s/stop"%robot_dir
 
-shm_start   = "./shm"
+shm_start   = "%s/shm"%robot_dir
 
 
 
@@ -31,7 +35,6 @@ shm = None
 
 # This contains the robot process (normally we don't need to look at it anymore)
 rob = None
-
 
 
 
@@ -70,8 +73,6 @@ def unload():
 
 
 
-
-
 def start_lkm():
     """ Starts the robot process. """
     print(robot_start,robot_dir)
@@ -88,7 +89,7 @@ def start_lkm():
 
 def stop_lkm():
     """ Stops the robot process (assuming one is running) """
-    subprocess.call(robot_stop)
+    subprocess.call(robot_stop,cwd=robot_dir)
 
     
 def start_shm():
@@ -159,9 +160,16 @@ def wshm(variable,value,index=0):
 
 
 
+def send_shm(proc,cmd):
+    global shm
+    send(shm,cmd)
+
+
+
+
 def stop_shm():
     ## TODO
-    subprocess.call(shm_stop)
+    subprocess.call(shm_stop,cwd=robot_dir)
     shm = None
 
 
@@ -256,7 +264,9 @@ def spawn_process(cmd,cwd=None):
                          stdout = subprocess.PIPE,
                          stderr = subprocess.PIPE,
                          bufsize = 1,
-                         cwd = cwd)
+                         cwd = cwd,
+                         universal_newlines = True # use this in Python3 to signal string-interactions
+                         )
     setNonBlocking(p.stdout)
     setNonBlocking(p.stderr)
 
@@ -265,22 +275,25 @@ def spawn_process(cmd,cwd=None):
 
 
 
-def send_command(proc,cmd):
-    """ Sends a command to the process. """
-    proc.stdin.write(cmd+"\n")
+def send(proc,cmd):
+    """ Sends a command to a process. """
+    try:
+        proc.stdin.write(cmd+"\n")
+    except:
+        print("Error writing to process!")
+
+
     
-
-
 
 def readline(proc):
     """ Read a single line from the process, or return None if nothing is available. """
     try:
         #out1 = shm.stdout.read()
-        out1 = shm.stdout.readline()
+        out1 = proc.stdout.readline()
         if len(out1)>0:
             return out1
     except IOError:
-        print("Got error")
+        print("Got error reading.")
         #continue
     #else:
     #    break
@@ -305,7 +318,7 @@ def read(proc):
     while True:
         try:
             #out1 = shm.stdout.read()
-            out1 = shm.stdout.read()
+            out1 = proc.stdout.read()
             if len(out1)>0:
                 if resp==None:
                     resp = out1

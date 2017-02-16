@@ -1,0 +1,372 @@
+# calibration for INMotion/2 robot arm
+#
+# planar imt2.cal
+#
+# input for shm "shared memory buffer (mbuff) user mode" program
+# this gets read into the mbuff by the 'go' script
+
+# InMotion2 robot system software for RTLinux
+
+# Copyright 2003-2006 Interactive Motion Technologies, Inc.
+# Cambridge, MA, USA
+# http://www.interactive-motion.com
+# All rights reserved
+
+# please keep this info up to date when you modify this file: 
+
+# Calibration file for: 201 Ostry/McGill
+# Wed Feb 13 13:58:43 EST 2008
+# Last modified by: trb
+#
+
+# note that you may NOT put a # comment on a line appended to a command.
+# without the leading #, the following line will cause trouble:
+
+# s variable 123	# set the foo variable
+
+#
+# this ok command turns OFF the ok's that get printed
+# when shm's set commands succeed.  we only want to see errors messages,
+# not "success notification."
+# so we want this in a calibration script, but not in an interactive
+# tcl script that uses shm.
+#
+
+ok
+
+#
+
+# s means set.
+#
+
+# make sure the robot is paused before setting any other vars
+s paused 1
+
+# din encoder oversampling
+s diovs 1
+
+s have_planar 1
+
+s have_wrist 0
+
+s have_ankle 0
+
+s have_linear 0
+
+# optional/old tachometer
+# if not have_tach, then use position differential
+# with butterworth filter for velocity
+s have_tach 0
+
+# optional/old ISA force transducer
+s have_isaft 0
+
+# standard PCI force transducer
+# if you have an ft, either isa or uei-driven, set have_ft to 1
+s have_ft 1
+
+# optional/future accelerometer
+s have_accel 0
+
+# optional grasp sensor
+s have_grasp 0
+
+# optional ISA counter card for other encoders
+# see isaenc below
+s have_pc7266 0
+
+# optional PCI counter card for other encoders
+s have_pci4e 0
+
+# optional multi-daq configuration
+# swap the two board positions
+s uei_board 0 0
+s uei_board 1 1
+# s uei_board 1 0
+# s uei_board 0 0
+# s uei_board 1 1
+
+# ft flipped?
+# the ISA McGill FT was flipped.
+
+s ft_flip 0
+
+# is this a vertically mounted FT, as on integrated wrist/planar
+
+# new IMT planars have the FT mounted vertically,
+# the McGill FT is horizontal.
+s ft_vert 0
+
+# the two round 36-pin cables plugged into the
+# connector on the face of the UEI daq board are for digital I/0.
+# (the encoder inputs)
+
+# the flat 50-conductor cable plugged into the
+# edge connector on the UEI daq board is for analog I/O.
+# (motor commands, force transducer, grasp sensor)
+# (see the UEI PowerDAQ Users Manual for more details)
+
+# these channel numbers are indices into raw data arrays.
+# they MUST be within range (for one uei board, 0 <= channel < 16)
+# or you might risk walking off the end of the array.
+# this is bounds checked, but still, be careful.
+
+# note that all 16-bit analog inputs are converted to 64-bit
+# double precision voltages.
+
+# old tach stuff
+# tachometer analog to digital input (adc) 16 bits per channel
+# these were 31 and 30 for McGill, but these vel variables are now unused.
+s shoulder_vel_channel 6
+s elbow_vel_channel 7
+
+s shoulder_vel_offset 0.0
+s elbow_vel_offset 0.0
+
+# torque channels are hard coded, these are not used.
+# torque digital to analog output (dac) 16 bits per channel
+# s shoulder_torque_channel 1
+# s elbow_torque_channel 0
+
+# encoders (din)
+s shoulder_angle_channel 1
+s elbow_angle_channel 0
+# gurley encoder 16 bits to radians
+# 0.00009587 == (pi * 2) / (2^^16)
+s shoulder_angle_xform .00009587379924285257
+s elbow_angle_xform   -.00009587379924285257
+
+# =====
+
+# begin motor calibrations per customer
+
+# 201 McGill
+# old robot calibration
+# s shoulder_angle_offset 0.704893  
+# s elbow_angle_offset 1.583964
+
+# New robot calibration
+ s shoulder_angle_offset 0.616085
+ s elbow_angle_offset 1.480579
+
+# new Copley servos
+# s shoulder_torque_xform 2.80
+# s elbow_torque_xform -2.80
+
+# McGill's Kollmorgen Servos
+s shoulder_torque_xform 5.8598
+s elbow_torque_xform -5.7988
+
+s shoulder_torque_offset 0.0195
+s elbow_torque_offset -0.0560
+
+# end motor calibrations per customer
+# =====
+
+# link lengths (meters)
+# classic 16 inches
+s link_s 0.4064
+# classic 20.25 inches
+s link_e 0.51435
+# with inline jr3 21.7 inches
+# s link_e 0.55118
+
+# tabletop origin offset (meters)
+s offset_x 0.0
+# original planar (McGill  .6)
+# s offset_y -0.65
+# planar with stops
+s offset_y -0.60
+
+# safety zone (meters)
+s safety_pos 0.2
+s safety_vel 1.5
+s safety_ramp .02
+# s safety_damping_nms 35.0
+# McGill's was 25.0 here.
+s safety_damping_nms 25.0
+
+# if you raise pfomax above 5.0, you risk burning out the motors.
+# volts
+#s pfomax 5.0
+s pfomax 5.0
+
+# you may lower pfotest to constrain the voltages when testing.
+# it works just like pfomax does.
+#s pfotest 5.0
+s pfotest 5.0
+
+# don't set Hz, damp, and stiff directly, set these and then go.
+# this way, they get set atomically, between cycles.
+s restart_Hz 400
+s restart_ovsample 1
+s restart_damp 5.0
+s restart_stiff 100.0
+s restart_go 1
+
+# default uei ain bias compensation
+s ain_bias_comp 1
+
+# this is to read a AIN7 on the grey box
+s ain_07_channel 23
+
+# ft stuff
+# radians
+# 135 deg, 3/4 pi radians
+# s ft_offset -1.570796327
+s ft_offset 2.35619449
+
+
+
+# ft channels
+# forces, analog to digital input (adc) 16 bits per channel
+
+s ft_channel 0 24
+s ft_channel 1 25
+s ft_channel 2 26
+s ft_channel 3 27
+s ft_channel 4 28
+s ft_channel 5 29
+
+# cal and scale come from manufacturer.
+# bias is read from device at rest.
+
+# 201 McGill
+
+# note from andy Wed Feb 13 13:56:30 EST 2008
+# if you set have_ft to 1 above, you want a 36-entry (6x6) matrix
+# followed by a 6-entry scaling vector.
+
+# I've included an example calibration file, you'll need to change it.
+
+# you probably want the six ft_scales to be 1.0,
+# and the 36-entry ft_cal matrix
+# to be a unit vector.  (I think, see crob/pl_sensact.c:adc_ft_sensor()).
+
+# begin included FT cal file
+# ======
+# <FTSensor  Serial="FT4776" BodyStyle="Gamma" Family="DAQ" NumGages="6" CalFileVersion="1.0">
+# 	<Calibration  PartNumber="US-30-100" CalDate="5/9/2002" ForceUnits="lbf" TorqueUnits="lbf-in" DistUnits="in" OutputMode="Ground Referenced Differential" OutputRange="20" OutputBipolar="True">
+
+s ft_cal 0 1.0
+s ft_cal 1 0.0
+s ft_cal 2 0.0
+s ft_cal 3 0.0
+s ft_cal 4 0.0
+s ft_cal 5 0.0
+
+s ft_cal 6 0.0
+s ft_cal 7 1.0
+s ft_cal 8 0.0
+s ft_cal 9 0.0
+s ft_cal 10 0.0
+s ft_cal 11 0.0
+
+s ft_cal 12 0.0
+s ft_cal 13 0.0
+s ft_cal 14 1.0
+s ft_cal 15 0.0
+s ft_cal 16 0.0
+s ft_cal 17 0.0
+
+s ft_cal 18 0.0
+s ft_cal 19 0.0
+s ft_cal 20 0.0
+s ft_cal 21 1.0
+s ft_cal 22 0.0
+s ft_cal 23 0.0
+
+s ft_cal 24 0.0
+s ft_cal 25 0.0
+s ft_cal 26 0.0
+s ft_cal 27 0.0
+s ft_cal 28 1.0
+s ft_cal 29 0.0
+
+s ft_cal 30 0.0
+s ft_cal 31 0.0
+s ft_cal 32 0.0
+s ft_cal 33 0.0
+s ft_cal 34 0.0
+s ft_cal 35 1.0
+
+s ft_scale 0 1.0
+s ft_scale 1 1.0
+s ft_scale 2 1.0
+s ft_scale 3 1.0
+s ft_scale 4 1.0
+s ft_scale 5 1.0
+
+# this is for the PCI or ISA boards
+# s ft_cal 0 -0.17374
+# s ft_cal 1 0.02262
+# s ft_cal 2 2.10146
+# s ft_cal 3 -28.55681
+# s ft_cal 4 -1.39961
+# s ft_cal 5 30.55194
+
+# s ft_cal 6 -0.34587
+# s ft_cal 7 33.59869
+# s ft_cal 8 0.24601
+# s ft_cal 9 -16.40823
+# s ft_cal 10 1.36926
+# s ft_cal 11 -17.72278
+
+# s ft_cal 12 16.63517
+# s ft_cal 13 -0.73086
+# s ft_cal 14 16.57328
+# s ft_cal 15 -0.70198
+# s ft_cal 16 16.60458
+# s ft_cal 17 -0.40938
+
+# s ft_cal 18 -0.23604
+# s ft_cal 19 -0.93378
+# s ft_cal 20 -28.74540
+# s ft_cal 21 1.57010
+# s ft_cal 22 28.83288
+# s ft_cal 23 0.06293
+
+# s ft_cal 24 33.01598
+# s ft_cal 25 -1.30778
+# s ft_cal 26 -16.94932
+# s ft_cal 27 -0.14506
+# s ft_cal 28 -17.07751
+# s ft_cal 29 1.16458
+
+# s ft_cal 30 0.45805
+# s ft_cal 31 -15.74295
+# s ft_cal 32 0.95986
+# s ft_cal 33 -15.63305
+# s ft_cal 34 0.63760
+# s ft_cal 35 -16.55905
+
+# s ft_scale 0 9.05964537732276
+
+# s ft_scale 1 9.05964537732276
+# s ft_scale 2 2.81161408261741
+# s ft_scale 3 4.29187196412003
+# s ft_scale 4 4.29187196412003
+# s ft_scale 5 4.09280554648923
+
+
+# end included FT cal file
+# ======
+
+# grasp (adc)
+
+s grasp_channel 8
+
+# G.force = (G.raw * G.gain + G.bias);
+s grasp_gain 117.48
+s grasp_bias 262.43
+
+# grasp thresholds, press > release, in volts
+s grasp_press 1.0
+s grasp_release .5
+
+# doinit must be last, because commands above
+# must be finished before init happens.
+
+s doinit 1
+
+# --done--

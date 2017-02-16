@@ -13,9 +13,10 @@
 
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 
-# this can be handy: export CROB_HOME=`pwd`
+# this can be handy:
+export CROB_HOME=`pwd`
 CROB=$CROB_HOME
-cd $CROB
+#cd $CROB
 
 # are there user mode procs to kill?
 # these should be killed by the progs that create them
