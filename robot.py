@@ -72,6 +72,7 @@ def unload():
 def start_lkm():
     """ Starts the robot process. """
     print(robot_start,robot_dir)
+    global shm
     shm = subprocess.Popen(robot_start,cwd=robot_dir)
     #subprocess.call(robot_start,cwd="./robot/") #,cwd=robot_dir)
     #subprocess.call(robot_start) #,cwd=robot_dir)
@@ -88,6 +89,7 @@ def stop_lkm():
 
     
 def start_shm():
+    global shm
     shm = subprocess.Popen(shm_start,cwd=robot_dir,
                            stdout=subprocess.PIPE,
                            stdin=subprocess.PIPE)
@@ -146,6 +148,7 @@ proc rshm {where {i 0}} {
 def rshm(variable,index=0):
     """ Read a variable from the shared memory and return its value. """
 
+    global shm
     # TODO: check that the shm is running
 
     # This is the query string we will send to the shm script

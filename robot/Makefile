@@ -34,12 +34,7 @@ export IMT_CONFIG:=$(shell pwd)
 
 # default:
 
-default: run
-
-run: all runscript
-
-runscript:
-	./run_experiment.tcl
+default: all
 
 all: robot shm rwarp 
 
