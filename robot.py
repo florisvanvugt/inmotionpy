@@ -10,6 +10,7 @@ This is for interacting with the InMotion2 robot using Python.
 import os
 import subprocess
 import time
+import fcntl
 
 
 # Locations of the robot executables
@@ -28,6 +29,8 @@ ob = {}
 # This will contain the process we are using to communicate with the shared memory
 shm = None
 
+# This contains the robot process (normally we don't need to look at it anymore)
+rob = None
 
 
 
@@ -72,8 +75,8 @@ def unload():
 def start_lkm():
     """ Starts the robot process. """
     print(robot_start,robot_dir)
-    global shm
-    shm = subprocess.Popen(robot_start,cwd=robot_dir)
+    global rob
+    rob = spawn_process(robot_start,robot_dir)
     #subprocess.call(robot_start,cwd="./robot/") #,cwd=robot_dir)
     #subprocess.call(robot_start) #,cwd=robot_dir)
     # TODO: catch result from starting the robot
@@ -90,13 +93,9 @@ def stop_lkm():
     
 def start_shm():
     global shm
-    shm = subprocess.Popen(shm_start,cwd=robot_dir,
-                           stdout=subprocess.PIPE,
-                           stdin=subprocess.PIPE)
+    shm = spawn_process(shm_start,robot_dir)
     # TODO: set buffering to line end
     
-    subprocess.call(shm_start,cwd=robot_dir)
-
     time.sleep(.1) # Wait for everything to start
 
     check = rshm('last_shm_val')
@@ -117,33 +116,6 @@ def start_shm():
     
 
 
-"""
-proc rshm {where {i 0}} {
-    global ob
-    set what "???"
-    set ob(last_rshm_failed) "yes"
-    if {![info exists ob(shm)]} {
-	return "0.0"
-    }
-    if {[info exists ob(shm_puts_exit_in_progress)]} {
-	return "0.0"
-    }
-    shm_puts "g $where $i"
-
-    gets $ob(shm) istr
-    set what [lindex $istr 0]
-    set ob(last_rshm_failed) "no"
-    if {[string equal $what "?"]} {
-	set ob(last_rshm_failed) "yes"
-	puts stderr $istr
-	return "0.0"
-    }
-    set what [lindex $istr 3]
-    return $what
-}
-"""
-
-
     
 def rshm(variable,index=0):
     """ Read a variable from the shared memory and return its value. """
@@ -153,16 +125,19 @@ def rshm(variable,index=0):
 
     # This is the query string we will send to the shm script
     query = "g %s %i"%(variable,index)
+    send(shm,query)
 
-    try:
-        response, errs = shm.communicate(input=query,timeout=15)
-
-        # TODO: Various response checking
-        return response
-    except TimeoutExpired:
-        print("Time out while communicating with robot shared memory.")
+    return read(shm)
+    
+    #try:
+    #    response, errs = shm.communicate(input=query,timeout=15)#
+    # TODO: Various response checking
+    #return response
+    #except TimeoutExpired:
+    #    print("Time out while communicating with robot shared memory.")
 
     return None
+
 
 
 
@@ -250,3 +225,97 @@ if not os.path.isfile(robot_stop):
 
 # Perhaps a nicer way to read/write to processes:
 # http://stackoverflow.com/questions/19880190/interactive-input-output-using-python
+
+
+
+
+"""
+
+Stuff that relates to interactive communication with child processes.
+
+"""
+
+import os
+import fcntl
+import subprocess
+
+
+def setNonBlocking(fd):
+    """
+    Set the file description of the given file descriptor to non-blocking.
+    """
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    flags = flags | os.O_NONBLOCK
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+
+
+
+def spawn_process(cmd,cwd=None):
+    p = subprocess.Popen(cmd,
+                         stdin  = subprocess.PIPE,
+                         stdout = subprocess.PIPE,
+                         stderr = subprocess.PIPE,
+                         bufsize = 1,
+                         cwd = cwd)
+    setNonBlocking(p.stdout)
+    setNonBlocking(p.stderr)
+
+    return p
+    
+
+
+
+def send_command(proc,cmd):
+    """ Sends a command to the process. """
+    proc.stdin.write(cmd+"\n")
+    
+
+
+
+def readline(proc):
+    """ Read a single line from the process, or return None if nothing is available. """
+    try:
+        #out1 = shm.stdout.read()
+        out1 = shm.stdout.readline()
+        if len(out1)>0:
+            return out1
+    except IOError:
+        print("Got error")
+        #continue
+    #else:
+    #    break
+    return None
+    
+
+
+def readall(proc):
+    """ Read all available output from the process. """
+    lines = []
+    line = readline(proc)
+    while line!=None:
+        lines.append(line)
+        line = readline(proc)
+    return lines
+
+
+
+
+def read(proc):
+    resp=None
+    while True:
+        try:
+            #out1 = shm.stdout.read()
+            out1 = shm.stdout.read()
+            if len(out1)>0:
+                if resp==None:
+                    resp = out1
+                else:
+                    resp += out1
+        except IOError:
+            #print("Got error")
+            continue
+        else:
+            break
+    return resp
+    
+
