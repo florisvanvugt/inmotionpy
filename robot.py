@@ -37,6 +37,16 @@ shm = None
 rob = None
 
 
+# Error buffer: this is where we can drop errors when they occur
+errbuff = []
+
+
+
+def status():
+    """ Return the status of the robot. """
+    print("Last errors:\n%s"%"\n".join(errbuff))
+
+
 
 def load():
     """ TODO """
@@ -131,17 +141,18 @@ def rshm(variable,index=0):
     query = "g %s %i"%(variable,index)
     send(shm,query)
 
-    return read(shm)
+    # Get the response to our query
+    reply = read(shm)
+    resp = reply.strip().split(' ')
+
+    # Parse it to get the output we need
+    if resp[0]=="?":
+        # An error was generated
+        error_buffer("Error in rshm('%s',%i): '%s'"%(variable,index,reply))
+        return None
+
+    return resp[3]  # TODO: parse this to the correct data type (how do we know?)
     
-    #try:
-    #    response, errs = shm.communicate(input=query,timeout=15)#
-    # TODO: Various response checking
-    #return response
-    #except TimeoutExpired:
-    #    print("Time out while communicating with robot shared memory.")
-
-    return None
-
 
 
 
@@ -150,16 +161,23 @@ def wshm(variable,value,index=0):
     
     # TODO: check if the shm process exists
     query = "s %s %i %s"%(variable,index,str(value))
-    try:
-        response, errs = shm.communicate(input=query,timeout=15)
+    send(shm,query)
 
-        # TODO: Various response checking
-        
-        return response
-    except TimeoutExpired:
-        print("Time out while communicating with robot shared memory.")
-    pass
+    # Get the response to our query
+    reply = read(shm)
+    resp = reply.strip().split(' ')
 
+    if reply=="ok": # This is what shm will say if it was successful
+        return value
+    
+    if resp[0]=="?":
+        # An error was generated
+        error_buffer("Error in wshm('%s',%s,%i): '%s'"%(variable,value,index,reply))
+        return None
+    
+    return None
+    
+    
 
 
 
@@ -235,7 +253,12 @@ if not os.path.isfile(robot_stop):
 
 
 
-
+def error_buffer(err):
+    """ Write a particular error to the buffer. """
+    global errbuff
+    print("-- ERROR -- "+err)
+    errbuff.append(err)
+    
 
 
 
@@ -290,7 +313,8 @@ def send(proc,cmd):
     try:
         proc.stdin.write(cmd+"\n")
     except:
-        print("Error writing to process!")
+        error_buffer("Error writing to process!")
+        
 
 
     
@@ -325,6 +349,11 @@ def readall(proc):
 
 def read(proc):
     resp=None
+
+    if proc==None:
+        error_buffer("Cannot read from something that is not a process.")
+        return None
+    
     while True:
         try:
             #out1 = shm.stdout.read()
