@@ -15,7 +15,7 @@ target_size = 5
 robot_move_time = 3.
 
 targets = []
-
+moving = False # whether we are currently moving to a target
 
 
 
@@ -50,23 +50,59 @@ def callback(event):
 
     # Add a target
     targ = win.create_rectangle(x-target_size,y-target_size,x+target_size,y+target_size, fill="red")
-    targets.append(targ)
 
     rx,ry = screen_to_rob(x,y)
-    print("Would move to %f,%f"%(rx,ry))
+    print("Add target %f,%f"%(rx,ry))
+    targets.append({"x":rx,"y":ry,"rect":targ})
+
+
     
+
+
+def initiate_move():
+    """ Initiate a move to the next target, assuming we are not already moving."""
+
+    global targets
+    global moving
+
+    # Initiate move to the next target
     robot.controller(0) # Make this a null field first (because we will be updating the position)
+    rx,ry=targets[0]["x"],targets[0]["y"]
+    print("Initiate move to %f,%f"%(rx,ry))
     robot.move_to(rx,ry,robot_move_time)
     
+    moving = True
+        
+    
+        
 
 
 def routine_checks():
     """ Stuff we need to keep doing. """
     # Check if a move is completed, if so, have the robot stay put.
-    # TODO
-    if robot.move_is_done():
-        robot.controller(0)
+    global targets
+    global moving
 
+    if moving: # If we are currently in the middle of moving to a target
+
+        if robot.move_is_done(): # check if we are done
+
+            # Remove the last target
+            if len(targets)>0: # this should always be true actually
+                oldtarg = targets[0]
+                win.itemconfig(oldtarg["rect"],fill="gray")
+                #win.delete(oldtarg["rect"]) # remove rect from the interface
+                targets = targets[1:] # remove this target from our stack
+
+            moving = False
+
+            # If now there is no more target to go to
+            if len(targets)==0:
+                robot.stay()
+
+    if not moving:
+        if len(targets)>0:
+            initiate_move()
 
     
 
@@ -111,7 +147,9 @@ def draw_robot():
     #print(rx,ry)
     x,y = rob_to_screen(rx,ry)
     win.coords(robot_pos,(x-cursor_size,y-cursor_size,x+cursor_size,y+cursor_size))
-
+    global moving
+    robcol = "green" if moving else "blue"
+    win.itemconfig(robot_pos,fill=robcol)
 
 
 
@@ -120,7 +158,7 @@ def draw_robot():
     
 
 keep_going = True
-    
+robot.wshm('plg_moveto_done',1)
 
 while keep_going:
 
