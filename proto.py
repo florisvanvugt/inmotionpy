@@ -7,6 +7,9 @@ robot.start_lkm()
 robot.start_shm()
 
 
+robot.send_shm('h')
+robot.read_shm()
+
 print("Okidoki")
 
 

@@ -75,9 +75,11 @@ def unload():
 
 def start_lkm():
     """ Starts the robot process. """
-    print(robot_start,robot_dir)
     global rob
-    rob = spawn_process(robot_start,robot_dir)
+    rob = subprocess.call(robot_start,cwd=robot_dir)
+
+    time.sleep(.1) # Wait for everything to start
+
     #subprocess.call(robot_start,cwd="./robot/") #,cwd=robot_dir)
     #subprocess.call(robot_start) #,cwd=robot_dir)
     # TODO: catch result from starting the robot
@@ -99,10 +101,11 @@ def start_shm():
     
     time.sleep(.1) # Wait for everything to start
 
-    check = rshm('last_shm_val')
-    if check!=12345678:
-        print("Error: rshm check returned %s instead of 1234578."%(str(check)))
-        sys.exit(-1)
+    # TODO: perform this check
+    #check = rshm('last_shm_val')
+    #if check!=12345678:
+    #    print("Error: rshm check returned %s instead of 1234578."%(str(check)))
+    #    sys.exit(-1)
 
     #set ob(shm) [open "|$ob(crobhome)/shm" r+]
     #fconfigure $ob(shm) -buffering line
@@ -160,16 +163,23 @@ def wshm(variable,value,index=0):
 
 
 
-def send_shm(proc,cmd):
+def send_shm(cmd):
     global shm
     send(shm,cmd)
 
 
+def read_shm():
+    global shm
+    return read(shm)
+
+    
 
 
 def stop_shm():
     ## TODO
-    subprocess.call(shm_stop,cwd=robot_dir)
+    #subprocess.call(shm_stop,cwd=robot_dir)
+    send_shm('q') # quit the shm process
+    global shm
     shm = None
 
 
@@ -326,6 +336,8 @@ def read(proc):
                     resp += out1
         except IOError:
             #print("Got error")
+            continue
+        except TypeError:
             continue
         else:
             break
