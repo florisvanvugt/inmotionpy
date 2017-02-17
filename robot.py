@@ -53,7 +53,8 @@ def status():
             print("shm: no connection")
         else:
             print("shm: process available")
-            print("robot: paused=%s"%str(rshm('paused')))
+            print("robot: paused = %s"%str(rshm('paused')))
+            print("robot: controller %i"%get_controller())
             print("robot position: %.03f,%.03f"%(rshm('x'),rshm('y')))
 
     if len(errbuff)>0:
@@ -67,6 +68,7 @@ def load():
     with it, and starts the robot main loop.
     """
 
+    print("Loading robot...")
     # TODO: Make sure the robot is not already loaded
     start_lkm()
     start_shm()
@@ -78,14 +80,16 @@ def load():
 
     # Remove the safety zone so that the robot arm can move everywhere - careful!
     wshm("no_safety_check",1)
-    
+
+    print("done")
     return
 
 
 
 def unload():
     """ Unloads the robot. """
-    #plg_select_controller 0; # should be the null field
+    select_controller(0)
+    print("Unloading robot...")
 
     # b_pause_proc $w
     # pause pauses actuator output, stop stops all main loop i/o.
@@ -94,8 +98,9 @@ def unload():
     stop_lkm()
 
     #set ob(loaded) 0
+    print("done")
     
-
+    return
 
 
 
@@ -133,8 +138,43 @@ def start_shm():
         error_buffer("Error: rshm check returned %s instead of 1234578.\nMake sure all software has been compiled with latest cmdlist.tcl"%(str(check)))
         sys.exit(-1)
 
+
+
+
+
+def get_controller():
+    """ Return which controller is currently running. """
+    return rshm("slot_fnid")
         
 
+
+
+def select_controller(n):
+    """ 
+    Select the n-th controller on the robot. 
+    
+    Arguments
+    n : the id of the controller to be selected
+    """
+
+    # Don't ask me why...
+    slot_id   = 0
+    slot_fnid = n
+
+    tslot_go = rshm('slot_go')
+    if tslot_go>0: # if we are currently changing slots...?
+        time.sleep(.01)
+	# reschedule myself in 10 ms
+	# puts "movebox2, rescheduling..."
+	# dtime "movebox: resched"
+
+    wshm("slot_id",slot_id)
+    wshm("slot_fnid",slot_fnid)
+    wshm("slot_running",1)
+    wshm("slot_go",1)
+
+
+    
 
     
 def rshm(variable,index=0):
@@ -241,14 +281,22 @@ def stop_loop():
     return
 
 
+
+
+
 def bias_force_transducers():
-    ## TODO!!
+    """ 
+    A little wrapper script to remove the bias of the force transducers.
+    This function asks the user not to hold the handle and then reads
+    the force transducer output.
+    """
     print("")
     print("*** biasing force transducers: please let go of the handle")
     print("*** and hit ENTER when ready to start zeroing procedure")
     input()
-    plg_zeroft() # TODO
-    
+
+    plg_zeroft()
+   
     print(" ")
     print("*** zeroing the force transducers is done, please hold the handle now")
     print("*** and hit ENTER when ready to continue")
@@ -257,6 +305,62 @@ def bias_force_transducers():
     
 
 
+def bias_report():
+    print("Robot ATI bias summary")
+    for i in range(6):
+        print("%i -> %f"%(i,rshm('ft_bias',i)))
+
+    
+
+def plg_zeroft():
+    """ 
+    Samples the force torque transducer values and zeroes them.
+    It is important to run this when there are no forces on the handle (i.e. subject is not
+    holding it).
+
+    Gribble's comments:
+    # use this instead of ft_bias, which only reads one sample
+    # plg_zeroft samples for 100 samples and takes the mean
+    """
+    
+    # initialize some shared memory variables to zero
+    wshm('plg_ftzerocount',0)
+    for i in range(6):
+        wshm('plg_ftzero',0,i)
+
+    #for {set i 0} {$i < 6} {incr i} {
+    #wshm plg_ftzero 0 $i
+    #}
+    
+    # select the zero_ft controller
+    select_controller(2)
+
+    # run it for a little while
+    time.sleep(1.)
+    
+    # select the null field controller
+    select_controller(0)
+
+    count = rshm('plg_ftzerocount')
+
+    print("Averaging over %i ATI samples"%count)
+
+    for i in range(6):
+        cal = rshm('plg_ftzero',i)/float(count)
+        wshm('ft_bias',cal,i)
+
+    bias_report()
+    
+
+
+
+
+
+
+
+
+
+    
 
 
 # Check the executables

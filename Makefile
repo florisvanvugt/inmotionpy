@@ -9,9 +9,8 @@ readme.html: readme.md
 	pandoc -f markdown -t html readme.md -c misc/github-pandoc.css -s -o readme.html
 
 clean:
-	rm -f readme.html
+	rm -Rf readme.html *.pyc __pycache__ *~
 	make -C robot clean
-	rm *.pyc
 
 rob:
 	cd robot
