@@ -13,7 +13,7 @@ cursor_size = 10
 
 def rob_to_screen(x,y):
     # Convert robot coordinates into screen coordinates
-    return (cw + x*robot_scale,ch + y*robot_scale)
+    return (cw + x*robot_scale,ch - y*robot_scale)
 
 
 def screen_to_rob():
@@ -53,7 +53,7 @@ win.pack()
 
 # Draw the background against which everything else is going to happen
 win.create_rectangle(0, 0, w, h, fill="black")
-minx,miny = rob_to_screen(-.4,-.1)
+minx,miny = rob_to_screen(-.4,-.2)
 maxx,maxy = rob_to_screen( .4,.3)
 win.create_rectangle(minx,miny,maxx,maxy, outline="blue")
 

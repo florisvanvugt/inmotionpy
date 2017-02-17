@@ -19,3 +19,6 @@ rob:
 run: rob
 	python3 run_simple.py
 
+
+viewpos: rob
+	python3 viewpos.py
