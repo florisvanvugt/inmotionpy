@@ -10,10 +10,13 @@ readme.html: readme.md
 
 clean:
 	rm -f readme.html
+	make -C robot clean
+	rm *.pyc
 
+rob:
+	cd robot
+	make -C robot
 
-
-
-run:
+run: rob
 	python3 run_simple.py
 

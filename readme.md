@@ -7,6 +7,15 @@ I plan to use Python instead of Tcl, but keep using C for the code that actually
 
 
 
+## Notes about the Python robot
+
+### Shared Memory
+Currently, the script interacts with the `shm` program to read and write shared memory. It would be much nicer to have a native Python way of reading and writing to shared memory.
+
+
+
+
+
 
 ## InMotion2 programmer's notes
 

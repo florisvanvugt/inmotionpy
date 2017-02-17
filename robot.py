@@ -44,12 +44,28 @@ errbuff = []
 
 def status():
     """ Return the status of the robot. """
-    print("Last errors:\n%s"%"\n".join(errbuff))
+    if rob==None:
+        print("robot launch process: none found")
+    else:
+        print("robot launch process: exit code = %s"%(str(rob)))
+        
+        if shm==None:
+            print("shm: no connection")
+        else:
+            print("shm: process available")
+            print("robot: paused=%s"%str(rshm('paused')))
+            print("robot position: %.03f,%.03f"%(rshm('x'),rshm('y')))
+
+    if len(errbuff)>0:
+        print("last errors:\n%s"%"\n".join(errbuff))
 
 
 
 def load():
-    """ TODO """
+    """ 
+    Starts up the robot. Loads the robot C program, starts our shared memory (shm) connection
+    with it, and starts the robot main loop.
+    """
 
     # TODO: Make sure the robot is not already loaded
     start_lkm()
@@ -68,7 +84,7 @@ def load():
 
 
 def unload():
-    """ TODO """
+    """ Unloads the robot. """
     #plg_select_controller 0; # should be the null field
 
     # b_pause_proc $w
@@ -112,22 +128,12 @@ def start_shm():
     time.sleep(.1) # Wait for everything to start
 
     # TODO: perform this check
-    #check = rshm('last_shm_val')
-    #if check!=12345678:
-    #    print("Error: rshm check returned %s instead of 1234578."%(str(check)))
-    #    sys.exit(-1)
+    check = rshm('last_shm_val')
+    if check!=12345678:
+        error_buffer("Error: rshm check returned %s instead of 1234578.\nMake sure all software has been compiled with latest cmdlist.tcl"%(str(check)))
+        sys.exit(-1)
 
-    #set ob(shm) [open "|$ob(crobhome)/shm" r+]
-    #fconfigure $ob(shm) -buffering line
-    #after 100
-    #set check [rshm last_shm_val]
-    #if {$check != 12345678} {
-    #puts "start_shm: bad shm check value."
-    #puts "make sure all software has been compiled with latest cmdlist.tcl"
-    #exit 1
-    #}
-
-    
+        
 
 
     
@@ -151,7 +157,20 @@ def rshm(variable,index=0):
         error_buffer("Error in rshm('%s',%i): '%s'"%(variable,index,reply))
         return None
 
-    return resp[3]  # TODO: parse this to the correct data type (how do we know?)
+
+    # Try if this is an integer
+    try:
+        return int(resp[3])
+    except ValueError:
+        pass
+
+    # Try if this is a float
+    try:
+        return float(resp[3])
+    except ValueError:
+        pass
+    
+    return resp[3]  # Give up and return it as-is (string)
     
 
 
@@ -196,8 +215,8 @@ def read_shm():
 def stop_shm():
     ## TODO
     #subprocess.call(shm_stop,cwd=robot_dir)
-    send_shm('q') # quit the shm process
     global shm
+    send(shm,'q') # quit the shm process
     shm = None
 
 
@@ -240,14 +259,13 @@ def bias_force_transducers():
 
 
 
+# Check the executables
+for executable in [robot_start,robot_stop,shm_start]:
 
-if not os.path.isfile(robot_start):
-    print("ERROR: could not find executable %s"%robot_start)
+    if not os.path.isfile(executable):
+        print("ERROR: could not find executable %s (did you compile the robot code already?)"%executable)
 
 
-if not os.path.isfile(robot_stop):
-    print("ERROR: could not find executable %s"%robot_stop)
-    
     
 
 
