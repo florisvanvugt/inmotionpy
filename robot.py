@@ -88,7 +88,7 @@ def load():
 
 def unload():
     """ Unloads the robot. """
-    select_controller(0)
+    controller(0)
     print("Unloading robot...")
 
     # b_pause_proc $w
@@ -149,7 +149,7 @@ def get_controller():
 
 
 
-def select_controller(n):
+def controller(n):
     """ 
     Select the n-th controller on the robot. 
     
@@ -284,6 +284,22 @@ def stop_loop():
 
 
 
+#
+#
+# A bit more high-level
+#
+#
+
+
+# Quite strong
+#stiffness = 4000. 
+#damping = 40.
+
+stiffness = 800. 
+damping = 8.
+
+
+
 def bias_force_transducers():
     """ 
     A little wrapper script to remove the bias of the force transducers.
@@ -295,7 +311,7 @@ def bias_force_transducers():
     print("*** and hit ENTER when ready to start zeroing procedure")
     input()
 
-    plg_zeroft()
+    zeroft()
    
     print(" ")
     print("*** zeroing the force transducers is done, please hold the handle now")
@@ -312,7 +328,7 @@ def bias_report():
 
     
 
-def plg_zeroft():
+def zeroft():
     """ 
     Samples the force torque transducer values and zeroes them.
     It is important to run this when there are no forces on the handle (i.e. subject is not
@@ -333,13 +349,13 @@ def plg_zeroft():
     #}
     
     # select the zero_ft controller
-    select_controller(2)
+    controller(2)
 
     # run it for a little while
     time.sleep(1.)
     
     # select the null field controller
-    select_controller(0)
+    controller(0)
 
     count = rshm('plg_ftzerocount')
 
@@ -354,13 +370,64 @@ def plg_zeroft():
 
 
 
+def stay():
+    """ 
+    Fix the robot handle at the current location. 
+    """
+    x,y = rshm('x'),rshm('y')
+    stay_at(x,y)
 
 
 
+def stay_at(x,y):
+    """
+    Fix the robot handle at location x,y.
+    CAUTION: we should be at x,y already otherwise we will snap to it!
+    """
+    wshm('plg_p1x',x)
+    wshm('plg_p1y',y)
+    wshm('plg_stiffness',stiffness)
+    wshm('plg_damping',damping)
+    controller(16) # static_ctl
+    return
+
+
+def move_to(x,y,t):
+    """
+    Move the robot handle to location (x,y) in t seconds.
+    The function returns when the controller is started,
+    and hence generally before the robot reaches the end location.
+    """
+    wshm('plg_movetime',0.0)
+    wshm('plg_p2x',x)
+    wshm('plg_p2y',y)
+    wshm('plg_movetime',float(t))
+    wshm('plg_stiffness',stiffness)
+    wshm('plg_damping',damping)
+    wshm('plg_moveto_done',0)
+    wshm('plg_p1x',rshm('x'))
+    wshm('plg_p1y',rshm('y'))
+    wshm('plg_counterstart',rshm('i')) # record the current sample
+    controller(4)
+    return
+
+
+def move_is_done():
+    """ Returns whether a move is done. This assumes that a move has been started using moveto(). """
+    return (rshm('plg_moveto_done')==1)
 
 
 
-    
+def move_stay(x,y,t):
+    """ 
+    Moves the robot handle to location (x,y) in t seconds and then holds it there.
+    This function returns when the robot handle reaches the target location.
+    """
+    move_to(x,y,t)
+    while not move_is_done():
+        pass
+    stay_at(x,y) # when the move is done
+
 
 
 # Check the executables

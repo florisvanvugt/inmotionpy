@@ -10,15 +10,34 @@ w,h = 800,600
 cw,ch = w/2,h/2
 robot_scale = 700
 cursor_size = 10
+target_size = 5
+
+robot_move_time = 3.
+
+targets = []
+
+
+
+
+
+robot.load()
+robot.bias_force_transducers()
+#robot.stay() # stay put
+robot.status()
+
+
+
+
 
 def rob_to_screen(x,y):
     # Convert robot coordinates into screen coordinates
     return (cw + x*robot_scale,ch - y*robot_scale)
 
 
-def screen_to_rob():
+def screen_to_rob(x,y):
     # Convert screen coordinates into robot coordinates
-    pass
+    return ( (x-cw)/float(robot_scale),
+             (y-ch)/float(-robot_scale) )
 
 
 def callback(event):
@@ -26,8 +45,30 @@ def callback(event):
     canvas = event.widget
     x = canvas.canvasx(event.x)
     y = canvas.canvasy(event.y)
-    print(canvas.find_closest(x, y))
+    print("Clicked",x,y)
+    #print(canvas.find_closest(x, y))
 
+    # Add a target
+    targ = win.create_rectangle(x-target_size,y-target_size,x+target_size,y+target_size, fill="red")
+    targets.append(targ)
+
+    rx,ry = screen_to_rob(x,y)
+    print("Would move to %f,%f"%(rx,ry))
+    
+    robot.controller(0) # Make this a null field first (because we will be updating the position)
+    robot.move_to(rx,ry,robot_move_time)
+    
+
+
+def routine_checks():
+    """ Stuff we need to keep doing. """
+    # Check if a move is completed, if so, have the robot stay put.
+    # TODO
+    if robot.move_is_done():
+        robot.controller(0)
+
+
+    
 
 def on_closing():
     #if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -49,7 +90,9 @@ master.geometry('%dx%d+%d+%d' % (w, h, 500, 200))
 
 
 win = Canvas(master, width=w, height=h)
+win.bind("<Button-1>", callback) # click callback
 win.pack()
+
 
 # Draw the background against which everything else is going to happen
 win.create_rectangle(0, 0, w, h, fill="black")
@@ -65,7 +108,7 @@ master.protocol("WM_DELETE_WINDOW", on_closing)
 def draw_robot():
     # Update the cursor that indicates the current position of the robot
     rx,ry = robot.rshm("x"),robot.rshm("y")
-    print(rx,ry)
+    #print(rx,ry)
     x,y = rob_to_screen(rx,ry)
     win.coords(robot_pos,(x-cursor_size,y-cursor_size,x+cursor_size,y+cursor_size))
 
@@ -78,16 +121,14 @@ def draw_robot():
 
 keep_going = True
     
-robot.load()
-robot.bias_force_transducers()
-robot.status()
 
 while keep_going:
 
     draw_robot()
-    
+    routine_checks()
+
     master.update_idletasks()
     master.update()
-    time.sleep(0.01) # frame rate of our GUI update
+    #time.sleep(0.01) # frame rate of our GUI update
 
     
