@@ -28,6 +28,22 @@ There are various Python modules that can read shared memory natively. Here is a
 
 From this, it seems `sysv_ipc` is the best way to go forward.
 
+Strategy for SHM management:
+
+1. When the robot compiles, have a Python script parse the robdecls.h file and write a section of C code. The code should basically output
+
+```
+fvv_trial_phase Ob 6488
+fvv_trial_no Ob 6824
+etc. ...
+```
+
+i.e. for each variable, it tells us what the object is and what the address within the object is (the offset).
+
+2. Execute the C code and pipe the output into an `address_list.txt` file.
+
+3. The output of this address list is parsed by the native shm file and that should be all!
+
 
 
 
