@@ -37,9 +37,14 @@ objects = {
 # to make every rshm() or wshm() call with the variable "x"
 # to actually operate on the variable "pos.x".
 varname_aliases = {
-    "x":"pos.x",
-    "y":"pos.y"
-}
+    "x"               :"pos.x",
+    "y"               :"pos.y",
+    "no_safety_check" :"safety.override",
+    "slot_fnid"       :"copy_slot.fnid",
+    "slot_id"         :"copy_slot.id",
+    "slot_go"         :"copy_slot.go",
+    "slot_running"    :"copy_slot.running",
+ }
 
 
 
@@ -59,7 +64,7 @@ def read_address_probe():
     A dict where the keys are the variable names (hopefully unique)
     and the values are tuples (OB,TYPE,ARRSTRUCT,ADDR).
     """
-    f = open('field_addresses.txt','r')
+    f = open('robot/field_addresses.txt','r')
     lns = f.readlines()
     f.close()
 
@@ -219,16 +224,18 @@ def init():
 
 
 
-def quit():
+def stop_shm():
     # When you are done...    
 
     global memobjects
-
     for ob in memobjects:
-        ob.detach()
+        memobjects[ob].detach()
     
             
 
 
-        
-init()
+def start_shm():        
+    init()
+
+
+

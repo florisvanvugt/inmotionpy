@@ -81,7 +81,7 @@ def parse_robdecls():
     We basically parse the typedefs in robdecls to find what the
     fields are called and what object they are found in.
     """
-    f = open('../robot/robdecls.h','r')
+    f = open('robdecls.h','r')
     robdecls = f.read()
     f.close()
 

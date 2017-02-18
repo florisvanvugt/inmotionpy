@@ -44,7 +44,6 @@ OIR=/opt/imt/robot
 
 flist="
 	$CROB/robot
-	$CROB/shm
 	$CROB/imt2.cal
 	/usr/realtime/modules/xeno_hal.ko
 	$OIR/pci4e/pci4e.ko

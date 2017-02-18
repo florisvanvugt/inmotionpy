@@ -15,7 +15,8 @@ import sys
 
 
 # Import code for interacting with the shared memory (this allows us to exchange information with the C script)
-from shm_ext import *
+#from shm_ext import *
+from shm_native import *
 
 
 
@@ -66,7 +67,6 @@ def load():
     """
 
     print("Loading robot...")
-    # TODO: Make sure the robot is not already loaded
     start_lkm()
     start_shm()
     start_loop()
@@ -177,6 +177,10 @@ def stop_loop():
     # to receive and process the commands.  (100 ms is 20 ticks at 200 Hz.)
     wshm("paused",1)
     time.sleep(.1)
+
+    wshm('quit',1)
+    time.sleep(2) # wait for the robot control loop to shut itself down
+
     return
 
 
@@ -330,7 +334,7 @@ def move_stay(x,y,t):
 
 
 # Check the executables
-for executable in [robot_start,robot_stop,shm_start]:
+for executable in [robot_start,robot_stop]:
 
     if not os.path.isfile(executable):
         print("ERROR: could not find executable %s (did you compile the robot code already?)"%executable)
