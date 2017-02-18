@@ -12,6 +12,7 @@ def showpos():
 print("Position:")
 showpos()
 
+print("Now I will tell the robot to stay fixed at this position")
 input()
 
 print("Staying")
