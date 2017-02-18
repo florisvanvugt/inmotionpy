@@ -16,11 +16,6 @@ PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 
 CROB_HOME=.
 
-if [ -z "$CROB_HOME" ]; then
-        echo "CROB_HOME is not set, imt_config/imt.rc must be sourced"
-	exit 1
-fi
-
 CROB=$CROB_HOME
 cd $CROB
 
@@ -87,7 +82,6 @@ done
 
 sleep 0.1
 
-#./shm < $IMT_CONFIG/robots/`cat $IMT_CONFIG/current_robot`/imt2.cal
 ./shm < $CROB_HOME/imt2.cal
 
 sleep 0.1

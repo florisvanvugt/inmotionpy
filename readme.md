@@ -4,6 +4,18 @@ This is an attempt to make a simple interface for the InMotion2 Robot at the Mot
 
 I plan to use Python instead of Tcl, but keep using C for the code that actually controls the robot directly.
 
+This is built for **Python 3**.
+
+
+
+## Requirements
+
+
+* You need `subprocess` 
+* You need `sysv_ipc` for native Python access to the shared memory
+
+I think these can be straight-forwardly be installed using `pip <module-name>`.
+
 
 
 
@@ -12,7 +24,18 @@ I plan to use Python instead of Tcl, but keep using C for the code that actually
 ### Shared Memory
 Currently, the script interacts with the `shm` program to read and write shared memory. It would be much nicer to have a native Python way of reading and writing to shared memory.
 
+There are various Python modules that can read shared memory natively. Here is a feature matrix: http://semanchuk.com/philip/PythonIpc/
 
+From this, it seems `sysv_ipc` is the best way to go forward.
+
+
+
+
+
+
+### TODO
+
+* Logging
 
 
 

@@ -41,24 +41,6 @@ OIR=/opt/imt/robot
 # /home/imt/daq/powerdaq: UEI daq code
 # /usr/local/include/ueidaq UEI: daq includes
 
-dlist="
-CROB_HOME
-"
-
-# what about LOG_HOME?
-
-for i in $dlist; do
-	# double indirection
-	dir=`eval echo \\$"$i"`
-	if [ -z $dir ]; then
-		echo checkexist: shell environment variable $i must be set.
-		exit 1
-	fi
-	if [ ! -d $dir ]; then
-		echo checkexist: shell environment variable $i directory $dir does not exist.
-		exit 1
-	fi
-done
 
 flist="
 	$CROB/robot

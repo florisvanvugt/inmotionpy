@@ -51,6 +51,11 @@ cmds.h: cmdlist.tcl
 shm:	cmds.h shm.c $(INCS)
 	$(CC) -Wall $(CFLAGS) -o shm shm.c
 
+# FVV ADDED (CAN BE REMOVED LATER)
+findad:	cmds.h shm-findad.c $(INCS)
+	$(CC) -Wall $(CFLAGS) -o findad shm-findad.c
+# END-FVV ADDED
+
 rwarp:	rwarp.c $(INCS)
 	$(CC) -Wall $(CFLAGS) -o rwarp rwarp.c -L/usr/X11R6/lib -lX11 -lXtst
 

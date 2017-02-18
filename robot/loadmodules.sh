@@ -21,6 +21,8 @@ sudo insmod /usr/realtime/modules/xeno_rtdm.ko
 sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq.ko > /dev/null 2>&1 || {
     sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq_dummy.ko
 }
+
+
 cd /opt/imt/robot/pci4e 
 ./pci4e_load vendor_id=0x1892 device_id=0x5747
 
