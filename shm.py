@@ -18,7 +18,9 @@ py_types = {
 # where they are located.
 objects = {
     "Ob"         : 0x494D5431,
-    "Dyncmp_var" : 0x494D5437
+    "Dyncmp_var" : 0x494D5437,
+    "Robot"      : 0x494D5432,
+    "Daq"        : 0x494D5433,
 }
 
 # These data types come from robdecls.h I think:
@@ -44,6 +46,9 @@ varname_aliases = {
     "slot_id"         :"copy_slot.id",
     "slot_go"         :"copy_slot.go",
     "slot_running"    :"copy_slot.running",
+    "have_pc7266"     :"pc7266.have",
+    "have_pci4e"      :"pci4e.have",
+    "safety_damping_nms":"safety.damping_nms",
  }
 
 
@@ -146,7 +151,7 @@ def get_element_loc(loc,arrn,index,what):
             print("Error: trying to read index of non-array object!")
             return None
         if index>=arrn:
-            print("Error: trying to read index %i which is larger than the size of the array (%i).")
+            print("Error: trying to read index %i which is larger than the size of the array (%i)."%(index,arrn))
             return None
 
         # Compute the size of elements in the array
@@ -183,19 +188,22 @@ def get_info(var,index=None):
         var = varname_aliases[var]
 
     # Otherwise, continue looking it up.
-    if var in locs:
+    if not var in locs:
 
-        ob,what,arrn,loc  = locs[var]
-        eloc = get_element_loc(loc,arrn,index,what)
-        if eloc==None: return None
-        return (ob,what,arrn,eloc)
-
-    
-    else:
-
-        # Oops, this variable doesn't seem to exist!
-        print("Variable %s not found!"%var)
-        return None
+        altvar = var.replace("_",".")
+        if altvar in locs:
+            var = altvar
+        else:
+            
+            # Oops, this variable doesn't seem to exist!
+            print("Variable %s not found!"%var)
+            return None
+        
+        
+    ob,what,arrn,loc  = locs[var]
+    eloc = get_element_loc(loc,arrn,index,what)
+    if eloc==None: return None
+    return (ob,what,arrn,eloc)
 
 
 

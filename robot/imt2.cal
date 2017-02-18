@@ -208,7 +208,7 @@ s restart_go 1
 s ain_bias_comp 1
 
 # this is to read a AIN7 on the grey box
-s ain_07_channel 23
+# s ain_07_channel 23    # REMOVED FVV, PROBABLY NEED TO LOOK AT THIS AGAIN
 
 # ft stuff
 # radians

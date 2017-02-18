@@ -8,6 +8,18 @@ that will tell us the addresses of each item.
 
 """
 
+
+
+objects_of_interest = [ "Ob",
+                        "Robot",
+                        "Daq",
+                        "Game",
+                        #"Moh",
+                        "Dyncmp_var" ]
+
+
+
+
 import re
 
 
@@ -63,13 +75,24 @@ def find_var_decls(line):
             continue
 
         # Try to parse it as an array
-        m = re.match(r'(\w+)\[(\d+)\]',v)
+        m = re.match(r'^(\w+)\[(\d+)\]$',v)
         if m:
             grps = m.groups()
             variables.append((tp,grps[0],int(grps[1])))
 
         else:
-            print("// WARNING IGNORED variable name %s"%v)
+
+            # Two-dimensional array! (Okay, this is bad form to be parsing it like this
+            # but just for a quick-and-dirty solution!
+            m = re.match(r'^(\w+)\[(\d+)\]\[(\d+)\]$',v)
+            if m:
+                grps = m.groups()
+                totsize = int(grps[1])*int(grps[2])
+                variables.append((tp,grps[0],totsize))
+
+            else:
+
+                print("// WARNING IGNORED variable name %s"%v)
             
     return variables
 
@@ -157,7 +180,7 @@ def output_c_file():
 
                 if arraystruct==None:
                     for (subtp,subname,subarraystruct) in typedefs[tp]:
-                        arrn = 0 if arraystruct==None else arraystruct
+                        arrn = 0 if subarraystruct==None else subarraystruct
                         print('\tprintf("%s %s %s.%s %i %%u\\n", (unsigned int)&%s->%s.%s );'%(typedef,subtp,name,subname,arrn,varname,name,subname))
                 else:
                     print("\t// IGNORED %s, %s because it is an array of a non-atomic type"%(tp,name))
@@ -177,12 +200,5 @@ print ("// ##############################################################\n")
     
 typedefs = parse_robdecls()
 
-
-objects_of_interest = [ "Ob",
-                        #"Rob",
-                        #"Daq",
-                        "Game",
-                        #"Moh",
-                        "Dyncmp_var" ]
 
 output_c_file()

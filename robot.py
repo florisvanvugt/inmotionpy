@@ -16,7 +16,7 @@ import sys
 
 # Import code for interacting with the shared memory (this allows us to exchange information with the C script)
 #from shm_ext import *
-from shm_native import *
+from shm import *
 
 
 
@@ -69,6 +69,7 @@ def load():
     print("Loading robot...")
     start_lkm()
     start_shm()
+    put_init_calib()
     start_loop()
 
     # Not sure if this does anything, but just to make sure
@@ -98,6 +99,44 @@ def unload():
     print("done")
     
     return
+
+
+
+def put_init_calib():
+    """ 
+    This function basically puts all the initial calibration stuff 
+    to the robot when we first launch it. The settings come from robot/imt2.cal
+    TODO: This can of course be done much nicer, without having to go through the 
+    calibration syntax.
+    """
+    f = open('robot/imt2.cal','r')
+    lns = f.readlines()
+    f.close()
+
+    for l in lns:
+        l = l.strip()
+        if len(l)>0 and l[0]!="#":
+            if l=="ok":
+                continue
+            fs = [ v.strip() for v in l.split() ]
+            if fs[0]=="s":
+                # If this is a set command
+                if get_info(fs[1])==None:
+                    print("WARNING: ignoring config setting %s"%l)
+                else:
+                    #print(fs)
+                    if len(fs)==3: # "simple" variable set
+                        #print(fs[1],tryenc(fs[2]))
+                        wshm(fs[1],tryenc(fs[2]))
+                    elif len(fs)==4: # array item set
+                        #print(fs[1],fs[3],fs[2])
+                        wshm(fs[1],tryenc(fs[3]),int(fs[2]))
+                    else:
+                        print("Not sure what to do with calibration line: %s"%l)
+
+            else:
+                print("Not sure what to do with calibration line: %s"%l)
+                
 
 
 
@@ -354,4 +393,25 @@ def error_buffer(err):
 
 
 
+
+
+
+    
+
+def tryenc(r):
+    """ Try to guess the encoding of this item."""
+    
+    # Try if this is an integer
+    try:
+        return int(r)
+    except ValueError:
+        pass
+
+    # Try if this is a float
+    try:
+        return float(r)
+    except ValueError:
+        pass
+
+    return r
 
