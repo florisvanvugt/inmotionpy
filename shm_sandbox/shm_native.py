@@ -31,6 +31,17 @@ objects = {
 
 
 
+# If you don't like to type much, you can define variable aliases.
+# For example add "x":"pos.x" to the varname_aliases dict
+# to make every rshm() or wshm() call with the variable "x"
+# to actually operate on the variable "pos.x".
+varname_aliases = {
+    "x":"pos.x",
+    "y":"pos.y"
+}
+
+
+
 # Read in a table that tells us where each variable is within each object.
 def read_address_probe():
     """ 
@@ -127,9 +138,17 @@ def wshm(var,value):
 def get_info(var):
     # Return the OB,TYPE,ADDR for the given variable.
     global locs
+
+    # Look whether this variable is an alias for something else
+    if var in varname_aliases:
+        var = varname_aliases[var]
+
+    # Otherwise, continue looking it up.
     if var in locs:
         return locs[var]
     else:
+
+        # Oops, this variable doesn't seem to exist!
         print("Variable %s not found!"%var)
         return None
 
