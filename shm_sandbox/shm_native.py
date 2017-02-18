@@ -21,6 +21,7 @@ objects = {
     "Dyncmp_var" : 0x494D5437
 }
 
+# These data types come from robdecls.h I think:
 #define OB_KEY   0x494D5431
 #define ROB_KEY  0x494D5432
 #define DAQ_KEY  0x494D5433
@@ -45,16 +46,18 @@ varname_aliases = {
 # Read in a table that tells us where each variable is within each object.
 def read_address_probe():
     """ 
-    This reads a table where each row is OB,TYPE,VAR,ADDR
+    This reads a table where each row is OB,TYPE,VAR,ARRSTRUCT,ADDR
     where OB is the object of which VAR is a member, and ADDR
     is the address where that VAR is found, and TYPE is its data type.
+    If the variable is an array, ARRSTRUCT (an int) tells us how many elements it has,
+    and 0 means it is not an array.
 
     Example line: 
-    Ob u32 mkt_isMcGill 6444
+    Ob u32 mkt_isMcGill 0 6444
 
     Returns:
     A dict where the keys are the variable names (hopefully unique)
-    and the values are tuples (OB,TYPE,ADDR).
+    and the values are tuples (OB,TYPE,ARRSTRUCT,ADDR).
     """
     f = open('field_addresses.txt','r')
     lns = f.readlines()
@@ -63,15 +66,18 @@ def read_address_probe():
     fields = {}
     for ln in lns:
         elts = ln.strip().split(" ")
-        if len(elts)==4:
-            ob,tp,var,addr=elts
+        if len(elts)==5:
+            ob,tp,var,arrn,addr=elts
             if var in fields:
                 print("WARNING: %s already exist in object."%var)
             else:
                 if not addr.isdigit():
-                    print("Cannot parse %i as an address (should be an integer)"%addr)
+                    print("Cannot parse %s as an address (should be an integer)"%addr)
                 else:
-                    fields[var] = (ob,tp,int(addr))
+                    if not arrn.isdigit():
+                        print("Cannot parse %s as an array length (should be an integer)"%arrn)
+                    else:
+                        fields[var] = (ob,tp,int(arrn),int(addr))
         else:
             print("Ignoring line %s"%ln)
                 
@@ -97,8 +103,6 @@ def read(memobj,what,loc):
     return struct.unpack(tp,res)
 
 
-# Read u32 at a given memory location in the shared memory
-# memloc = 6448
 
 
 def write(memobj,what,loc,value):
@@ -117,25 +121,55 @@ def write(memobj,what,loc,value):
 
 
 
+def get_element_loc(loc,arrn,index,what):
+    """ 
+    Get the location of a data, where the data may be an array.
+    
+    Arguments
+    loc   : the location of the (start) of the data, i.e. the location of the data itself or the start of the array
+    arrn  : the number of items in the data; 0 means it is not an array, anything larger is the number of elements
+    index : the requested index in the array
+    what  : the data type to be read (and if we read from an array, the data type of the elements of the array)
+    """
+    if index==None or index==0: # If we don't specify a location, either this is not an array or if it is, we by default return the first element
+        return loc # TODO: if this is an array, we might want to just return the actual array instead of just its first element.
+    else:
 
-def rshm(var):
+        # Okay, we are requesting the non-zero location of something, that means it has to be an array, and the location has
+        # to be less than the array size!
+        if not arrn>0:
+            print("Error: trying to read index of non-array object!")
+            return None
+        if index>=arrn:
+            print("Error: trying to read index %i which is larger than the size of the array (%i).")
+            return None
+
+        # Compute the size of elements in the array
+        sz = struct.calcsize(py_types[what])
+        return loc+ (index*sz)
+
+
+
+    
+
+def rshm(var,index=None):
     """ Read from shared memory. """
-    ob,what,loc  = get_info(var)
+    ob,what,arrn,eloc  = get_info(var,index)
     global memobjects
-    return read(memobjects[ob],what,loc)[0]
+    return read(memobjects[ob],what,eloc)[0]
     
 
 
-def wshm(var,value):
+def wshm(var,value,index=None):
     """ Write to the shared memory. """
-    ob,what,loc  = get_info(var)
+    ob,what,arrn,eloc  = get_info(var,index)
     global memobjects
-    write(memobjects[ob],what,loc,value)
+    write(memobjects[ob],what,eloc,value)
 
 
 
 
-def get_info(var):
+def get_info(var,index=None):
     # Return the OB,TYPE,ADDR for the given variable.
     global locs
 
@@ -145,7 +179,13 @@ def get_info(var):
 
     # Otherwise, continue looking it up.
     if var in locs:
-        return locs[var]
+
+        ob,what,arrn,loc  = locs[var]
+        eloc = get_element_loc(loc,arrn,index,what)
+        if eloc==None: return None
+        return (ob,what,arrn,eloc)
+
+    
     else:
 
         # Oops, this variable doesn't seem to exist!

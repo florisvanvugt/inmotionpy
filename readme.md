@@ -19,6 +19,17 @@ I think these can be straight-forwardly be installed using `pip <module-name>`.
 
 
 
+## Some notes about the existing robot code
+
+This code is found in the `robot/` subdirectory. It is a set of C programs that need to be compiled against the correct libraries and in the right architecture. That is, don't try this at home. Compile on the machine where the robot is installed. To compile, simply type `make` in that directory.
+
+A few useful commands in this directory, once everything is compiled:
+
+* `./go` Spawns the robot process. This can run even if the robot is not physically switched on, which can be a great way to test aspects of your code.
+* `./shm` A neat little script to interact with the shared memory.
+* `./stop` Stops the robot.
+
+
 ## Notes about the Python robot
 
 ### Shared Memory

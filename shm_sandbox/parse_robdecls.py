@@ -145,7 +145,8 @@ def output_c_file():
 
                 # Write the C code that will print the memory location of this variable (relative to
                 # the start in memory of the main object, which is exactly what we want).
-                print('\tprintf("%s %s %s %%u\\n", (unsigned int)&%s->%s ); // atomic'%(typedef,tp,name,varname,name))
+                arrn = 0 if arraystruct==None else arraystruct
+                print('\tprintf("%s %s %s %i %%u\\n", (unsigned int)&%s->%s ); // atomic'%(typedef,tp,name,arrn,varname,name))
 
             else:
                 # Actually this variable is of a type that we have a definition of.
@@ -156,7 +157,8 @@ def output_c_file():
 
                 if arraystruct==None:
                     for (subtp,subname,subarraystruct) in typedefs[tp]:
-                        print('\tprintf("%s %s %s.%s %%u\\n", (unsigned int)&%s->%s.%s );'%(typedef,subtp,name,subname,varname,name,subname))
+                        arrn = 0 if arraystruct==None else arraystruct
+                        print('\tprintf("%s %s %s.%s %i %%u\\n", (unsigned int)&%s->%s.%s );'%(typedef,subtp,name,subname,arrn,varname,name,subname))
                 else:
                     print("\t// IGNORED %s, %s because it is an array of a non-atomic type"%(tp,name))
 
