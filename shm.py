@@ -8,6 +8,7 @@ import struct
 # Map the type definitions used in the C robdecls.h code
 # to the data types that python's struct uses.
 py_types = {
+    "s32":"i",
     "u32":"I",
     "f64":"d",
 }
