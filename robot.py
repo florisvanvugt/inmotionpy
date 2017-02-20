@@ -230,6 +230,63 @@ def stop_loop():
 
 #
 #
+# Logging
+#
+#
+
+savedatpid = None
+
+def start_log(fname,n):
+    """ Starts the log. 
+
+    Arguments
+    fname    : log file name
+    n        : number of columns
+    """
+
+    # write log header
+    #logheader(fname,n,headerf) # $logfile $num $uheaderfile
+    wshm('nlog',0) # suspends the log writing
+
+    global savedatpid
+    if savedatpid!=None:
+        print("Log already running! Not starting another log process.")
+        return
+        
+    savedatpid = subprocess.Popen(['cat','/proc/xenomai/registry/pipes/crob_out'],stdout=open(fname,'wb'))
+
+    wshm('nlog',n) # starts the log writing
+    
+    # Original: [exec cat < /proc/xenomai/registry/pipes/crob_out >> $logfile &]
+
+
+def stop_log():
+    """ Stops the log. """
+    global savedatpid
+    if savedatpid!=None:
+        wshm('nlog',0)
+        savedatpid.kill()
+        savedatpid=None
+
+    
+
+
+def logheader(fname,n,headerfile=""):
+    """ Write log file header.
+    pad with commented dots to 4096 bytes of ascii stuff
+    (or truncate)
+    make sure this is ascii, multi-byte chars will be messy here.
+    """
+    subprocess.call(['robot/loghead',fname,n])
+    #exec $ob(crobhome)/loghead $filename $ncols
+
+
+
+
+
+
+#
+#
 # A bit more high-level
 #
 #
@@ -239,6 +296,7 @@ def stop_loop():
 #stiffness = 4000. 
 #damping = 40.
 
+# Testing strength
 stiffness = 800. 
 damping = 8.
 

@@ -18,6 +18,8 @@ That's it!
 
 ## Usage
 
+Full documentation can be found in [robot.html](robot.html) (to generate it type `make doc`).
+
 The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt:
 
 ```
@@ -40,6 +42,12 @@ robot.unload()
 
 
 
+## Logging
+
+Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n` is the number of columns (this has to match the way you have defined columns in your `robot/pl_ulog.c`). Stop logging using `robot.stop_log()`. Logs are written in binary format and you can unpack them easily if you know the order in which columns are written (and how many there are).
+
+
+
 ## Files
 
 * `robot.py` -- the main robot module.
@@ -49,6 +57,12 @@ robot.unload()
 * `example_simple.py` -- loads the robot and prints the position to the screen, repeatedly
 * `example_proto.py` -- loads the robot and reads position and moves it to a different position
 * `example_viewpos.py` -- example of a GUI interface in which you see the robot handle position and can click to move it to new locations.
+* `example_log.py` -- writes an example log file
+
+* `dump_shm.py` -- this reads all variables it knows about from the shared memory together with their value (great for taking a "snapshot" of the current config)
+* `shm_ext.py` -- old-style shm module (can be loaded instead of the preferred `shm`) which mimicks previous Tcl code by communicating with the C program `shm`.
+
+* `readlog/readlog.py` -- this is an example script that can read a robot log
 
 Note that you also need a build environment where robot code can be built. In other words, this won't simply work at your home computer, because you will need libraries that are installed, for example in `/opt` on the robot computer.
 
@@ -64,6 +78,8 @@ A number of C objects are put in the shared memory, and these are defined in `ro
 The interface is fairly straightforward. Let's say you want, within Python, to read or write to a variable `plg_stiffness` defined in the structure `Ob` in `robdecls.h`. From within Python, you can access this variable with `rshm('plg_stiffness')` or write a value to it using `wshm('plg_stiffness,4000)`. That's all there is to it!
 
 If you want to access variables that are embedded in objects, say variable `x` that is a variable declared in `pos` (of type `xy`) in `Ob`, then you can access this variable using `rshm('pos_x')`. In other words, what would be dots in C are turned into underscores when calling the variables within the Python interface (this is, again, done for backwards compatibility with the previous Tcl implementation).
+
+If you want to access arrays, you need to specify which element of an array you want. For example, if you want to read the 4-th element from an array `ft_bias`, then you call `rshm('ft_bias',3)`. Similarly for writing, but careful, the index you are assigning to comes as the last argument, i.e. if you want to set the aforementioned element to `8.9` then you call `wshm('ft_bias',8.9,3)`.
 
 
 

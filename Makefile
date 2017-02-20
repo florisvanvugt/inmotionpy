@@ -1,17 +1,19 @@
-default: run
+default: rob
 
-kill: # Kill the robot
-	python3 -c "from shm import *; start_shm(); wshm('quit',1); stop_shm();"
-	robot/unloadmodules.sh
+kill: rob # Kill the robot, reasonably gently
+	python3 -c "import robot; robot.start_shm(); robot.unload();"
 
-doc: readme.html
+doc: readme.html robot.html
 	xdg-open readme.html
+
+robot.html:
+	pydoc3 -w robot
 
 readme.html: readme.md
 	pandoc -f markdown -t html readme.md -c misc/github-pandoc.css -s -o readme.html
 
 clean:
-	rm -Rf readme.html *.pyc __pycache__ *~
+	rm -Rf readme.html robot.html *.pyc __pycache__ *~
 	make -C robot clean
 
 rob:

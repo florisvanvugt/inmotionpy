@@ -126,21 +126,12 @@ write_data_fifo_sample_fn(void)
     ob->log[j++] = ob->pos.x; //2
     ob->log[j++] = ob->pos.y; //3
 
-    //ob->log[j++] = ob->vel.x;
-    //ob->log[j++] = ob->vel.y;
+    ob->log[j++] = ob->vel.x; //4
+    ob->log[j++] = ob->vel.y; //5
 
-    ob->log[j++] = rob->ft.world.x; //4
-    ob->log[j++] = rob->ft.world.y; //5
+    ob->log[j++] = rob->ft.world.x; //6
+    ob->log[j++] = rob->ft.world.y; //7
     
-    //ob->log[j++] = ob->ba_fx; 
-    //ob->log[j++] = ob->ba_fy; 
-    //ob->log[j++] = ob->ba_position; 
-    //ob->log[j++] = rob->ft.moment.x;
-    //ob->log[j++] = rob->ft.moment.y;
-    ob->log[j++] = moh->fX; //6
-    ob->log[j++] = moh->fY; //7
-    //ob->log[j++] = moh->move_flag;
-    //ob->log[j++] = moh->last_pointX;
     ob->log[j++] = ob->motor_force.x; //8
     ob->log[j++] = ob->motor_force.y; //9
 
@@ -150,19 +141,9 @@ write_data_fifo_sample_fn(void)
     //ob->log[j++] = ob->current_controller;
 
     //ob->log[j++] = moh->current_dir;
-    //ob->log[j++] = rob->ft.world.z;
-    //ob->log[j++] = rob->grasp.force;
+    ob->log[j++] = rob->ft.world.z; //12
+    ob->log[j++] = rob->grasp.force; //13
     
-    //ob->log[j++] = ob->hand.pos;
-    //ob->log[j++] = ob->hand.vel;
-    //ob->log[j++] = rob->hand.motor.devfrc;
-    //ob->log[j++] = ob->hand.force;
-
-
-    // ob->log[0] = (f64) ob->i;
-    // for (j=0;j<8;j++)
-	    // ob->log[j+1] = rob->isaft.raw[j];
-    // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
     rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
 }
 
