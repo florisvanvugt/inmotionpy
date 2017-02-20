@@ -50,10 +50,13 @@ def status():
         print("robot launch process: none found")
     else:
         print("robot launch process: exit code = %s"%(str(rob)))
-        
-        print("robot: paused = %s"%str(rshm('paused')))
-        print("robot: controller %i"%get_controller())
-        print("robot position: %.03f,%.03f"%(rshm('x'),rshm('y')))
+
+        try:
+            print("robot: paused = %s"%str(rshm('paused')))
+            print("robot: controller %i"%get_controller())
+            print("robot position: %.03f,%.03f"%(rshm('x'),rshm('y')))
+        except:
+            print("error reading from shared memory: try start_shm() ?")
 
     if len(errbuff)>0:
         print("last errors:\n%s"%"\n".join(errbuff))

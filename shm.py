@@ -40,17 +40,44 @@ objects = {
 # to make every rshm() or wshm() call with the variable "x"
 # to actually operate on the variable "pos.x".
 varname_aliases = {
-    "x"               :"pos.x",
-    "y"               :"pos.y",
-    "no_safety_check" :"safety.override",
-    "slot_fnid"       :"copy_slot.fnid",
-    "slot_id"         :"copy_slot.id",
-    "slot_go"         :"copy_slot.go",
-    "slot_running"    :"copy_slot.running",
-    "have_pc7266"     :"pc7266.have",
-    "have_pci4e"      :"pci4e.have",
-    "safety_damping_nms":"safety.damping_nms",
- }
+    "x"               :"pos_x",
+    "y"               :"pos_y",
+    "no_safety_check" :"safety_override",
+    "slot_fnid"       :"copy_slot_fnid",
+    "slot_id"         :"copy_slot_id",
+    "slot_go"         :"copy_slot_go",
+    "slot_running"    :"copy_slot_running",
+    "have_pc7266"     :"pc7266_have",
+    "have_pci4e"      :"pci4e_have",
+}
+
+
+
+def add_aliases(fname):
+    """ 
+    Some aliases are exceeding erratic (for historical reasons I suppose)
+    so I just add them to a file and here I can read that file.
+    """
+    print("Adding aliases from %s"%fname)
+    f = open(fname,'r')
+    for ln in f.readlines():
+        ln = ln.strip().split(' ')
+        if len(ln)==2:
+            ali,name = ln[0].strip(),ln[1].strip()
+            name = name.replace('.','_') # in the original naming scheme, dots were used because they were c names, however, at this level we already use our own names, where underscore is the new standard.
+            
+            if name!=ali: # If this isn't a name that we would have guessed anyway...
+                varname_aliases[ali]=name
+                #print("Added alias %s"%ali)
+    f.close()
+    return
+
+
+# For now, we read aliases from alias_list.txt. However, they are quite erratic and weird because
+# they were added in the time when the robot was controlled using Tcl (and nobody knows why they
+# didn't stick to logical variable naming). 
+add_aliases('alias_list.txt')
+
 
 
 
@@ -197,7 +224,7 @@ def get_info(var,index=None):
         else:
             
             # Oops, this variable doesn't seem to exist!
-            print("Variable %s not found!"%var)
+            print("WARNING -- Variable %s not found!"%var)
             return None
         
         

@@ -36,6 +36,8 @@ default: all
 
 all: robot field_addresses.txt
 
+shm:	shm.c cmds.h $(INCS)
+	$(CC) -Wall $(CFLAGS) -o shm shm.c
 
 field_addresses.txt: probe_addresses
 	./probe_addresses > field_addresses.txt

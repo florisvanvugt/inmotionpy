@@ -19,6 +19,25 @@ I think these can be straight-forwardly be installed using `pip <module-name>`.
 
 
 
+## Usage
+
+You can write a script that controls the robot. A simple example is here:
+
+
+```python
+import robot
+
+robot.load()
+
+robot.move_to(.2,.1,5.) # move to point (x=.2,y=.1) in t=5 seconds.
+time.wait(6) # wait roughly until the movement completes
+
+robot.unload()
+```
+
+
+
+
 ## Some notes about the existing robot code
 
 This code is found in the `robot/` subdirectory. It is a set of C programs that need to be compiled against the correct libraries and in the right architecture. That is, don't try this at home. Compile on the machine where the robot is installed. To compile, simply type `make` in that directory.

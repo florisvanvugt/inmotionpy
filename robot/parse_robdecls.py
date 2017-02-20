@@ -14,7 +14,7 @@ objects_of_interest = [ "Ob",
                         "Robot",
                         "Daq",
                         "Game",
-                        #"Moh",
+                        "Moh",
                         "Dyncmp_var" ]
 
 
@@ -104,12 +104,15 @@ def parse_robdecls():
     We basically parse the typedefs in robdecls to find what the
     fields are called and what object they are found in.
     """
-    f = open('robdecls.h','r')
-    robdecls = f.read()
-    f.close()
+
+    contents = ""
+    for fname in ['robdecls.h','userdecls.h']:
+        f = open(fname,'r')
+        contents += f.read()
+        f.close()
 
     # Strip away comments
-    purec = comment_remover(robdecls)
+    purec = comment_remover(contents)
 
     # Now look for typedef statements
     td = re.compile(r'typedef\s*struct\s*(\w+)\s*{([^}]*)}\s*(\w+);')
@@ -138,11 +141,52 @@ def parse_robdecls():
 
 
 
+def expand_to_atomic(typename,typedefs):
+    """ 
+    Given a set of fields of a particular object, go through them one by one to
+    see if they are atomic (e.g. f32 or such a "known" datatype). If they are not,
+    i.e. if they are objects themselves, then go look for the appropriate object
+    and "expand" this variable, e.g. given a variable pos of type xy in the typedef,
+    and if the typdef of type xy consists of x and y, then return pos.x and pos.y, basically.
+
+    We return a list of tuples (type,name,cname,array_type)
+    where type is the data type (atomic), name is the variable name as we will
+    be calling it in shared memory, cname is the name of the variable in c (i.e.
+    with dots to "go into" objects, and array_type is whether it is an array (None if it isn't), and if so
+    how many entries it has.
+    """
+
+    fields = [] # this is where we will stick the expanded variables
+    
+    for (tp,name,arystr) in typedefs[typename]:
+
+        # If this is atomic
+        if tp not in typedefs:
+            fields.append( (tp,name,name,arystr) )
+
+        else:
+
+            if arystr==None: # We only expand stuff that is not an array
+                
+                # Let's expand it!
+                subfields = expand_to_atomic(tp,typedefs)
+                
+                for (sub_tp,sub_name,sub_cname,sub_arystr) in subfields:
+                    fields.append( (sub_tp,"%s_%s"%(name,sub_name),"%s.%s"%(name,sub_cname),sub_arystr) )
+
+
+            else:
+                print("\t// IGNORED %s,%s because it is an array of a non-atomic type (for type %s)"%(tp,name,typename))
+                    
+                    
+    return fields
 
 
 
 
-def output_c_file():
+
+
+def output_c_file(typdefs):
 
     print ("")
     print ("""
@@ -161,29 +205,14 @@ def output_c_file():
 
     for typedef in objects_of_interest:
 
+        thisobj = expand_to_atomic(typedef,typedefs)
+    
         varname = typedef.lower()
-        for (tp,name,arraystruct) in typedefs[typedef]:
+        for (tp,name,cname,arraystruct) in thisobj:
 
-            if tp not in typedefs: # This is an "atomic" type; we don't have any other definition of it
+            arrn = 0 if arraystruct==None else arraystruct
+            print('\tprintf("%s %s %s %i %%u\\n", (unsigned int)&%s->%s ); // atomic'%(typedef,tp,name,arrn,varname,cname))
 
-                # Write the C code that will print the memory location of this variable (relative to
-                # the start in memory of the main object, which is exactly what we want).
-                arrn = 0 if arraystruct==None else arraystruct
-                print('\tprintf("%s %s %s %i %%u\\n", (unsigned int)&%s->%s ); // atomic'%(typedef,tp,name,arrn,varname,name))
-
-            else:
-                # Actually this variable is of a type that we have a definition of.
-                # Now it gets a bit trickier.
-                # For instance, let's say that we have a variable here "pos" of type "xy" that elsewhere
-                # is defined to have fields "x" and "y", which have atomic types (e.g. "f64").
-                # Then here we will write memory locations for "pos.x" and "pos.y".
-
-                if arraystruct==None:
-                    for (subtp,subname,subarraystruct) in typedefs[tp]:
-                        arrn = 0 if subarraystruct==None else subarraystruct
-                        print('\tprintf("%s %s %s.%s %i %%u\\n", (unsigned int)&%s->%s.%s );'%(typedef,subtp,name,subname,arrn,varname,name,subname))
-                else:
-                    print("\t// IGNORED %s, %s because it is an array of a non-atomic type"%(tp,name))
 
     print("\treturn 0;\n}\n\n")
 
@@ -201,4 +230,4 @@ print ("// ##############################################################\n")
 typedefs = parse_robdecls()
 
 
-output_c_file()
+output_c_file(typedefs)
