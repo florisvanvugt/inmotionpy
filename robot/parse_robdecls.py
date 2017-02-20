@@ -106,7 +106,7 @@ def parse_robdecls():
     """
 
     contents = ""
-    for fname in ['robdecls.h','userdecls.h']:
+    for fname in ['robdecls.h']:
         f = open(fname,'r')
         contents += f.read()
         f.close()
@@ -131,9 +131,9 @@ def parse_robdecls():
             if len(cont)>0: # Silently ignore empty lines
 
                 vrs += find_var_decls(cont)
-                        
+                
         structs[obname]=vrs
-    
+        
     return structs
 
 
@@ -177,7 +177,7 @@ def expand_to_atomic(typename,typedefs):
 
             else:
                 print("\t// IGNORED %s,%s because it is an array of a non-atomic type (for type %s)"%(tp,name,typename))
-                    
+                
                     
     return fields
 
@@ -189,14 +189,7 @@ def expand_to_atomic(typename,typedefs):
 def output_c_file(typdefs):
 
     print ("")
-    print ("""
-    #include <stdlib.h>
-    #include <signal.h>
-    #include "ruser.h"
-    #include "rtl_inc.h"
-    #include "userdecls.h"
-    #include "robdecls.h"\n\n
-    """)
+    print ("#include <stdlib.h>\n#include <signal.h>\n#include \"ruser.h\"\n#include \"rtl_inc.h\"\n#include \"robdecls.h\"\n\n")
 
     for typedef in objects_of_interest:
         print ("%s *%s;\n"%(typedef,typedef.lower()))

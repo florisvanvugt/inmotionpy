@@ -19,8 +19,11 @@ rob:
 	make -C robot
 
 run: rob
-	python3 run_simple.py
+	python3 example_simple.py
 
+
+proto: rob
+	python3 example_proto.py
 
 viewpos: rob
-	python3 viewpos.py
+	python3 example_viewpos.py

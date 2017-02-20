@@ -10,7 +10,6 @@ This is for interacting with the InMotion2 robot using Python.
 import os
 import subprocess
 import time
-import fcntl
 import sys
 
 

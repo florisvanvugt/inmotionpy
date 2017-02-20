@@ -1045,6 +1045,33 @@ typedef struct func_s {
     void (*write_display) (void);
 } Func;
 
+
+
+typedef struct Moh_s {
+	f64 pointer; 	
+
+	u32 pixelx[36];
+	u32 pixely[36];
+	f64 realx[36];
+	f64 realy[36];
+	f64 xcenter;
+	f64 ycenter;
+	f64 ffs;
+	f64 hand_place;
+	f64 stiffness;
+	f64 move_flag;
+	f64 servo_flag;
+	f64 counter;
+	f64 current_dir;
+	f64 last_pointX;
+	f64 last_pointY;
+	f64 fX;
+	f64 fY;
+
+} Moh;
+
+
+
 // 0x494D5431 is 'IMT1'
 #define OB_KEY   0x494D5431
 #define ROB_KEY  0x494D5432
@@ -1060,6 +1087,7 @@ extern Prev *prev;
 extern Robot *rob;
 extern Game *game;
 extern Dyncmp_var *dyncmp_var;
+extern Moh *moh;
 
 extern Func func;
 
@@ -1256,3 +1284,5 @@ void fprf(RT_PIPE *, const s8 *, ...);
 #include <syslog.h>
 
 #endif				// ROBDECLS_H
+
+

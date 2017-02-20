@@ -76,7 +76,7 @@ def add_aliases(fname):
 # For now, we read aliases from alias_list.txt. However, they are quite erratic and weird because
 # they were added in the time when the robot was controlled using Tcl (and nobody knows why they
 # didn't stick to logical variable naming). 
-add_aliases('alias_list.txt')
+add_aliases('robot/alias_list.txt')
 
 
 

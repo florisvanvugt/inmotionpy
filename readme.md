@@ -1,27 +1,30 @@
-# Simple Robot
+# Inmotion2-Python Robot
 
-This is an attempt to make a simple interface for the InMotion2 Robot at the Motor Control Lab at McGill.
-
-I plan to use Python instead of Tcl, but keep using C for the code that actually controls the robot directly.
-
-This is built for **Python 3**.
-
+This is an attempt to make a simple interface for the InMotion2 Robot at the Motor Control Lab at McGill. It uses Python instead of Tcl, but keeps C for the code that actually controls the robot directly. All of this is built for **Python 3**.
 
 
 ## Requirements
 
+Python 3 with the following modules:
 
-* You need `subprocess` 
-* You need `sysv_ipc` for native Python access to the shared memory
+* `subprocess` (might already be included in your Python installation by default).
+* `sysv_ipc` (for native Python access to the shared memory)
 
 I think these can be straight-forwardly be installed using `pip <module-name>`.
 
+That's it! 
 
 
 
 ## Usage
 
-You can write a script that controls the robot. A simple example is here:
+The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt:
+
+```
+make
+```
+
+You can then write a script that controls the robot. A simple example is here:
 
 
 ```python
@@ -37,8 +40,65 @@ robot.unload()
 
 
 
+## Files
 
-## Some notes about the existing robot code
+* `robot.py` -- the main robot module.
+* `shm.py` -- infrastructure for accessing the shared memory.
+* `robot/` -- the C code for the robot (as well as some Python scripts for shared memory access)
+
+* `example_simple.py` -- loads the robot and prints the position to the screen, repeatedly
+* `example_proto.py` -- loads the robot and reads position and moves it to a different position
+* `example_viewpos.py` -- example of a GUI interface in which you see the robot handle position and can click to move it to new locations.
+
+Note that you also need a build environment where robot code can be built. In other words, this won't simply work at your home computer, because you will need libraries that are installed, for example in `/opt` on the robot computer.
+
+
+
+
+## Shared memory (shm)
+
+The robot is controlled by a C program whose code is in `robot/`. Since we use a Python script to run the experiment itself (e.g. present trials, switch on or off force fields, etc.) these two programs need to be able to talk to each other. This happens through the shared memory, which is currently implemented as *System V* ([doc](http://fscked.org/writings/SHM/shm-5.html)).
+
+A number of C objects are put in the shared memory, and these are defined in `robot/robdecls.h` and `robot/userdecls.h`. The previous Tcl code for the robot invoked another C script and then asked it to return particular variables in the shared memory. The current Python implementation reads the shared memory directly.
+
+The interface is fairly straightforward. Let's say you want, within Python, to read or write to a variable `plg_stiffness` defined in the structure `Ob` in `robdecls.h`. From within Python, you can access this variable with `rshm('plg_stiffness')` or write a value to it using `wshm('plg_stiffness,4000)`. That's all there is to it!
+
+If you want to access variables that are embedded in objects, say variable `x` that is a variable declared in `pos` (of type `xy`) in `Ob`, then you can access this variable using `rshm('pos_x')`. In other words, what would be dots in C are turned into underscores when calling the variables within the Python interface (this is, again, done for backwards compatibility with the previous Tcl implementation).
+
+
+
+### Under the hood
+
+The shared memory system itself in Python is quite easy thanks to the module `sysv_ipc` ([doc](http://semanchuk.com/philip/PythonIpc/)). It allows you to access the chunk of memory and read or write data with a particular offset. The tricky thing is to find out where in that chunk particular variables are, because you can't call them by name but only by byte offset. In other words, you need to figure out how C stores its objects. It would have been ideal if the shared memory were allocated in a more structured fashion (i.e. to have specifications where particular variables are to be found in the shared memory chunk). Since we don't have that, one solution is to have a middle-man C script that we can talk to that will give us these variables or write to them on demand. But in order to move towards the specification-approach I mentioned before, I decided for the following "intermediate" solution. 
+
+A python script `parse_robdecls.py` parses the `robdecls.h` script and pulls out the type definitions. For a few types of interest, the script lists their variables and generates a C script that will tell us the memory location offsets of the subtypes (see the `Makefile` in `robot/` for details). These memory locations are then stored in a file `field_addresses.txt` which the Python shared memory module reads in and uses to find the byte offsets for variables in the shared memory chunk.
+
+However, some of the naming of variables in the previous Tcl implementation was quite erratic. For example, a variable was called from the shared memory by the name `have_csen` which actually referred to the C varialbe `csen.have`. Why these words were sometimes flipped (and sometimes not) remains a mystery to me but for backwards compatibility I decided to create infrastructure that could deal with these, until the time that a gentle soul spends an afternoon recoding these names properly. Until that time, aliases such as these are defined in `robot/alias_list.txt` and these are read by the Python script at run time.
+
+
+
+### Some examples
+
+If your robot process is running, then shared memory chunks will be allocated and Python can access them. Here is an example:
+
+```python
+from shm import *
+start_shm()
+st = rshm('plg_stiffness')
+print(st)
+```
+
+If you are looking up a variable, `get_info()` can be useful, as it gives information about where Python thinks the data is to be found.
+```python
+get_info('plg_stiffness')
+```
+
+
+
+
+
+
+## Some notes about the (past) robot code
 
 This code is found in the `robot/` subdirectory. It is a set of C programs that need to be compiled against the correct libraries and in the right architecture. That is, don't try this at home. Compile on the machine where the robot is installed. To compile, simply type `make` in that directory.
 
@@ -54,7 +114,7 @@ A few useful commands in this directory, once everything is compiled:
 ### Shared Memory
 Currently, the script interacts with the `shm` program to read and write shared memory. It would be much nicer to have a native Python way of reading and writing to shared memory.
 
-There are various Python modules that can read shared memory natively. Here is a feature matrix: http://semanchuk.com/philip/PythonIpc/
+There are various Python modules that can read shared memory natively. Here is a feature matrix:
 
 From this, it seems `sysv_ipc` is the best way to go forward.
 
