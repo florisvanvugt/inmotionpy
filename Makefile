@@ -1,5 +1,7 @@
 default: run
 
+kill: # Kill the robot
+	python3 -c "from shm import *; start_shm(); wshm('quit',1); stop_shm();"
 
 doc: readme.html
 	xdg-open readme.html

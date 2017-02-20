@@ -31,8 +31,14 @@ print("About to move to %f,%f, okay?"%(tx,ty))
 input()
 robot.move_to(tx,ty,3.)
 
+print("Press <ENTER> to switch to stay")
 input()
 
+print("Staying")
+robot.stay()
+
+print("Press <ENTER> to unload.")
+input()
 robot.unload()
 
 
