@@ -325,8 +325,7 @@ def bias_force_transducers():
 
 def bias_report():
     print("Robot ATI bias summary")
-    for i in range(6):
-        print("%i -> %f"%(i,rshm('ft_bias',i)))
+    print(rshm('ft_bias'))
 
     
 
@@ -343,13 +342,8 @@ def zeroft():
     
     # initialize some shared memory variables to zero
     wshm('plg_ftzerocount',0)
-    for i in range(6):
-        wshm('plg_ftzero',0,i)
+    wshm('plg_ftzero',[0]*6)
 
-    #for {set i 0} {$i < 6} {incr i} {
-    #wshm plg_ftzero 0 $i
-    #}
-    
     # select the zero_ft controller
     controller(2)
 
@@ -363,9 +357,8 @@ def zeroft():
 
     print("Averaging over %i ATI samples"%count)
 
-    for i in range(6):
-        cal = rshm('plg_ftzero',i)/float(count)
-        wshm('ft_bias',cal,i)
+    ftzero = rshm('plg_ftzero')
+    wshm('ft_bias',[ z/float(count) for z in ftzero ])
 
     bias_report()
     
