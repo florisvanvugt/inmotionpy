@@ -2,10 +2,10 @@ default: run
 
 kill: # Kill the robot
 	python3 -c "from shm import *; start_shm(); wshm('quit',1); stop_shm();"
+	robot/unloadmodules.sh
 
 doc: readme.html
 	xdg-open readme.html
-
 
 readme.html: readme.md
 	pandoc -f markdown -t html readme.md -c misc/github-pandoc.css -s -o readme.html
