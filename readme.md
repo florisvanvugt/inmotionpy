@@ -18,7 +18,7 @@ That's it!
 
 ## Usage
 
-Full documentation can be found in [robot.html](robot.html) (to generate it type `make doc`).
+Full documentation can be found in [robot.html](robot.html) and [shm.html](shm.html) (to generate it type `make doc`).
 
 The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt:
 
@@ -52,17 +52,17 @@ Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n
 
 * `robot.py` -- the main robot module.
 * `shm.py` -- infrastructure for accessing the shared memory.
-* `robot/` -- the C code for the robot (as well as some Python scripts for shared memory access)
+* `robot/` -- the C code for the robot (as well as some Python scripts for shared memory access).
 
-* `example_simple.py` -- loads the robot and prints the position to the screen, repeatedly
-* `example_proto.py` -- loads the robot and reads position and moves it to a different position
+* `example_simple.py` -- loads the robot and prints the position to the screen, repeatedly.
+* `example_proto.py` -- loads the robot and reads position and moves it to a different position.
 * `example_viewpos.py` -- example of a GUI interface in which you see the robot handle position and can click to move it to new locations.
-* `example_log.py` -- writes an example log file
+* `example_log.py` -- writes an example log file.
 
-* `dump_shm.py` -- this reads all variables it knows about from the shared memory together with their value (great for taking a "snapshot" of the current config)
+* `dump_shm.py` -- this reads all variables it knows about from the shared memory together with their value (great for taking a "snapshot" of the current config).
 * `shm_ext.py` -- old-style shm module (can be loaded instead of the preferred `shm`) which mimicks previous Tcl code by communicating with the C program `shm`.
 
-* `readlog/readlog.py` -- this is an example script that can read a robot log
+* `readlog/readlog.py` -- this is an example script that can read a robot log.
 
 Note that you also need a build environment where robot code can be built. In other words, this won't simply work at your home computer, because you will need libraries that are installed, for example in `/opt` on the robot computer.
 
@@ -110,19 +110,6 @@ get_info('plg_stiffness')
 ```
 
 
-
-
-
-
-## Some notes about the (past) robot code
-
-This code is found in the `robot/` subdirectory. It is a set of C programs that need to be compiled against the correct libraries and in the right architecture. That is, don't try this at home. Compile on the machine where the robot is installed. To compile, simply type `make` in that directory.
-
-A few useful commands in this directory, once everything is compiled:
-
-* `./go` Spawns the robot process. This can run even if the robot is not physically switched on, which can be a great way to test aspects of your code.
-* `./shm` A neat little script to interact with the shared memory.
-* `./stop` Stops the robot.
 
 
 

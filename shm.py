@@ -2,7 +2,7 @@
 import sys
 import sysv_ipc
 import struct
-
+import collections
 
 
 # Map the type definitions used in the C robdecls.h code
@@ -97,7 +97,11 @@ def read_address_probe():
     A dict where the keys are the variable names (hopefully unique)
     and the values are tuples (OB,TYPE,ARRSTRUCT,ADDR).
     """
-    f = open('robot/field_addresses.txt','r')
+    try:
+        f = open('robot/field_addresses.txt','r')
+    except:
+        print("Can't open robot/field_addresses.txt. This usually means you haven't run 'make robot'.")
+        sys.exit(-1)
     lns = f.readlines()
     f.close()
 
@@ -126,24 +130,26 @@ def read_address_probe():
 
 
 
-def read(memobj,what,loc):
+def read(memobj,what,loc,n=1):
     """ Read from the shared memory.
 
     Arguments
     memobj : the shared memory object
     what : data type to be read, e.g. "u32". 
     loc : location in the shared memory (offset)
+    n : how many (consecutive) data points to read.
     """
     tp = py_types[what]
     sz = struct.calcsize(tp)
-    res = memobj.read(byte_count=sz,offset=loc)
+    res = memobj.read(byte_count=sz*n,offset=loc)
 
-    return struct.unpack(tp,res)
+    dat = struct.unpack("%i%s"%(n,tp),res)
+    return dat
 
 
 
 
-def write(memobj,what,loc,value):
+def write(memobj,what,loc,value,n=1):
     """ Write something to the shared memory. 
     
     Arguments
@@ -152,7 +158,8 @@ def write(memobj,what,loc,value):
     value : the value to be written
     """
     tp = py_types[what]
-    dt = struct.pack(tp,value)
+    fmt = "%i%s"%(n,tp)
+    dt = struct.pack(fmt,*value) if isinstance(value, collections.MutableSequence) else struct.pack(fmt,value)
     memobj.write(dt,offset=loc)
     return
     
@@ -192,17 +199,54 @@ def get_element_loc(loc,arrn,index,what):
 
 def rshm(var,index=None):
     """ Read from shared memory. """
-    ob,what,arrn,eloc  = get_info(var,index)
-    global memobjects
-    return read(memobjects[ob],what,eloc)[0]
+    try:
+        ob,what,arrn,eloc  = get_info(var,index)
+        global memobjects
+        
+        # Determine how many items to read
+        n = arrn if arrn!=None and arrn>0 and index==None else 1
+        # If this is an array variable and we did *not* give an index,
+        # then we assume the user wants the whole array.
+
+        dat = read(memobjects[ob],what,eloc,n)
+
+        if index!=None or arrn==None or arrn==0:
+            return dat[0]
+        else:
+            return list(dat)
+
+    except:
+        return None
     
 
 
 def wshm(var,value,index=None):
     """ Write to the shared memory. """
     ob,what,arrn,eloc  = get_info(var,index)
+
+    # Determine exactly what we are going to write.
+    n = 1 # how many data points to write
+    if arrn==None or arrn==0:
+        if index!=None:
+            print("WARNING: ignoring index %i when writing to non-array %s"%(index,var))
+    else:
+        # If this /is/ an array object
+        if index==None:
+            # Set the whole array at once
+            if not isinstance(value, collections.MutableSequence):
+                print("Trying to write to array %s but you haven't specified an index and you haven't given a list of %i values either."%(var,arrn))
+                return
+            if len(value)!=arrn:
+                print("ERROR: trying to set array %s of %i elements to an array of %i elements."%(var,arrn,len(value)))
+                return
+            else:
+                n = len(value)
+                # Write the whole array in one fell swoop to memory, nice!
+                
     global memobjects
-    write(memobjects[ob],what,eloc,value)
+    write(memobjects[ob],what,eloc,value,n)
+
+    
 
 
 
