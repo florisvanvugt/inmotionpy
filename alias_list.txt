@@ -387,19 +387,19 @@ scr6 scr[6]
 scr7 scr[7]
 game game[0]
 dienc m_dienc[0][0]
-dienc_vel dienc_vel[0] 2
-dienc_accel dienc_accel[0] 2
+dienc_vel dienc_vel[0]
+dienc_accel dienc_accel[0]
 diovs diovs
 dout_buf m_dout_buf[0]
 dout0 dout0
 dout1 dout1
-adc m_adc[0][0]4
-dac m_dac[0][0] 32
-adcvolts m_adcvolts[0][0]4
-adcmean m_adcvoltsmean[0][0]4
-adcmed m_adcvoltsmed[0][0]4
-dacvolts m_dacvolts[0][0] 32
-distat distat[0] 2
+adc m_adc[0][0]
+dac m_dac[0][0]
+adcvolts m_adcvolts[0][0]
+adcmean m_adcvoltsmean[0][0]
+adcmed m_adcvoltsmed[0][0]
+dacvolts m_dacvolts[0][0]
+distat distat[0]
 ft_flip ft.flip
 ft_vert ft.vert
 ft_dobias ft.dobias
@@ -410,7 +410,7 @@ ft_curr ft.curr
 ft_prev ft.prev
 ft_filt ft.filt
 ft_sg ft.sg
-ft_prevf ft.prevf[0]
+ft_prevf ft.prevf
 ft_xworld ft.world.x
 ft_yworld ft.world.y
 ft_zworld ft.world.z
@@ -483,7 +483,7 @@ pcienc_scale pci4e.scale
 pcienc_zero pci4e.zero
 stiff stiff
 side_stiff side_stiff
-tag tag[0]
+tag tag
 ticks30Hz ticks30Hz
 time_after_last_sample times.time_after_last_sample
 time_after_sample times.time_after_sample
@@ -568,10 +568,10 @@ mass11 Mofq.e00
 mass12 Mofq.e01
 mass21 Mofq.e10
 mass22 Mofq.e11
-pixelx pixelx[0]
-pixely pixely[0]
-realx realx[0]
-realy realy[0]
+pixelx pixelx
+pixely pixely
+realx realx
+realy realy
 xcenter xcenter
 ycenter ycenter
 ffs ffs
@@ -583,9 +583,9 @@ current_dir current_dir
 last_pointX last_pointX
 last_pointY last_pointY
 plg_debug plg_debug
-plg_ftzero plg_ftzero[0]
+plg_ftzero plg_ftzero
 plg_ftzerocount plg_ftzerocount
-plg_curlmat plg_curlmat[0]
+plg_curlmat plg_curlmat
 plg_stiffness plg_stiffness
 plg_damping plg_damping
 plg_p1x plg_p1x
