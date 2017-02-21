@@ -1,0 +1,247 @@
+
+import time
+import pygame
+from Tkinter import * # use for python2
+import tkMessageBox
+#from tkinter import * # use for python3
+import numpy as np
+import random
+
+import robot
+
+
+# Controlling the subject screen
+SUBJ_SCREENSIZE = (640,480)
+SUBJ_SCREENPOS = (0,0) # the offset (allows you to place the subject screen "on" the second monitor)
+
+
+
+N_HORIZ_VISUAL_TARGETS = 10
+N_VERTIC_VISUAL_TARGETS = 5
+TARGET_REPETITIONS = 2 # how often to present each target
+
+N_CAPTURE = 50 # how many data points to capture (and average) for each target
+CAPTURE_SLEEP = .005 # how long to sleep between captures
+
+HORIZ_PAD = 100
+VERTIC_PAD = 100
+
+
+# The target circle radius
+TARGET_RADIUS = 20
+
+
+
+
+
+# The little control window
+w,h = 600,600
+cw,ch = w/2,h/2
+
+
+
+
+circlex = 200
+
+def init_pygame():
+
+    pygame.init()
+
+    import os
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % SUBJ_SCREENPOS # controls where the subject screen will appear
+
+    global subjscreen
+    subjscreen = pygame.display.set_mode(SUBJ_SCREENSIZE,pygame.NOFRAME)
+    subjscreen.fill((0,0,0))
+    pygame.display.flip()
+
+
+
+
+def draw_target(target):
+    (x,y) = target
+
+    global subjscreen
+    
+    subjscreen.fill((0,0,0))
+    pygame.draw.circle(subjscreen,(255,0,0),(x,y),TARGET_RADIUS)
+    pygame.display.flip()
+    
+
+    
+
+
+    
+
+def load_robot(e):
+    robot.load()
+
+
+
+def zeroft(e):
+    robot.zeroft()
+
+    bias = robot.bias_report()
+    tkMessageBox.showinfo("Bias report", "Robot bias settings:\n\n" +" ".join([ str(b) for b in bias ]))
+    
+
+    
+def unload_robot(e):
+    robot.unload()
+
+
+
+def visual_calibrate(e):
+    """
+    Here we will present a series of visual targets (on the screen)
+    and then ask the user to move to them, capture their position,
+    and then later compute a regression to map screen coordinates to 
+    robot coordinates.
+    """
+
+    N_HORIZ_VISUAL_TARGETS = 10
+    N_VERTIC_VISUAL_TARGETS = 5
+
+    targs = [ (int(x),int(y))
+              for x in np.linspace(HORIZ_PAD, SUBJ_SCREENSIZE[0]-HORIZ_PAD, N_HORIZ_VISUAL_TARGETS)
+              for y in np.linspace(VERTIC_PAD,SUBJ_SCREENSIZE[1]-VERTIC_PAD,N_VERTIC_VISUAL_TARGETS)
+    ]
+    
+    global targets
+    targets = []
+    for _ in range(TARGET_REPETITIONS):
+        random.shuffle(targs)
+        targets += targs[:]
+
+    global current_target,captured
+    current_target = -1
+    next_target(e)
+
+    captured = []
+    
+
+
+
+
+def next_target(e):
+    
+    global targets,current_target
+    target = targets[current_target]
+    print("Presenting target",target)
+    draw_target(target)
+
+    if current_target>=len(targets):
+        print("Done!")
+    
+    # Now wait for the subject to go there
+    
+
+
+def capture(e):
+    capt = []
+    for _ in range(N_CAPTURE):
+        x,y = robot.rshm('x'),robot.rshm('y')
+        capt.append((x,y))
+        time.sleep(CAPTURE_SLEEP)
+    
+    # Capture the position
+    allx,ally=zip(*capt)
+    capx,capy=np.mean(allx),np.mean(ally)
+
+
+    global captured,current_target,targets
+    captured.append( (targets[current_target],(capx,capy)) )
+
+    # Show in the interface what we captured
+    global gui
+    gui["position"].set("x=%.3f y=%.3f"%(capx,capy))
+    
+    next_target(e)
+
+
+        
+
+    
+
+def init_tk():
+    global gui
+    gui = {}
+    
+    #master = Tk()
+    master = Tk()
+    master.geometry('%dx%d+%d+%d' % (w, h, 500, 200))
+    master.configure(background='black')
+    #win = Canvas(master, width=w, height=h)
+    #win.bind("<Button-1>", callback) # click callback
+    #win.pack()
+
+
+    #win.create_rectangle(0, 0, w, h, fill="black")
+    #robot_pos = win.create_oval(cw,ch,cw,ch,fill="blue")
+    
+    f = Frame(master,background='black')
+    b1    = Button(f, text="Load robot",                background="green",foreground="black")
+    b2    = Button(f, text="Zero FT (release handle)",  background="green",foreground="black")
+    calibb= Button(f, text="Visual calibrate",          background="blue",foreground="white")
+    captb = Button(f, text="Capture",                   background="blue",foreground="white")
+    b3    = Button(f, text="Unload robot"  ,            background="green",foreground="black")
+    b4    = Button(f, text="Quit",                      background="red",foreground="black")
+    b1.bind('<ButtonRelease-1>',load_robot)
+    b2.bind('<ButtonRelease-1>',zeroft)
+    calibb.bind('<ButtonRelease-1>',visual_calibrate)
+    captb.bind('<ButtonRelease-1>',capture)
+    b3.bind('<ButtonRelease-1>',unload_robot)
+    b4.bind('<ButtonRelease-1>',endprogram)
+    #b1.pack(side=LEFT)
+    #b2.pack(side=LEFT)
+    #b3.pack(side=LEFT)
+    l    = Label(f, text="This label is over all buttons",fg="white",bg="black")
+    gui["position"] = StringVar()
+    posl = Label(f, textvariable=gui["position"],fg="white",bg="black")
+
+    f.grid         (column=0,row=0,padx=10,pady=10)
+    b1.grid        (row=0,sticky=W,pady=10)
+    b2.grid        (row=1,sticky=W,pady=10)
+    calibb.grid    (row=2,sticky=W,pady=10)
+    captb.grid     (row=2,column=1,sticky=W,pady=10)
+    posl.grid      (row=2,column=2,sticky=W,padx=10)
+    b3.grid        (row=3,sticky=W,pady=10)
+    b4.grid        (row=4,sticky=W,pady=10)
+    l.grid         (row=5)
+
+    # Make some elements available for the future
+    gui["position"].set("x=[] y=[]")
+    
+    master.bind()
+
+    return master
+    #win.bind("<Button-1>", callback) # click callback
+    
+
+
+
+def init():
+    init_pygame()
+    init_tk()
+
+
+
+
+def endprogram(e):
+    pygame.quit()
+    sys.exit(0)
+    
+    
+
+
+
+master = init_tk()
+init_pygame()
+
+master.mainloop()
+
+#pygame.time.wait(3000)
+#quit()
+
+
+
