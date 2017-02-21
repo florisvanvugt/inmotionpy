@@ -325,7 +325,11 @@ def bias_force_transducers():
 
 def bias_report():
     print("Robot ATI bias summary")
-    print(rshm('ft_bias'))
+    bias = rshm('ft_bias')
+    print(bias)
+    return bias
+    
+    
 
     
 
