@@ -6,8 +6,11 @@ import tkMessageBox
 #from tkinter import * # use for python3
 import numpy as np
 import random
+import datetime
 
 import robot
+import pickle
+
 
 
 # Controlling the subject screen
@@ -16,8 +19,8 @@ SUBJ_SCREENPOS = (0,0) # the offset (allows you to place the subject screen "on"
 
 
 
-N_HORIZ_VISUAL_TARGETS = 10
-N_VERTIC_VISUAL_TARGETS = 5
+#N_HORIZ_VISUAL_TARGETS,N_VERTIC_VISUAL_TARGETS = 10,5
+N_HORIZ_VISUAL_TARGETS,N_VERTIC_VISUAL_TARGETS = 2,2
 TARGET_REPETITIONS = 2 # how often to present each target
 
 N_CAPTURE = 50 # how many data points to capture (and average) for each target
@@ -68,6 +71,17 @@ def draw_target(target):
     pygame.display.flip()
     
 
+
+
+
+def draw_cursor(sx,sy):
+    global subjscreen
+    subjscreen.fill((0,0,0))
+    pygame.draw.circle(subjscreen,(0,0,255),(sx,sy),TARGET_RADIUS)
+    pygame.display.flip()
+    
+
+    
     
 
 
@@ -99,9 +113,6 @@ def visual_calibrate(e):
     robot coordinates.
     """
 
-    N_HORIZ_VISUAL_TARGETS = 10
-    N_VERTIC_VISUAL_TARGETS = 5
-
     targs = [ (int(x),int(y))
               for x in np.linspace(HORIZ_PAD, SUBJ_SCREENSIZE[0]-HORIZ_PAD, N_HORIZ_VISUAL_TARGETS)
               for y in np.linspace(VERTIC_PAD,SUBJ_SCREENSIZE[1]-VERTIC_PAD,N_VERTIC_VISUAL_TARGETS)
@@ -123,17 +134,91 @@ def visual_calibrate(e):
 
 
 
-def next_target(e):
+
+def linregr(x,y):
+    """ Find a linear regression, i.e. slope and intercept, to predict y based on x."""
+    A = np.vstack([x, np.ones(len(x))]).T
+    slope, interc = np.linalg.lstsq(A, y)[0]
+    return (slope,interc)
     
+    
+
+def wrap_calibration():
     global targets,current_target
+    global gui
+
+    gui["target"].set("Targets complete")
+
+    global captured
+    scr_x,scr_y,rob_x,rob_y = zip(*captured)
+
+    regrs = {}
+    for (var,screenvar,robotvar) in [("x",scr_x,rob_x),
+                                     ("y",scr_y,rob_y)]:
+        sl,interc = linregr( robotvar, screenvar )
+        regrs["slope.%s"%var]  = sl
+        regrs["interc.%s"%var] = interc
+
+    subjid = gui["subject.id"].get()
+
+    timestamp = datetime.datetime.now().strftime("%Y%d%m_%Hh%Mm%S")
+    
+    fname = "calib_%s_%s.pickle27"%(subjid,timestamp)
+    pickle.dump((captured,regrs),open(fname,'wb'))
+
+    print("Robot -> Screen regression: ",regrs)
+    
+    global calib
+    calib = regrs
+    
+    
+
+
+def robot_to_screen(x,y):
+    """ Given robot coordinates, find the screen coordinates. """
+    global calib
+    return (int(calib["interc.x"] + (x*calib["slope.x"])),
+            int(calib["interc.y"] + (y*calib["slope.y"])))
+
+
+
+def follow_robot():
+    """ Draw the robot position on the screen, repeatedly."""
+    global calib
+    global master
+    global gui
+
+    gui["keep_going"] = True
+    while gui["keep_going"]:
+        rx,ry = robot.rshm('x'),robot.rshm('y')
+        sx,sy = robot_to_screen(rx,ry)
+
+        draw_cursor(sx,sy)
+        
+        master.update_idletasks()
+        master.update()
+
+
+        
+
+def next_target(e):
+
+    global targets,current_target
+    current_target+= 1
+
+    if current_target>=len(targets):
+        wrap_calibration()
+        follow_robot()
+        return
+        
+    # Now wait for the subject to go there
     target = targets[current_target]
     print("Presenting target",target)
     draw_target(target)
 
-    if current_target>=len(targets):
-        print("Done!")
-    
-    # Now wait for the subject to go there
+    global gui
+    gui["target"].set("target %i/%i"%(current_target+1,len(targets)))
+
     
 
 
@@ -148,9 +233,9 @@ def capture(e):
     allx,ally=zip(*capt)
     capx,capy=np.mean(allx),np.mean(ally)
 
-
     global captured,current_target,targets
-    captured.append( (targets[current_target],(capx,capy)) )
+    targx,targy=targets[current_target]
+    captured.append( (targx,targy,capx,capy) )
 
     # Show in the interface what we captured
     global gui
@@ -161,6 +246,11 @@ def capture(e):
 
         
 
+
+def stop_following(e):
+    global gui
+    gui["keep_going"]=False
+    
     
 
 def init_tk():
@@ -183,34 +273,56 @@ def init_tk():
     b1    = Button(f, text="Load robot",                background="green",foreground="black")
     b2    = Button(f, text="Zero FT (release handle)",  background="green",foreground="black")
     calibb= Button(f, text="Visual calibrate",          background="blue",foreground="white")
+    stopb = Button(f, text="Stop following",            background="black",foreground="red")
     captb = Button(f, text="Capture",                   background="blue",foreground="white")
     b3    = Button(f, text="Unload robot"  ,            background="green",foreground="black")
     b4    = Button(f, text="Quit",                      background="red",foreground="black")
     b1.bind('<ButtonRelease-1>',load_robot)
     b2.bind('<ButtonRelease-1>',zeroft)
     calibb.bind('<ButtonRelease-1>',visual_calibrate)
+    stopb.bind('<ButtonRelease-1>',stop_following)
     captb.bind('<ButtonRelease-1>',capture)
     b3.bind('<ButtonRelease-1>',unload_robot)
     b4.bind('<ButtonRelease-1>',endprogram)
     #b1.pack(side=LEFT)
     #b2.pack(side=LEFT)
     #b3.pack(side=LEFT)
-    l    = Label(f, text="This label is over all buttons",fg="white",bg="black")
     gui["position"] = StringVar()
-    posl = Label(f, textvariable=gui["position"],fg="white",bg="black")
+    gui["target"]   = StringVar()
+    gui["subject.id"] = StringVar()
+    posl  = Label(f, textvariable=gui["position"],fg="white",bg="black")
 
-    f.grid         (column=0,row=0,padx=10,pady=10)
-    b1.grid        (row=0,sticky=W,pady=10)
-    b2.grid        (row=1,sticky=W,pady=10)
-    calibb.grid    (row=2,sticky=W,pady=10)
-    captb.grid     (row=2,column=1,sticky=W,pady=10)
-    posl.grid      (row=2,column=2,sticky=W,padx=10)
-    b3.grid        (row=3,sticky=W,pady=10)
-    b4.grid        (row=4,sticky=W,pady=10)
-    l.grid         (row=5)
+    l    = Label(f, text="subject ID",fg="white",bg="black")
+    subjid = Entry(f, textvariable=gui["subject.id"],fg="white",bg="black")
+    
+    targl = Label(f, textvariable=gui["target"],  fg="white",bg="black")
+
+    row = 0
+    f.grid         (column=0,row=row,padx=10,pady=10)
+    row += 1
+    b1.grid        (row=row,sticky=W,pady=10)
+    row += 1
+    b2.grid        (row=row,sticky=W,pady=10)
+    row += 1
+    l.grid         (row=row,column=0,sticky=W,pady=10)
+    subjid.grid    (row=row,column=1,sticky=W,padx=10)
+    
+    row +=1
+    calibb.grid    (row=row,sticky=W,pady=10)
+    captb.grid     (row=row,column=1,sticky=W,pady=10)
+    targl.grid     (row=row,column=2,sticky=W,padx=10)
+    posl.grid      (row=row,column=3,sticky=W,padx=10)
+    stopb.grid     (row=row,column=4,sticky=W,padx=10)
+    row += 1
+    b3.grid        (row=row,sticky=W,pady=10)
+    row += 1
+    b4.grid        (row=row,sticky=W,pady=10)
+    
 
     # Make some elements available for the future
     gui["position"].set("x=[] y=[]")
+    gui["target"].set("Target NA/NA")
+    gui["keep_going"]=False
     
     master.bind()
 
