@@ -3,6 +3,7 @@ import time
 import pygame
 from Tkinter import * # use for python2
 import tkMessageBox
+import tkFileDialog
 #from tkinter import * # use for python3
 import numpy as np
 import random
@@ -38,7 +39,7 @@ TARGET_RADIUS = 20
 
 
 # The little control window
-w,h = 600,600
+w,h = 700,400
 cw,ch = w/2,h/2
 
 
@@ -246,7 +247,20 @@ def capture(e):
 
         
 
+def load_calib(e):
 
+    fname = tkFileDialog.askopenfilename(filetypes=[('pickles','.pickle27')])
+    if fname!=None:
+        print("Opening",fname)
+
+        (captured,regrs) = pickle.load(open(fname,'rb'))
+        global calib
+        calib = regrs
+        follow_robot()
+        return
+        
+
+    
 def stop_following(e):
     global gui
     gui["keep_going"]=False
@@ -275,12 +289,14 @@ def init_tk():
     calibb= Button(f, text="Visual calibrate",          background="blue",foreground="white")
     stopb = Button(f, text="Stop following",            background="black",foreground="red")
     captb = Button(f, text="Capture",                   background="blue",foreground="white")
+    loadb = Button(f, text="Load calib",                background="blue",foreground="white")
     b3    = Button(f, text="Unload robot"  ,            background="green",foreground="black")
     b4    = Button(f, text="Quit",                      background="red",foreground="black")
     b1.bind('<ButtonRelease-1>',load_robot)
     b2.bind('<ButtonRelease-1>',zeroft)
     calibb.bind('<ButtonRelease-1>',visual_calibrate)
     stopb.bind('<ButtonRelease-1>',stop_following)
+    loadb.bind('<ButtonRelease-1>',load_calib)
     captb.bind('<ButtonRelease-1>',capture)
     b3.bind('<ButtonRelease-1>',unload_robot)
     b4.bind('<ButtonRelease-1>',endprogram)
@@ -306,6 +322,7 @@ def init_tk():
     row += 1
     l.grid         (row=row,column=0,sticky=W,pady=10)
     subjid.grid    (row=row,column=1,sticky=W,padx=10)
+    loadb.grid     (row=row,column=2,sticky=W,padx=20)
     
     row +=1
     calibb.grid    (row=row,sticky=W,pady=10)
@@ -340,6 +357,7 @@ def init():
 
 
 def endprogram(e):
+    stop_following(e)
     pygame.quit()
     sys.exit(0)
     
