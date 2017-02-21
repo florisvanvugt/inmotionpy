@@ -14,20 +14,20 @@ import pickle
 
 
 # Controlling the subject screen
-SUBJ_SCREENSIZE = (640,480)
-SUBJ_SCREENPOS = (0,0) # the offset (allows you to place the subject screen "on" the second monitor)
+SUBJ_SCREENSIZE = (1920,1080)
+SUBJ_SCREENPOS = (1600,0) # the offset (allows you to place the subject screen "on" the second monitor)
 
 
 
 #N_HORIZ_VISUAL_TARGETS,N_VERTIC_VISUAL_TARGETS = 10,5
-N_HORIZ_VISUAL_TARGETS,N_VERTIC_VISUAL_TARGETS = 2,2
+N_HORIZ_VISUAL_TARGETS,N_VERTIC_VISUAL_TARGETS = 3,3
 TARGET_REPETITIONS = 2 # how often to present each target
 
 N_CAPTURE = 50 # how many data points to capture (and average) for each target
 CAPTURE_SLEEP = .005 # how long to sleep between captures
 
-HORIZ_PAD = 100
-VERTIC_PAD = 100
+HORIZ_PAD = 400
+VERTIC_PAD = 300
 
 
 # The target circle radius
