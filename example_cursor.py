@@ -34,18 +34,19 @@ VERTIC_PAD = 300
 # The target circle radius
 TARGET_RADIUS = 20
 
+# When we draw a cursor following the robot handle position, this controls its radius
+CURSOR_RADIUS = 10
 
 
 
 
 # The little control window
-w,h = 700,400
-cw,ch = w/2,h/2
+CONTROL_WIDTH,CONTROL_HEIGHT= 700,400 # control window dimensions
+CONTROL_X,CONTROL_Y = 800,500 # controls where on the screen the control window appears
 
 
 
 
-circlex = 200
 
 def init_pygame():
 
@@ -62,13 +63,15 @@ def init_pygame():
 
 
 
+    
+
 def draw_target(target):
     (x,y) = target
 
     global subjscreen
     
     subjscreen.fill((0,0,0))
-    pygame.draw.circle(subjscreen,(255,0,0),(x,y),TARGET_RADIUS)
+    updaterec = pygame.draw.circle(subjscreen,(255,0,0),(x,y),TARGET_RADIUS)
     pygame.display.flip()
     
 
@@ -76,12 +79,15 @@ def draw_target(target):
 
 
 def draw_cursor(sx,sy):
-    global subjscreen
+    global subjscreen,oldrect
     subjscreen.fill((0,0,0))
-    pygame.draw.circle(subjscreen,(0,0,255),(sx,sy),TARGET_RADIUS)
-    pygame.display.flip()
-    
 
+    updateold = None
+    if oldrect!=None: # oldrect holds the rect where we last drew a cursor (we'll have to remove it)
+        updateold = pygame.draw.rect  (subjscreen,(0,0,0),oldrect) # remove the previous cursor (we simply draw a rect over it because that is faster)
+    updaterec = pygame.draw.circle(subjscreen,(255,255,0),(sx,sy),CURSOR_RADIUS)
+    pygame.display.update([updaterec,updateold])
+    oldrect = updaterec
     
     
 
@@ -102,6 +108,7 @@ def zeroft(e):
 
     
 def unload_robot(e):
+    stop_following(e)
     robot.unload()
 
 
@@ -185,11 +192,10 @@ def robot_to_screen(x,y):
 
 def follow_robot():
     """ Draw the robot position on the screen, repeatedly."""
-    global calib
-    global master
-    global gui
-
-    gui["keep_going"] = True
+    global calib,master,gui,oldrect
+    oldrect = None # just so that it is initialised
+    
+    gui["keep_going"] = True # set gui["keep_going"] to False to drop out of this and stop following the robot handle
     while gui["keep_going"]:
         rx,ry = robot.rshm('x'),robot.rshm('y')
         sx,sy = robot_to_screen(rx,ry)
@@ -271,17 +277,10 @@ def init_tk():
     global gui
     gui = {}
     
-    #master = Tk()
     master = Tk()
-    master.geometry('%dx%d+%d+%d' % (w, h, 500, 200))
+    master.geometry('%dx%d+%d+%d' % (CONTROL_WIDTH, CONTROL_HEIGHT, CONTROL_X, CONTROL_Y))
     master.configure(background='black')
-    #win = Canvas(master, width=w, height=h)
-    #win.bind("<Button-1>", callback) # click callback
-    #win.pack()
 
-
-    #win.create_rectangle(0, 0, w, h, fill="black")
-    #robot_pos = win.create_oval(cw,ch,cw,ch,fill="blue")
     
     f = Frame(master,background='black')
     b1    = Button(f, text="Load robot",                background="green",foreground="black")
