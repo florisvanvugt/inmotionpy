@@ -32,3 +32,8 @@ proto: rob
 
 viewpos: rob
 	python3 example_viewpos.py
+
+
+cursor: rob
+	python2.7 example_cursor.py
+
