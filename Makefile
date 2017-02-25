@@ -1,7 +1,9 @@
-default: run
+default: rob
 
+kill: rob # Kill the robot, reasonably gently
+	python3 -c "import robot; robot.start_shm(); robot.unload();"
 
-doc: readme.html
+doc: readme.html robot.html shm.html
 	xdg-open readme.html
 
 compiling_setting_robot_environment.html: compiling_setting_robot_environment.md
@@ -10,12 +12,17 @@ compiling_setting_robot_environment.html: compiling_setting_robot_environment.md
 compiling: compiling_setting_robot_environment.html
 	xdg-open compiling_setting_robot_environment.html
 
+robot.html:
+	pydoc3 -w robot
+
+shm.html:
+	pydoc3 -w shm
 
 readme.html: readme.md
 	pandoc -f markdown -t html readme.md -c misc/github-pandoc.css -s -o readme.html
 
 clean:
-	rm -Rf readme.html *.pyc __pycache__ *~ compiling_setting_robot_environment.html
+	rm -Rf readme.html *.pyc __pycache__ *~ compiling_setting_robot_environment.html robot.html shm.html
 	make -C robot clean
 
 rob:
@@ -23,8 +30,16 @@ rob:
 	make -C robot
 
 run: rob
-	python3 run_simple.py
+	python3 example_simple.py
 
+
+proto: rob
+	python3 example_proto.py
 
 viewpos: rob
-	python3 viewpos.py
+	python3 example_viewpos.py
+
+
+cursor: rob
+	python2.7 example_cursor.py
+

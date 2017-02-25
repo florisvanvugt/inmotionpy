@@ -667,20 +667,20 @@ typedef struct sim_s {
 typedef struct daq_s {
     s8 tag[8];	// unused
     s32 n_ueidaq_boards;	// number of UEI boards in system
-    s32 uei_board[N_UEIDAQ_BOARDS];    // mapping from logical (array) to physical (bus)
-    s32 ain_handle[N_UEIDAQ_BOARDS];   // Handles returned by PdAcquireSubsystem
-    s32 aout_handle[N_UEIDAQ_BOARDS];
-    s32 din_handle[N_UEIDAQ_BOARDS];   // Handles returned by PdAcquireSubsystem
-    s32 dout_handle[N_UEIDAQ_BOARDS];
-    s32 ao8_handle[N_UEIDAQ_BOARDS];
-    // TODO: delete u16 subdevid[N_UEIDAQ_BOARDS];     // sub device ID to identify board
-    u32 adapter_type[N_UEIDAQ_BOARDS];     // adapter type to identify board
+    s32 uei_board[4];    // mapping from logical (array) to physical (bus)
+    s32 ain_handle[4];   // Handles returned by PdAcquireSubsystem
+    s32 aout_handle[4];
+    s32 din_handle[4];   // Handles returned by PdAcquireSubsystem
+    s32 dout_handle[4];
+    s32 ao8_handle[4];
+    // TODO: delete u16 subdevid[4];     // sub device ID to identify board
+    u32 adapter_type[4];     // adapter type to identify board
 
     s32 ain_cl_size;		// channel list size
     s32 ain_ret;		// return from pd_ain_get_samples()
     u32 ain_got_samples;	// number of samples returned
     u32 ain_cfg;		// SINGLE_ENDED?  5/10V?
-    f64 ain_bias_comp[N_UEIDAQ_BOARDS]; 	// bias voltage compensation ~ .018
+    f64 ain_bias_comp[4]; 	// bias voltage compensation ~ .018
 
     // in the shoulder/elbow robot:
     // 2 dio vars are used for encoder input
@@ -691,20 +691,20 @@ typedef struct daq_s {
 // single dim arrays are easier to handle here.
 
     // two-dimensional arrays
-    u16 m_dienc[N_UEIDAQ_BOARDS][2];		// digital inputs
-    u16 m_dout_buf[N_UEIDAQ_BOARDS];		// digital outputs
-    u16 m_adc[N_UEIDAQ_BOARDS][UEI_SAMPLES];	// analog inputs
-    u16 m_dac[N_UEIDAQ_BOARDS][UEI_SAMPLES];	// analog outputs
+    u16 m_dienc[4][2];		// digital inputs
+    u16 m_dout_buf[4];		// digital outputs
+    u16 m_adc[4][16];	// analog inputs
+    u16 m_dac[4][16];	// analog outputs
 
-    f64 m_adcvoltsmean[N_UEIDAQ_BOARDS][UEI_SAMPLES];	// adc mean
-    f64 m_adcvoltsmed[N_UEIDAQ_BOARDS][UEI_SAMPLES];	// adc median
+    f64 m_adcvoltsmean[4][16];	// adc mean
+    f64 m_adcvoltsmed[4][16];	// adc median
 
-    f64 m_adcvoltsprev[N_UEIDAQ_BOARDS][UEI_SAMPLES];	// adc filter stuff
-    f64 m_adcvoltsfilt[N_UEIDAQ_BOARDS][UEI_SAMPLES];
-    f64 m_adcvoltspfilt[N_UEIDAQ_BOARDS][UEI_SAMPLES];
+    f64 m_adcvoltsprev[4][16];	// adc filter stuff
+    f64 m_adcvoltsfilt[4][16];
+    f64 m_adcvoltspfilt[4][16];
 
-    f64 m_adcvolts[N_UEIDAQ_BOARDS][UEI_SAMPLES];
-    f64 m_dacvolts[N_UEIDAQ_BOARDS][UEI_SAMPLES];
+    f64 m_adcvolts[4][16];
+    f64 m_dacvolts[4][16];
 
     // one dimensional pointers, see main..c:main_init()
     u16 *dienc;
@@ -1045,6 +1045,33 @@ typedef struct func_s {
     void (*write_display) (void);
 } Func;
 
+
+
+typedef struct Moh_s {
+	f64 pointer; 	
+
+	u32 pixelx[36];
+	u32 pixely[36];
+	f64 realx[36];
+	f64 realy[36];
+	f64 xcenter;
+	f64 ycenter;
+	f64 ffs;
+	f64 hand_place;
+	f64 stiffness;
+	f64 move_flag;
+	f64 servo_flag;
+	f64 counter;
+	f64 current_dir;
+	f64 last_pointX;
+	f64 last_pointY;
+	f64 fX;
+	f64 fY;
+
+} Moh;
+
+
+
 // 0x494D5431 is 'IMT1'
 #define OB_KEY   0x494D5431
 #define ROB_KEY  0x494D5432
@@ -1060,6 +1087,7 @@ extern Prev *prev;
 extern Robot *rob;
 extern Game *game;
 extern Dyncmp_var *dyncmp_var;
+extern Moh *moh;
 
 extern Func func;
 
@@ -1256,3 +1284,5 @@ void fprf(RT_PIPE *, const s8 *, ...);
 #include <syslog.h>
 
 #endif				// ROBDECLS_H
+
+

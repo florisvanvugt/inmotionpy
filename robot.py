@@ -10,10 +10,12 @@ This is for interacting with the InMotion2 robot using Python.
 import os
 import subprocess
 import time
-import fcntl
 import sys
 
 
+# Import code for interacting with the shared memory (this allows us to exchange information with the C script)
+#from shm_ext import *
+from shm import *
 
 
 
@@ -22,7 +24,6 @@ robot_dir   = os.getcwd()+"/robot" # we assume that a subdirectory of our script
 robot_start = "%s/go"%robot_dir
 robot_stop  = "%s/stop"%robot_dir
 
-shm_start   = "%s/shm"%robot_dir
 
 
 
@@ -48,14 +49,13 @@ def status():
         print("robot launch process: none found")
     else:
         print("robot launch process: exit code = %s"%(str(rob)))
-        
-        if shm==None:
-            print("shm: no connection")
-        else:
-            print("shm: process available")
+
+        try:
             print("robot: paused = %s"%str(rshm('paused')))
             print("robot: controller %i"%get_controller())
             print("robot position: %.03f,%.03f"%(rshm('x'),rshm('y')))
+        except:
+            print("error reading from shared memory: try start_shm() ?")
 
     if len(errbuff)>0:
         print("last errors:\n%s"%"\n".join(errbuff))
@@ -69,9 +69,9 @@ def load():
     """
 
     print("Loading robot...")
-    # TODO: Make sure the robot is not already loaded
     start_lkm()
     start_shm()
+    put_init_calib()
     start_loop()
 
     # Not sure if this does anything, but just to make sure
@@ -104,6 +104,44 @@ def unload():
 
 
 
+def put_init_calib():
+    """ 
+    This function basically puts all the initial calibration stuff 
+    to the robot when we first launch it. The settings come from robot/imt2.cal
+    TODO: This can of course be done much nicer, without having to go through the 
+    calibration syntax.
+    """
+    f = open('robot/imt2.cal','r')
+    lns = f.readlines()
+    f.close()
+
+    for l in lns:
+        l = l.strip()
+        if len(l)>0 and l[0]!="#":
+            if l=="ok":
+                continue
+            fs = [ v.strip() for v in l.split() ]
+            if fs[0]=="s":
+                # If this is a set command
+                if get_info(fs[1])==None:
+                    print("WARNING: ignoring config setting %s"%l)
+                else:
+                    #print(fs)
+                    if len(fs)==3: # "simple" variable set
+                        #print(fs[1],tryenc(fs[2]))
+                        wshm(fs[1],tryenc(fs[2]))
+                    elif len(fs)==4: # array item set
+                        #print(fs[1],fs[3],fs[2])
+                        wshm(fs[1],tryenc(fs[3]),int(fs[2]))
+                    else:
+                        print("Not sure what to do with calibration line: %s"%l)
+
+            else:
+                print("Not sure what to do with calibration line: %s"%l)
+                
+
+
+
 def start_lkm():
     """ Starts the robot process. """
     global rob
@@ -125,21 +163,6 @@ def stop_lkm():
     subprocess.call(robot_stop,cwd=robot_dir)
 
     
-def start_shm():
-    global shm
-    shm = spawn_process(shm_start,robot_dir)
-    # TODO: set buffering to line end
-    
-    time.sleep(.1) # Wait for everything to start
-
-    # TODO: perform this check
-    check = rshm('last_shm_val')
-    if check!=12345678:
-        error_buffer("Error: rshm check returned %s instead of 1234578.\nMake sure all software has been compiled with latest cmdlist.tcl"%(str(check)))
-        sys.exit(-1)
-
-
-
 
 
 def get_controller():
@@ -176,89 +199,6 @@ def controller(n):
 
     
 
-    
-def rshm(variable,index=0):
-    """ Read a variable from the shared memory and return its value. """
-
-    global shm
-    # TODO: check that the shm is running
-
-    # This is the query string we will send to the shm script
-    query = "g %s %i"%(variable,index)
-    send(shm,query)
-
-    # Get the response to our query
-    reply = read(shm)
-    resp = reply.strip().split(' ')
-
-    # Parse it to get the output we need
-    if resp[0]=="?":
-        # An error was generated
-        error_buffer("Error in rshm('%s',%i): '%s'"%(variable,index,reply))
-        return None
-
-
-    # Try if this is an integer
-    try:
-        return int(resp[3])
-    except ValueError:
-        pass
-
-    # Try if this is a float
-    try:
-        return float(resp[3])
-    except ValueError:
-        pass
-    
-    return resp[3]  # Give up and return it as-is (string)
-    
-
-
-
-def wshm(variable,value,index=0):
-    """ Writes the given value to the given variable in the shared memory. """
-    
-    # TODO: check if the shm process exists
-    query = "s %s %i %s"%(variable,index,str(value))
-    send(shm,query)
-
-    # Get the response to our query
-    reply = read(shm)
-    resp = reply.strip().split(' ')
-
-    if reply=="ok": # This is what shm will say if it was successful
-        return value
-    
-    if resp[0]=="?":
-        # An error was generated
-        error_buffer("Error in wshm('%s',%s,%i): '%s'"%(variable,value,index,reply))
-        return None
-    
-    return None
-    
-    
-
-
-
-def send_shm(cmd):
-    global shm
-    send(shm,cmd)
-
-
-def read_shm():
-    global shm
-    return read(shm)
-
-    
-
-
-def stop_shm():
-    ## TODO
-    #subprocess.call(shm_stop,cwd=robot_dir)
-    global shm
-    send(shm,'q') # quit the shm process
-    shm = None
-
 
 def start_loop():
     # TODO: check if this makes sense
@@ -278,7 +218,68 @@ def stop_loop():
     # to receive and process the commands.  (100 ms is 20 ticks at 200 Hz.)
     wshm("paused",1)
     time.sleep(.1)
+
+    wshm('quit',1)
+    time.sleep(2) # wait for the robot control loop to shut itself down
+
     return
+
+
+
+
+
+#
+#
+# Logging
+#
+#
+
+savedatpid = None
+
+def start_log(fname,n):
+    """ Starts the log. 
+
+    Arguments
+    fname    : log file name
+    n        : number of columns
+    """
+
+    # write log header
+    #logheader(fname,n,headerf) # $logfile $num $uheaderfile
+    wshm('nlog',0) # suspends the log writing
+
+    global savedatpid
+    if savedatpid!=None:
+        print("Log already running! Not starting another log process.")
+        return
+        
+    savedatpid = subprocess.Popen(['cat','/proc/xenomai/registry/pipes/crob_out'],stdout=open(fname,'wb'))
+
+    wshm('nlog',n) # starts the log writing
+    
+    # Original: [exec cat < /proc/xenomai/registry/pipes/crob_out >> $logfile &]
+
+
+def stop_log():
+    """ Stops the log. """
+    global savedatpid
+    if savedatpid!=None:
+        wshm('nlog',0)
+        savedatpid.kill()
+        savedatpid=None
+
+    
+
+
+def logheader(fname,n,headerfile=""):
+    """ Write log file header.
+    pad with commented dots to 4096 bytes of ascii stuff
+    (or truncate)
+    make sure this is ascii, multi-byte chars will be messy here.
+    """
+    subprocess.call(['robot/loghead',fname,n])
+    #exec $ob(crobhome)/loghead $filename $ncols
+
 
 
 
@@ -295,6 +296,7 @@ def stop_loop():
 #stiffness = 4000. 
 #damping = 40.
 
+# Testing strength
 stiffness = 800. 
 damping = 8.
 
@@ -323,8 +325,11 @@ def bias_force_transducers():
 
 def bias_report():
     print("Robot ATI bias summary")
-    for i in range(6):
-        print("%i -> %f"%(i,rshm('ft_bias',i)))
+    bias = rshm('ft_bias')
+    print(bias)
+    return bias
+    
+    
 
     
 
@@ -341,13 +346,8 @@ def zeroft():
     
     # initialize some shared memory variables to zero
     wshm('plg_ftzerocount',0)
-    for i in range(6):
-        wshm('plg_ftzero',0,i)
+    wshm('plg_ftzero',[0]*6)
 
-    #for {set i 0} {$i < 6} {incr i} {
-    #wshm plg_ftzero 0 $i
-    #}
-    
     # select the zero_ft controller
     controller(2)
 
@@ -361,9 +361,8 @@ def zeroft():
 
     print("Averaging over %i ATI samples"%count)
 
-    for i in range(6):
-        cal = rshm('plg_ftzero',i)/float(count)
-        wshm('ft_bias',cal,i)
+    ftzero = rshm('plg_ftzero')
+    wshm('ft_bias',[ z/float(count) for z in ftzero ])
 
     bias_report()
     
@@ -431,7 +430,7 @@ def move_stay(x,y,t):
 
 
 # Check the executables
-for executable in [robot_start,robot_stop,shm_start]:
+for executable in [robot_start,robot_stop]:
 
     if not os.path.isfile(executable):
         print("ERROR: could not find executable %s (did you compile the robot code already?)"%executable)
@@ -453,112 +452,23 @@ def error_buffer(err):
 
 
 
-# Perhaps a nicer way to read/write to processes:
-# http://stackoverflow.com/questions/19880190/interactive-input-output-using-python
 
-
-
-
-"""
-
-Stuff that relates to interactive communication with child processes.
-
-"""
-
-import os
-import fcntl
-import subprocess
-
-
-def setNonBlocking(fd):
-    """
-    Set the file description of the given file descriptor to non-blocking.
-    """
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-    flags = flags | os.O_NONBLOCK
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
-
-
-
-def spawn_process(cmd,cwd=None):
-    p = subprocess.Popen(cmd,
-                         stdin  = subprocess.PIPE,
-                         stdout = subprocess.PIPE,
-                         stderr = subprocess.PIPE,
-                         bufsize = 1,
-                         cwd = cwd,
-                         universal_newlines = True # use this in Python3 to signal string-interactions
-                         )
-    setNonBlocking(p.stdout)
-    setNonBlocking(p.stderr)
-
-    return p
     
 
-
-
-def send(proc,cmd):
-    """ Sends a command to a process. """
+def tryenc(r):
+    """ Try to guess the encoding of this item."""
+    
+    # Try if this is an integer
     try:
-        proc.stdin.write(cmd+"\n")
-    except:
-        error_buffer("Error writing to process!")
-        
+        return int(r)
+    except ValueError:
+        pass
 
-
-    
-
-def readline(proc):
-    """ Read a single line from the process, or return None if nothing is available. """
+    # Try if this is a float
     try:
-        #out1 = shm.stdout.read()
-        out1 = proc.stdout.readline()
-        if len(out1)>0:
-            return out1
-    except IOError:
-        print("Got error reading.")
-        #continue
-    #else:
-    #    break
-    return None
-    
+        return float(r)
+    except ValueError:
+        pass
 
-
-def readall(proc):
-    """ Read all available output from the process. """
-    lines = []
-    line = readline(proc)
-    while line!=None:
-        lines.append(line)
-        line = readline(proc)
-    return lines
-
-
-
-
-def read(proc):
-    resp=None
-
-    if proc==None:
-        error_buffer("Cannot read from something that is not a process.")
-        return None
-    
-    while True:
-        try:
-            #out1 = shm.stdout.read()
-            out1 = proc.stdout.read()
-            if len(out1)>0:
-                if resp==None:
-                    resp = out1
-                else:
-                    resp += out1
-        except IOError:
-            #print("Got error")
-            continue
-        except TypeError:
-            continue
-        else:
-            break
-    return resp
-    
+    return r
 

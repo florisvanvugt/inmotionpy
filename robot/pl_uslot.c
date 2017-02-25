@@ -13,7 +13,7 @@
 typedef int s32;
 typedef char s8;
 typedef u64 hrtime_t;
-#include "userdecls.h"
+//#include "userdecls.h"
 #include "robdecls.h"
 
 #include "userfn.h"

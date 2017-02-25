@@ -18,7 +18,7 @@ RT_TASK_INFO thread_info;
 
 #include "ruser.h"
 
-#include "userdecls.h"
+//#include "userdecls.h"
 
 #include "robdecls.h"
 

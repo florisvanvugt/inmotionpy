@@ -11,7 +11,7 @@
 #include "rtl_inc.h"
 #include "ruser.h"
 #include "robdecls.h"
-#include "userdecls.h"
+//#include "userdecls.h"
 
 // point2d operator * ( jacobian2d& J, point2d& p )
 

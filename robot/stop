@@ -28,14 +28,14 @@ CROB=$CROB_HOME
 # TODO: what is correct substitution here? lsof  /dev/mbuff /dev/rtf*
 
 # kill the usual suspects if they're there.
-pkill -0 -x shm && pkill -x shm
 pkill -0 -x iofifo && pkill -x iofifo
 
 # TODO: delete pgrep -x robot && pkill -x robot
 
 # set quit in the control loop, so it can clean itself up properly.
 
-echo -e "ok\nset quit 1" | ./shm
+## TODO
+# echo -e "ok\nset quit 1" | ./shm
 
 # wait for 2 seconds for control loop to clean up and exit
 

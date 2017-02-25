@@ -82,8 +82,4 @@ done
 
 sleep 0.1
 
-./shm < $CROB_HOME/imt2.cal
-
-sleep 0.1
-
 exit 0

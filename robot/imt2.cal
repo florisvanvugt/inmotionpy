@@ -205,10 +205,10 @@ s restart_stiff 100.0
 s restart_go 1
 
 # default uei ain bias compensation
-s ain_bias_comp 1
+s ain_bias_comp 1 0
 
 # this is to read a AIN7 on the grey box
-s ain_07_channel 23
+#s ain_07_channel 23
 
 # ft stuff
 # radians
