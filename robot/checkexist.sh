@@ -20,7 +20,10 @@ if [ -z "$CROB_HOME" ]; then
 	exit 1
 fi
 
-MSG=$CROB_HOME/tools/zenity_wrap
+#MSG=$CROB_HOME/tools/zenity_wrap
+MSG=echo
+
+
 
 # TODO: change our uname -a to something to shorter to make Andy happy
 #uname -a | grep -q interactive-motion

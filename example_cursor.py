@@ -92,6 +92,10 @@ def draw_cursor(sx,sy):
     
 
 
+
+def robot_status(e):
+    """ Show the current status of the robot. """
+    tkMessageBox.showinfo("Robot status", robot.status() )
     
 
 def load_robot(e):
@@ -281,47 +285,46 @@ def init_tk():
     master.geometry('%dx%d+%d+%d' % (CONTROL_WIDTH, CONTROL_HEIGHT, CONTROL_X, CONTROL_Y))
     master.configure(background='black')
 
-    
     f = Frame(master,background='black')
-    b1    = Button(f, text="Load robot",                background="green",foreground="black")
-    b2    = Button(f, text="Zero FT (release handle)",  background="green",foreground="black")
-    calibb= Button(f, text="Visual calibrate",          background="blue",foreground="white")
-    stopb = Button(f, text="Stop following",            background="black",foreground="red")
-    captb = Button(f, text="Capture",                   background="blue",foreground="white")
-    loadb = Button(f, text="Load calib",                background="blue",foreground="white")
-    b3    = Button(f, text="Unload robot"  ,            background="green",foreground="black")
-    b4    = Button(f, text="Quit",                      background="red",foreground="black")
-    b1.bind('<ButtonRelease-1>',load_robot)
-    b2.bind('<ButtonRelease-1>',zeroft)
-    calibb.bind('<ButtonRelease-1>',visual_calibrate)
-    stopb.bind('<ButtonRelease-1>',stop_following)
-    loadb.bind('<ButtonRelease-1>',load_calib)
-    captb.bind('<ButtonRelease-1>',capture)
-    b3.bind('<ButtonRelease-1>',unload_robot)
-    b4.bind('<ButtonRelease-1>',endprogram)
-    #b1.pack(side=LEFT)
-    #b2.pack(side=LEFT)
-    #b3.pack(side=LEFT)
+    loadb   = Button(f, text="Load robot",                background="green",foreground="black")
+    statusb = Button(f, text="Status",                    background="green",foreground="black")
+    zerob   = Button(f, text="Zero FT (release handle)",  background="green",foreground="black")
+    calibb  = Button(f, text="Visual calibrate",          background="blue",foreground="white")
+    stopb   = Button(f, text="Stop following",            background="black",foreground="red")
+    captb   = Button(f, text="Capture",                   background="blue",foreground="white")
+    loadcalb= Button(f, text="Load calib",                background="blue",foreground="white")
+    unloadb = Button(f, text="Unload robot"  ,            background="green",foreground="black")
+    quitb   = Button(f, text="Quit",                      background="red",foreground="black")
+    loadb   .bind('<ButtonRelease-1>',load_robot)
+    statusb .bind('<ButtonRelease-1>',robot_status)
+    zerob   .bind('<ButtonRelease-1>',zeroft)
+    calibb  .bind('<ButtonRelease-1>',visual_calibrate)
+    stopb   .bind('<ButtonRelease-1>',stop_following)
+    loadcalb.bind('<ButtonRelease-1>',load_calib)
+    captb   .bind('<ButtonRelease-1>',capture)
+    unloadb .bind('<ButtonRelease-1>',unload_robot)
+    quitb   .bind('<ButtonRelease-1>',endprogram)
+    
     gui["position"] = StringVar()
     gui["target"]   = StringVar()
     gui["subject.id"] = StringVar()
-    posl  = Label(f, textvariable=gui["position"],fg="white",bg="black")
-
-    l    = Label(f, text="subject ID",fg="white",bg="black")
+    posl   = Label(f, textvariable=gui["position"],  fg="white",bg="black")
+    l      = Label(f, text="subject ID",             fg="white",bg="black")
     subjid = Entry(f, textvariable=gui["subject.id"],fg="white",bg="black")
-    
-    targl = Label(f, textvariable=gui["target"],  fg="white",bg="black")
+    targl  = Label(f, textvariable=gui["target"],    fg="white",bg="black")
 
-    row = 0
-    f.grid         (column=0,row=row,padx=10,pady=10)
+    
+    row  = 0
+    f.grid         (row=row,padx=10,pady=10)
     row += 1
-    b1.grid        (row=row,sticky=W,pady=10)
+    loadb.grid     (row=row,column=0,sticky=W,pady=10)
+    statusb.grid   (row=row,column=1,sticky=W,pady=10)
     row += 1
-    b2.grid        (row=row,sticky=W,pady=10)
+    zerob.grid     (row=row,sticky=W,pady=10)
     row += 1
     l.grid         (row=row,column=0,sticky=W,pady=10)
     subjid.grid    (row=row,column=1,sticky=W,padx=10)
-    loadb.grid     (row=row,column=2,sticky=W,padx=20)
+    loadcalb.grid  (row=row,column=2,sticky=W,padx=20)
     
     row +=1
     calibb.grid    (row=row,sticky=W,pady=10)
@@ -330,9 +333,9 @@ def init_tk():
     posl.grid      (row=row,column=3,sticky=W,padx=10)
     stopb.grid     (row=row,column=4,sticky=W,padx=10)
     row += 1
-    b3.grid        (row=row,sticky=W,pady=10)
+    unloadb.grid   (row=row,sticky=W,pady=10)
     row += 1
-    b4.grid        (row=row,sticky=W,pady=10)
+    quitb.grid     (row=row,sticky=W,pady=10)
     
 
     # Make some elements available for the future
