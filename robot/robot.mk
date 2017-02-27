@@ -9,8 +9,9 @@ UEI_INC = powerdaq/include
 
 CC = $(shell /usr/realtime/bin/xeno-config --cc)
 # TODO: remove -O0 in next line
-CFLAGS = $(shell /usr/realtime/bin/xeno-config --xeno-cflags) -I$(CWD)/../$(UEI_INC) -I$(CWD)/../pci4e -I/opt/imt/robot/$(UEI_INC) -I/opt/imt/robot/pci4e -g -O0
+CFLAGS = $(shell /usr/realtime/bin/xeno-config --xeno-cflags) -I/opt/imt/robot/$(UEI_INC) -g -O0
 ## CFLAGS = $(shell xeno-config --xeno-cflags)
+# FVV Removed -I/opt/imt/robot/pci4e  -I$(CWD)/../pci4e from CFLAGS  -I$(CWD)/../$(UEI_INC)
 LDFLAGS = $(shell /usr/realtime/bin/xeno-config --xeno-ldflags) -lnative -lpowerdaq32 -lrtdm
 
 # TODO: delete LINUX_DIR = /usr/src/linux

@@ -24,6 +24,11 @@ RT_TASK_INFO thread_info;
 
 #include "userfn.h"
 
+
+/* 
+FVV Removed references to PCI4e 20170227.
+*/
+
 // Xenomai has 1 ns resolution.  Multipliers: seconds 10^0,
 // millisecond 10^-3, microsecond 10^-6, nanoseconds 10^-9.  
 
@@ -66,7 +71,7 @@ cleanup_devices()
 {
 	// shut down devices here.
 	uei_aio_close();
-	pci4e_close();
+	//pci4e_close();
 }
 
 /// cleanup_signal - 
@@ -540,7 +545,7 @@ do_init(void)
     uei_aio_init();
     isa_ft_init();
     pc7266_init();
-    pci4e_init();
+    //pci4e_init();
     // this is no longer necessary since we read sensors
     // even if we are paused.
     // clear_sensors();
@@ -606,10 +611,12 @@ shm_copy_commands(void)
 		pc7266_reset_all_ctrs();
 		rob->pc7266.zero = 0;
 	}
+	/* FVV removed 20170227 since we don't seem to have PCI4e here at McGill.
 	if (rob->pci4e.zero) {
 		pci4e_reset_all_ctrs();
 		rob->pci4e.zero = 0;
 	}
+	*/
 	if (rob->pc7266.docal) {
 		pc7266_calib();
 		// do not zero this.
@@ -892,7 +899,7 @@ read_sensors_fn(void)
     isa_ft_read();
     uei_dio_scan();
     pc7266_encoder_read();
-    pci4e_encoder_read();
+    /* pci4e_encoder_read(); */
 }
 
 void

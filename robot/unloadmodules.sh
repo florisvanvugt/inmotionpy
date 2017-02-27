@@ -7,5 +7,7 @@ sudo rmmod /usr/realtime/modules/xeno_rtdm.ko
 sudo rmmod /usr/realtime/modules/xeno_native.ko
 sudo rmmod /usr/realtime/modules/xeno_nucleus.ko
 sudo rmmod /usr/realtime/modules/xeno_hal.ko
-cd /opt/imt/robot/pci4e
-./pci4e_unload
+
+# FVV Removed these lines since we don't seem to have PCI4e at McGill, 20170227
+# cd /opt/imt/robot/pci4e
+# ./pci4e_unload

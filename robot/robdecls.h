@@ -1193,12 +1193,12 @@ void pc7266_encoder_read(void);
 void pc7266_calib(void);
 
 // pci4e.c
-void pci4e_init(void);
-void pci4e_close(void);
-void pci4e_reset_all_ctrs(void);
-s32 pci4e_safe_check(void);
-void pci4e_encoder_read(void);
-void pci4e_calib(void);
+//void pci4e_init(void);
+//void pci4e_close(void);
+//void pci4e_reset_all_ctrs(void);
+//s32 pci4e_safe_check(void);
+//void pci4e_encoder_read(void);
+//void pci4e_calib(void);
 
 // sensact.c
 void sensact_init(void);
