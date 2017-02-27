@@ -326,7 +326,6 @@ def update_ui():
         gui["zerob"]   .configure(state=DISABLED)
         gui["loadcalb"].configure(state=DISABLED)
         
-    #TODO
 
 
 
