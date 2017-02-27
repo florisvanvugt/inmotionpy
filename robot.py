@@ -59,7 +59,7 @@ def lkm_status():
     
 
 
-def probe_robot_process():
+def probe_process():
     """ Try to find out if there is a robot process running. """
     try:
         rob = str(subprocess.check_output(['pkill','-0','-x','robot']))
@@ -79,7 +79,7 @@ def status():
 
     status += "linux kernel modules: %s\n"%lkm_status()
 
-    status += "robot process: %s"%("found" if probe_robot_process() else "not found")
+    status += "robot process: %s"%("found" if probe_process() else "not found")
 
     status += "\n\n"
     status += "shm status: %s\n"%shm_status()
@@ -94,7 +94,6 @@ def status():
         
     if len(errbuff)>0:
         status += "last errors:\n%s"%"\n".join(errbuff)
-    print(status)
     return status
         
 
