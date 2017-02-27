@@ -19,12 +19,12 @@ MATHLIBS = -L/usr/lib -lm -lc `$(CC) -print-file-name=libgcc.a`
 INCS = robdecls.h rtl_inc.h ruser.h uei_inc.h userfn.h pipes.h
 
 SRCS = main.c uei.c fifo.c math.c \
-	slot.c write.c isaft.c pc7266.c\
+	slot.c write.c isaft.c \
 	pl_sensact.c pl_ulog.c pl_uslot.c \
 	dyncomp.c
 
 OBJS = main.o uei.o fifo.o math.o \
-	slot.o write.o isaft.o pc7266.o\
+	slot.o write.o isaft.o \
 	pl_sensact.o pl_ulog.o pl_uslot.o \
 	dyncomp.o
 
