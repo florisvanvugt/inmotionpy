@@ -32,7 +32,7 @@ void write_motor_test_fifo_sample_fn(void);
 void write_grip_test_fifo_sample_fn(void);
 void write_adc_fifo_fn(void);
 void write_ovadc_fifo_fn(void);
-void write_pc7266_fifo_fn(void);
+//void write_pc7266_fifo_fn(void);
 void write_ft_fifo_sample_fn(void);
 void write_accel_test_fifo_sample_fn(void);
 void write_wrist_fifo_fn(void);
@@ -51,7 +51,7 @@ init_log_fns(void)
 	ob->log_fns[2] =  write_grip_test_fifo_sample_fn;
 	ob->log_fns[3] =  write_adc_fifo_fn;
 	ob->log_fns[4] =  write_ovadc_fifo_fn;
-	ob->log_fns[5] =  write_pc7266_fifo_fn;
+	//ob->log_fns[5] =  write_pc7266_fifo_fn;
 	ob->log_fns[6] =  write_ft_fifo_sample_fn;
 	ob->log_fns[7] =  write_accel_test_fifo_sample_fn;
 //	ob->log_fns[8] =  write_wrist_fifo_fn;
@@ -245,6 +245,7 @@ write_ovadc_fifo_fn(void)
     rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
 }
 
+/* FVV 20170227 phased out because we don't have this card
 void
 write_pc7266_fifo_fn(void)
 {
@@ -264,6 +265,7 @@ write_pc7266_fifo_fn(void)
     // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
     rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
 }
+*/
 
 //
 // test ft
@@ -389,6 +391,8 @@ write_accel_test_fifo_sample_fn(void)
 
 // write counter, then nlog doubles from log array, into dofifo.
 
+
+/*
 void
 write_wrist_fifo_sample_fn(void)
 {
@@ -411,6 +415,7 @@ write_wrist_fifo_sample_fn(void)
     // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
     rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
 }
+*/
 
 void
 write_vsensor_fifo_sample_fn(void)
