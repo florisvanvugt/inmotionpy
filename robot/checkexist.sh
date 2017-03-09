@@ -20,15 +20,18 @@ if [ -z "$CROB_HOME" ]; then
 	exit 1
 fi
 
-MSG=$CROB_HOME/tools/zenity_wrap
+#MSG=$CROB_HOME/tools/zenity_wrap
+MSG=echo
+
+
 
 # TODO: change our uname -a to something to shorter to make Andy happy
-uname -a | grep -q interactive-motion
-if [ $? != 0 ]; then
-        echo "The Linux kernel currently booted is not correct for Xenomai."
-	uname -a
-	exit 1
-fi
+#uname -a | grep -q interactive-motion
+#if [ $? != 0 ]; then
+#        echo "The Linux kernel currently booted is not correct for Xenomai."
+#	uname -a
+#	exit 1
+#fi
 
 CROB=$CROB_HOME
 OIR=/opt/imt/robot
@@ -46,11 +49,11 @@ flist="
 	$CROB/robot
 	$CROB/imt2.cal
 	/usr/realtime/modules/xeno_hal.ko
-	$OIR/pci4e/pci4e.ko
 	$OIR/lib/imt.gif
 	/lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq.ko
 "
 # Removed from flist (fvv June 2014):
+#       	$OIR/pci4e/pci4e.ko  (because we don't have PCI4e)
 #	$IMT_CONFIG/robots/`cat $IMT_CONFIG/current_robot`/imt2.cal
 
 

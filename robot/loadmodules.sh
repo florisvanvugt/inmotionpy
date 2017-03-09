@@ -23,8 +23,9 @@ sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq.ko > /dev/null 2>
 }
 
 
-cd /opt/imt/robot/pci4e 
-./pci4e_load vendor_id=0x1892 device_id=0x5747
+# FVV removed the following lines because we don't seem to have PCI4e at McGill. 20170227
+# cd /opt/imt/robot/pci4e 
+# ./pci4e_load vendor_id=0x1892 device_id=0x5747
 
 # make sure the /dev/rtp files exist before running chmod.
 

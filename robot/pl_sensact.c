@@ -182,15 +182,15 @@ dio_encoder_sensor(void)
 	return;
     }
 
-    if (ob->have_planar_incenc && rob->pci4e.have) {
+    //if (ob->have_planar_incenc && rob->pci4e.have) {
     // new for planar pci4e
-	raw.s = As.raw = (f64)rob->pci4e.enc[As.channel];
-	raw.e = Ae.raw = (f64)rob->pci4e.enc[Ae.channel];
-    } else {
+    //raw.s = As.raw = (f64)rob->pci4e.enc[As.channel];
+    //raw.e = Ae.raw = (f64)rob->pci4e.enc[Ae.channel];
+    //} else {
     // old standard va's on pd2mf
-	raw.s = As.raw = (f64)daq->dienc[As.channel];
-	raw.e = Ae.raw = (f64)daq->dienc[Ae.channel];
-    }
+    raw.s = As.raw = (f64)daq->dienc[As.channel];
+    raw.e = Ae.raw = (f64)daq->dienc[Ae.channel];
+    //}
 
 // take the two raw shoulder/elbow values from the sensors
 // and return an x/y coordinate pair

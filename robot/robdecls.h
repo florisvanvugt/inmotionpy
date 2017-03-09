@@ -1185,20 +1185,24 @@ void isa_ft_init(void);
 void isa_ft_read(void);
 
 // pc7266.c
+/* FVV 20170227 Removed because we don't have this card
 void pc7266_init(void);
 f64 pc7266_read_ch(u32);
 void pc7266_reset_all_ctrs(void);
 s32 pc7266_safe_check(void);
 void pc7266_encoder_read(void);
 void pc7266_calib(void);
+*/
 
 // pci4e.c
+/* FVV 20170227 Removed because we don't have this card
 void pci4e_init(void);
 void pci4e_close(void);
 void pci4e_reset_all_ctrs(void);
 s32 pci4e_safe_check(void);
 void pci4e_encoder_read(void);
 void pci4e_calib(void);
+*/
 
 // sensact.c
 void sensact_init(void);

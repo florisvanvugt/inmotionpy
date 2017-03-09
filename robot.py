@@ -43,23 +43,59 @@ errbuff = []
 
 
 
+def lkm_status():
+    """ Try to find out whether the Linux kernel modules are loaded. """
+    mods = str(subprocess.check_output('lsmod'))
+
+    loaded = []
+    if mods.find('xeno_')>-1: loaded.append("Xenomai")
+    if mods.find('pwrdaq')>-1: loaded.append("PowerDAQ")
+
+    if len(loaded)==0:
+        return "none found"
+    else:
+        return "%s loaded"%(", ".join(loaded))
+
+    
+
+
+def probe_process():
+    """ Try to find out if there is a robot process running. """
+    try:
+        rob = str(subprocess.check_output(['pkill','-0','-x','robot']))
+        return True
+    except subprocess.CalledProcessError: # pkill will return exit status 1 if there is no process found
+        return False
+
+
+
 def status():
     """ Return the status of the robot. """
+    status = ""
     if rob==None:
-        print("robot launch process: none found")
+        status += "robot launch process: none found, probably you have not run the robot from here\n"
     else:
-        print("robot launch process: exit code = %s"%(str(rob)))
+        status += "robot launch process: exit code = %s\n"%(str(rob))
 
+    status += "linux kernel modules: %s\n"%lkm_status()
+
+    status += "robot process: %s"%("found" if probe_process() else "not found")
+
+    status += "\n\n"
+    status += "shm status: %s\n"%shm_status()
+
+    if shm_connected():
         try:
-            print("robot: paused = %s"%str(rshm('paused')))
-            print("robot: controller %i"%get_controller())
-            print("robot position: %.03f,%.03f"%(rshm('x'),rshm('y')))
+            status += "robot: paused = %s\n"%str(rshm('paused'))
+            status += "robot: controller %i\n"%get_controller()
+            status += "robot position: %.03f,%.03f\n"%(rshm('x'),rshm('y'))
         except:
-            print("error reading from shared memory: try start_shm() ?")
-
+            status += "error reading from shared memory: try start_shm() ?\n"
+        
     if len(errbuff)>0:
-        print("last errors:\n%s"%"\n".join(errbuff))
-
+        status += "last errors:\n%s"%"\n".join(errbuff)
+    return status
+        
 
 
 def load():

@@ -2,6 +2,8 @@
 import time
 import pygame
 from Tkinter import * # use for python2
+#from ttk import *
+
 import tkMessageBox
 import tkFileDialog
 #from tkinter import * # use for python3
@@ -41,8 +43,8 @@ CURSOR_RADIUS = 10
 
 
 # The little control window
-CONTROL_WIDTH,CONTROL_HEIGHT= 700,400 # control window dimensions
-CONTROL_X,CONTROL_Y = 800,500 # controls where on the screen the control window appears
+CONTROL_WIDTH,CONTROL_HEIGHT= 650,600 # control window dimensions
+CONTROL_X,CONTROL_Y = 800,400 # controls where on the screen the control window appears
 
 
 
@@ -92,11 +94,26 @@ def draw_cursor(sx,sy):
     
 
 
+
+def robot_status(e):
+    """ Show the current status of the robot. """
+    #tkMessageBox.showinfo("Robot status", stat )
+    global gui
+    gui["message"].delete(1.0,END)
+    gui["message"].insert(END,robot.status())
     
 
 def load_robot(e):
     robot.load()
+    update_ui()
 
+
+
+def reconnect_shm(e):
+    # In case something happened, it may be good to reconnect the shared memory (then at least you can kill the robot).
+    robot.start_shm()
+    update_ui()
+    
 
 
 def zeroft(e):
@@ -104,12 +121,14 @@ def zeroft(e):
 
     bias = robot.bias_report()
     tkMessageBox.showinfo("Bias report", "Robot bias settings:\n\n" +" ".join([ str(b) for b in bias ]))
+    update_ui()
     
 
     
 def unload_robot(e):
     stop_following(e)
     robot.unload()
+    update_ui()
 
 
 
@@ -137,7 +156,7 @@ def visual_calibrate(e):
     next_target(e)
 
     captured = []
-    
+    update_ui()
 
 
 
@@ -196,6 +215,7 @@ def follow_robot():
     oldrect = None # just so that it is initialised
     
     gui["keep_going"] = True # set gui["keep_going"] to False to drop out of this and stop following the robot handle
+    update_ui()
     while gui["keep_going"]:
         rx,ry = robot.rshm('x'),robot.rshm('y')
         sx,sy = robot_to_screen(rx,ry)
@@ -270,9 +290,46 @@ def load_calib(e):
 def stop_following(e):
     global gui
     gui["keep_going"]=False
-    
+    update_ui()
+
     
 
+
+
+
+def update_ui():
+    """ Updates the user interface, determines what we can click and not. """
+    print("Updating UI")
+    global gui
+    
+    robot_status(None) # tries to determine what the robto status is and puts it in our message listing.
+
+    have_rob = robot.probe_process()
+    have_shm = robot.shm_connected()
+    
+    if have_shm:
+        gui["unloadb"].configure(state=NORMAL)
+    else:
+        gui["unloadb"].configure(state=DISABLED)
+
+    if have_rob:
+        gui["loadb"].configure(state=DISABLED)
+        gui["quitb"].configure(state=DISABLED)
+    else:
+        gui["loadb"].configure(state=NORMAL)
+        gui["quitb"].configure(state=NORMAL)
+
+    if have_rob and have_shm:
+        gui["zerob"]   .configure(state=NORMAL)
+        gui["loadcalb"].configure(state=NORMAL)
+    else:
+        gui["zerob"]   .configure(state=DISABLED)
+        gui["loadcalb"].configure(state=DISABLED)
+        
+
+
+
+    
 def init_tk():
     global gui
     gui = {}
@@ -281,47 +338,57 @@ def init_tk():
     master.geometry('%dx%d+%d+%d' % (CONTROL_WIDTH, CONTROL_HEIGHT, CONTROL_X, CONTROL_Y))
     master.configure(background='black')
 
-    
     f = Frame(master,background='black')
-    b1    = Button(f, text="Load robot",                background="green",foreground="black")
-    b2    = Button(f, text="Zero FT (release handle)",  background="green",foreground="black")
-    calibb= Button(f, text="Visual calibrate",          background="blue",foreground="white")
-    stopb = Button(f, text="Stop following",            background="black",foreground="red")
-    captb = Button(f, text="Capture",                   background="blue",foreground="white")
-    loadb = Button(f, text="Load calib",                background="blue",foreground="white")
-    b3    = Button(f, text="Unload robot"  ,            background="green",foreground="black")
-    b4    = Button(f, text="Quit",                      background="red",foreground="black")
-    b1.bind('<ButtonRelease-1>',load_robot)
-    b2.bind('<ButtonRelease-1>',zeroft)
-    calibb.bind('<ButtonRelease-1>',visual_calibrate)
-    stopb.bind('<ButtonRelease-1>',stop_following)
-    loadb.bind('<ButtonRelease-1>',load_calib)
-    captb.bind('<ButtonRelease-1>',capture)
-    b3.bind('<ButtonRelease-1>',unload_robot)
-    b4.bind('<ButtonRelease-1>',endprogram)
-    #b1.pack(side=LEFT)
-    #b2.pack(side=LEFT)
-    #b3.pack(side=LEFT)
-    gui["position"] = StringVar()
-    gui["target"]   = StringVar()
-    gui["subject.id"] = StringVar()
-    posl  = Label(f, textvariable=gui["position"],fg="white",bg="black")
-
-    l    = Label(f, text="subject ID",fg="white",bg="black")
-    subjid = Entry(f, textvariable=gui["subject.id"],fg="white",bg="black")
+    loadb   = Button(f, text="Load robot",                background="green",foreground="black")
+    statusb = Button(f, text="Update status",             background="green",foreground="black")
+    connects= Button(f, text="(re)Connect SHM",           background="green",foreground="black")
+    zerob   = Button(f, text="Zero FT (release handle)",  background="green",foreground="black")
+    calibb  = Button(f, text="Visual calibrate",          background="blue",foreground="white")
+    stopb   = Button(f, text="Stop following",            background="black",foreground="red")
+    captb   = Button(f, text="Capture",                   background="blue",foreground="white")
+    loadcalb= Button(f, text="Load calib",                background="blue",foreground="white")
+    unloadb = Button(f, text="Unload robot"  ,            background="green",foreground="black")
+    quitb   = Button(f, text="Quit",                      background="red",foreground="black")
+    loadb   .bind('<ButtonRelease-1>',load_robot)
+    statusb .bind('<ButtonRelease-1>',robot_status)
+    connects.bind('<ButtonRelease-1>',reconnect_shm)
+    zerob   .bind('<ButtonRelease-1>',zeroft)
+    calibb  .bind('<ButtonRelease-1>',visual_calibrate)
+    stopb   .bind('<ButtonRelease-1>',stop_following)
+    loadcalb.bind('<ButtonRelease-1>',load_calib)
+    captb   .bind('<ButtonRelease-1>',capture)
+    unloadb .bind('<ButtonRelease-1>',unload_robot)
+    quitb   .bind('<ButtonRelease-1>',endprogram)
     
-    targl = Label(f, textvariable=gui["target"],  fg="white",bg="black")
+    gui["position"]   = StringVar()
+    gui["target"]     = StringVar()
+    gui["subject.id"] = StringVar()
+    posl   = Label(f, textvariable=gui["position"],  fg="white", bg="black")
+    l      = Label(f, text="subject ID",             fg="white", bg="black")
+    subjid = Entry(f, textvariable=gui["subject.id"],fg="white", bg="black")
+    targl  = Label(f, textvariable=gui["target"],    fg="white", bg="black")
 
-    row = 0
-    f.grid         (column=0,row=row,padx=10,pady=10)
+    sb = Scrollbar(f)
+    mess = Text(master, wrap=WORD, yscrollcommand=sb.set,fg='yellow',bg='black')
+    gui["message"]    = mess
+
+    
+    row  = 0
+    f.grid         (row=row,padx=10,pady=10)
     row += 1
-    b1.grid        (row=row,sticky=W,pady=10)
+    loadb.grid     (row=row,column=0,sticky=W,padx=10,pady=10)
+    statusb.grid   (row=row,column=1,sticky=W,padx=10)
+    connects.grid  (row=row,column=2,sticky=W,padx=10)
     row += 1
-    b2.grid        (row=row,sticky=W,pady=10)
+    #sb.pack(side=RIGHT, fill=Y)
+    sb.config(command=mess.yview)
+    
+    row += 1
+    zerob.grid     (row=row,sticky=W,pady=10)
     row += 1
     l.grid         (row=row,column=0,sticky=W,pady=10)
     subjid.grid    (row=row,column=1,sticky=W,padx=10)
-    loadb.grid     (row=row,column=2,sticky=W,padx=20)
+    loadcalb.grid  (row=row,column=2,sticky=W,padx=20)
     
     row +=1
     calibb.grid    (row=row,sticky=W,pady=10)
@@ -330,27 +397,28 @@ def init_tk():
     posl.grid      (row=row,column=3,sticky=W,padx=10)
     stopb.grid     (row=row,column=4,sticky=W,padx=10)
     row += 1
-    b3.grid        (row=row,sticky=W,pady=10)
+    unloadb.grid   (row=row,sticky=W,pady=10)
     row += 1
-    b4.grid        (row=row,sticky=W,pady=10)
-    
+    quitb.grid     (row=row,sticky=W,pady=10)
+
+    row += 1
+    mess.grid      (row=row,column=0,sticky=W,padx=10,pady=10)
 
     # Make some elements available for the future
     gui["position"].set("x=[] y=[]")
     gui["target"].set("Target NA/NA")
+    gui["loadb"]   =loadb
+    gui["unloadb"] =unloadb
+    gui["zerob"]   =zerob
+    gui["loadcalb"]=loadcalb
+    gui["quitb"]   =quitb
     gui["keep_going"]=False
     
     master.bind()
 
     return master
-    #win.bind("<Button-1>", callback) # click callback
     
 
-
-
-def init():
-    init_pygame()
-    init_tk()
 
 
 
@@ -367,10 +435,9 @@ def endprogram(e):
 master = init_tk()
 init_pygame()
 
+update_ui()
 master.mainloop()
 
-#pygame.time.wait(3000)
-#quit()
 
 
 

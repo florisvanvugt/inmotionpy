@@ -286,9 +286,6 @@ def init():
     global locs
     global memobjects
     
-    # Read address information about the data
-    locs = read_address_probe()
-
     memobjects = {}
 
     for ob in objects:
@@ -299,7 +296,6 @@ def init():
             memobjects[ob]= memobj
         except:
             print("Cannot access shared memory key OB_KEY. Robot process not running?")
-            sys.exit(-1)
 
 
 
@@ -314,8 +310,55 @@ def stop_shm():
             
 
 
-def start_shm():        
+def start_shm():
+    """ 
+    Initialises the shared memory object, connects to the shared memory blocks. This will fail
+    if a robot process is not running because the shared memory has in that case not been allocated.
+    """
     init()
 
 
 
+
+def shm_status():
+    """ 
+    Returns the status of the shared memory.
+    """
+    status = ""
+    if shm_connected():
+        status += "connected"
+    else:
+        status += "shared memory objects not initialised (call start_shm())."
+        
+    return status
+
+
+
+
+def shm_connected():
+    """ Returns whether we are connected to the shared memory or not. """
+    global memobjects
+    return len(memobjects.keys())>0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if True: # module initialisation
+
+    global locs,memobjects
+
+    # Read address information about the data
+    locs = read_address_probe()
+
+    memobjects = {}
