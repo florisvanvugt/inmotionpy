@@ -952,6 +952,27 @@ typedef struct ob_s {
   u32 fvv_trial_phase;           // the current phase in the trial
   u32 fvv_trial_no;              // the current trial number
 
+  f64 fvv_robot_center_x;        // the robot center (x coordinate)
+  f64 fvv_robot_center_y;        // the robot center (y coordinate)
+
+  f64 fvv_force_fade;            // a multiplier for the force, used to fade the force
+
+  f64 fvv_robot_min_y;           // the lower Y edge of the workspace
+  f64 fvv_vel;                   // the maximum Y speed recorded so far
+  f64 fvv_max_vel;               // the maximum Y speed recorded so far
+
+  f64 fvv_vmax_x;                // the x coordinate of the maximum velocity point
+  f64 fvv_vmax_y;                // the y coordinate of the maximum velocity point
+
+  f64 fvv_final_x;                // the x coordinate of the final position
+  f64 fvv_final_y;                // the y coordinate of the final position
+  
+  u32 fvv_trial_timer;           // a timer for the move phase (so we can cut off the trial when it takes too long)
+
+  u32 fvv_vel_low_timer;         // times how long we are on low Y-velocity (below some percentage of the maximum velocity
+
+  u32 fvv_workspace_enter;       // 0 when outside of workspace, 1 when entered the workspace
+  
   s32 debug_level;		// for dpr
   
   u32 last_shm_val;		// sanity check

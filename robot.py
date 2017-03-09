@@ -4,6 +4,15 @@
 
 This is for interacting with the InMotion2 robot using Python.
 
+We assume that the following controllers are set (controlled in pl_uslot.c)
+
+controller 0  : null field
+controller 2  : zero_ft
+controller 4  : movetopt (move to location)
+controller 5  : static_ctl_fade (hold and fade)
+controller 16 : static_ctl (hold at specified location)
+
+
 """
 
 
@@ -328,13 +337,13 @@ def logheader(fname,n,headerfile=""):
 #
 
 
-# Quite strong
-#stiffness = 4000. 
-#damping = 40.
+# Quite strong (production mode - use this when you are confident about your scripts)
+stiffness = 4000. 
+damping = 40.
 
 # Testing strength
-stiffness = 800. 
-damping = 8.
+#stiffness = 800. 
+#damping = 8.
 
 
 
@@ -464,6 +473,26 @@ def move_stay(x,y,t):
     stay_at(x,y) # when the move is done
 
 
+
+def stay_fade(x,y):
+    """
+    Starts out as an attractor controller for the point (x,y) but
+    gradually fades out the forces. This is supposed to not give subjects
+    a sudden jolt when they gain back control of the robot.
+    """
+    wshm("fvv_force_fade",1.0) # This starts at 1.0 but exponentially decays to infinitely small
+    wshm("plg_p1x",x)
+    wshm("plg_p1y",y)
+    wshm("plg_stiffness",stiffness)
+    wshm("plg_damping",damping)
+    controller(5)  # static_ctl_fade
+
+    
+
+
+
+
+    
 
 # Check the executables
 for executable in [robot_start,robot_stop]:
