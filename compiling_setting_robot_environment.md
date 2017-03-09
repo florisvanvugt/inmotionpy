@@ -3,7 +3,12 @@
 
 written by Floris van Vugt, February 2017.
 
-The instructions below are based on lots of trial and error and some very useful READMEs in various packages. There may be restarts required in between, or `sudo ldconfig` to be run in between parts of the instructions, but I am not sure because I did a lot of back and forth when I tried to get this working. So I hope it is possible more or less linearly as listed here below.
+The instructions below are based on trial and lots of error and some very useful READMEs in various packages. There may be restarts required in between, or `sudo ldconfig` to be run in between parts of the instructions, but I am not sure because I did a lot of back and forth when I tried to get this working. So I hope it is possible more or less linearly as listed here below.
+
+
+## In short
+
+In short, you need to set up an environment which contains a custom compiled Linux 2.6 kernel, which needs to be patched to be able to work with Xenomai, which enables realtime functionality. Once the kernel is compiled and install, you compile and install Xenomai, and then you compile and install drivers for the interface cards, PowerDAQ. That is it. 
 
 
 
@@ -36,12 +41,8 @@ You need a basically sane build environment to be able to compile kernel stuff.
 
 ```
 sudo apt-get install build-essential kernel-package fakeroot
-
 sudo apt-get install libncurses5-dev libncursesw5-dev # required for building xenomai
-
 sudo touch /etc/ld.so.conf
-
-
 ```
 
 I think it also good to tell the system which robot code we are using. The system seems to expect `/opt/imt/robot` to point to the latest robot code. This is used when compiling robot code to find the `powerdaq` sources, and perhaps at other occasions too.
@@ -56,7 +57,6 @@ sudo ln -s <<YOURrobot-suiteDIRECTORY>> /opt/imt/robot # point to the new robot
 
 
 ## Building the kernel
-
 
 ```
 cd <<YOURrobot-suiteDIRECTORY>>/linux-2.6.15/
@@ -210,7 +210,6 @@ make clean
 ```
 
 
-
 ```
 make XENOMAI=1
 sudo make install
@@ -238,9 +237,10 @@ Note that you cannot just modprobe the driver though, because it depends on Xeno
 
 ## PCI4e
 
-The PCI-4E is again an interface card, see its [manual](usdigital.com/assets/datasheets/PCI-4E_datasheet.pdf?k=635168184226049538). You can download drivers [here](http://wa.us.usdigital.com/support/software/pci-4e).
+**NOTE** PCI4e is not actually required for the robot anymore. It is probably an interface card that was being used at some point but no longer is. For one, I could not find it physically in suzuki. Nevertheless, here below I will write what I could figure out about the code to interface with this card.
 
-I think PCI4e needs to be re-installed as well, or at least reconfigured, when you change to a new kernel. Otherwise, when `pci4e` gets inserted it will give an error message giving the name of the kernel that it was compiled against.
+
+The PCI-4E is again an interface card, see its [manual](usdigital.com/assets/datasheets/PCI-4E_datasheet.pdf?k=635168184226049538). You can download drivers [here](http://wa.us.usdigital.com/support/software/pci-4e).
 
 Note that PCI4e also requires Linux 2.6 kernel.
 
@@ -292,8 +292,7 @@ A few things seem to not work or give error messages and I don't understand why.
 
 1. When you load `pci4e`, it complains on `dmesg` that it can't find the card with specs `1892:5747` (vendor and device ID, I believe). I confirmed that this very same error message appears on the old (working) Suzuki installation as well. No module named `pci4e` appears to be ever loaded. How can it be that everything works correctly when a seemingly important element of the system is missing?
 
-2. PowerDAQ loading often complains.
-
+2. PowerDAQ loading often complains. This was solved when I compiled it against the correct Xenomai sources.
 
 Here is some example `dmesg` output when the robot code is launched. This is on my new installation, not on the "old" Suzuki installation:
 
@@ -333,8 +332,6 @@ Here is some example `dmesg` output when the robot code is launched. This is on 
 [  897.254932] pd:      IRQ line: 0x9
 [  897.254934] pd:      DSP Rev: v2
 [  897.254936] pd:      Firmware type: MFx, rev: 3.45/50113
-[  897.276754] pci4e: pci4e_init
-[  897.276763] pci4e: no devices match 1892:5747
 ```
 
 
@@ -375,4 +372,22 @@ Igo Krebs told me that this is the setup they currently use:
 https://git.xenomai.org/
 
 
-## Log
+## General notes about the Suzuki computer
+
+### Video card
+The video card is ASUS GeForce 7300GT DirectX 9 EN7300GT SILENT/HTD/256M 256MB 128-Bit GDDR2 PCI Express x16 SLI Support Video Card.
+
+The video card doesn't work with the X windowing system out of the box on Ubuntu 5.04 but it *does* work out of the box on Ubuntu 12.04. To get it to work under 5.04 this is what I did. I downloaded [these NVIDIA drivers](http://www.nvidia.com/download/driverResults.aspx/73965/en-us).
+
+I executed the shell script. First it failed because it couldn't find kernel headers, so I installed linux-headers-XX where XX was determined from `uname -r`. Then it complained that the current C compiler (GCC 4.0) was different than the one used to compile the running kernel (3.4). Forcing it to go ahead didn't work: the kernel module wouldn't load. 
+Then I installed gcc-3.4 and set the environment variable `export CC=/usr/bin/gcc-3.4` and then ran the NVIDIA script again.
+This time it compiled, and seemed to be okay with the kernel module, and then it offered me to custom make the X11 config script, which I did, and with that it ended up with a working X11 graphics.
+
+To get tcl::snack working, I compiled it with OSS support (not ALSA, as it will offer). This caused slightly better performance, I believe.
+
+
+### PCI data acquisition/control cards
+
+The robot interface is through two PowerDAQ cards, by United Electronic Industries, models PD2-MF-16-50/16L and PD2-MF-16-50/16H (these cards are so old you will probably not find data sheets for these specific cards anymore.
+
+
