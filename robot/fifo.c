@@ -17,6 +17,9 @@
 // and the linux kernel robot control module.
 // TODO: delete // uses the traditional stdin/stdout/stderr numbering, with 3 for command-in
 
+
+#define POOLSIZE 0
+
 void
 init_fifos(void)
 {
@@ -29,7 +32,7 @@ init_fifos(void)
     // data input from user space
     // TODO: delete ob->dififo = 0;
     // TODO: delete rtf_create(ob->dififo, ob->fifolen);
-    ret = rt_pipe_create(&(ob->dififo), DIFIFO_NAME, DIFIFO_MINOR);
+    ret = rt_pipe_create(&(ob->dififo), DIFIFO_NAME, DIFIFO_MINOR, POOLSIZE);
     if (ret < 0) {
       printf("%s:%d %d return from rt_pipe_create()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);
@@ -38,7 +41,7 @@ init_fifos(void)
     // data output to user space
     // TODO: delete ob->dofifo = 1;
     // TODO: delete rtf_create(ob->dofifo, ob->fifolen);
-    ret = rt_pipe_create(&(ob->dofifo), DOFIFO_NAME, DOFIFO_MINOR);
+    ret = rt_pipe_create(&(ob->dofifo), DOFIFO_NAME, DOFIFO_MINOR, POOLSIZE);
     if (ret < 0) {
       printf("%s:%d %d return from rt_pipe_create()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);
@@ -47,7 +50,7 @@ init_fifos(void)
     // error output to user space
     // TODO: delete ob->eofifo = 2;
     // TODO: delete rtf_create(ob->eofifo, ob->fifolen);
-    ret = rt_pipe_create(&(ob->eofifo), EOFIFO_NAME, EOFIFO_MINOR);
+    ret = rt_pipe_create(&(ob->eofifo), EOFIFO_NAME, EOFIFO_MINOR, POOLSIZE);
     if (ret < 0) {
       printf("%s:%d %d return from rt_pipe_create()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);
@@ -58,7 +61,7 @@ init_fifos(void)
     ob->ci_fifo_buffer = ibuffer;
     // TODO: delete rtf_create(ob->cififo, ob->fifolen);
     // TODO: delete rtf_create_handler(ob->cififo, fifo_input_handler);
-    ret = rt_pipe_create(&(ob->cififo), CIFIFO_NAME, CIFIFO_MINOR);
+    ret = rt_pipe_create(&(ob->cififo), CIFIFO_NAME, CIFIFO_MINOR, POOLSIZE);
     if (ret < 0) {
       printf("%s:%d %d return from rt_pipe_create()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);
@@ -67,7 +70,7 @@ init_fifos(void)
     // display data to user space
     // TODO: delete ob->ddfifo = 4;
     // TODO: delete rtf_create(ob->ddfifo, ob->fifolen);
-    ret = rt_pipe_create(&(ob->ddfifo), DDFIFO_NAME, DDFIFO_MINOR);
+    ret = rt_pipe_create(&(ob->ddfifo), DDFIFO_NAME, DDFIFO_MINOR, POOLSIZE);
     if (ret < 0) {
       printf("%s:%d %d return from rt_pipe_create()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);
@@ -76,7 +79,7 @@ init_fifos(void)
     // tick data to user space
     // TODO: delete ob->tcfifo = 5;
     // TODO: delete rtf_create(ob->tcfifo, ob->fifolen);
-    ret = rt_pipe_create(&(ob->tcfifo), TCFIFO_NAME, TCFIFO_MINOR);
+    ret = rt_pipe_create(&(ob->tcfifo), TCFIFO_NAME, TCFIFO_MINOR, POOLSIZE);
     if (ret < 0) {
       printf("%s:%d %d return from rt_pipe_create()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);

@@ -48,7 +48,7 @@ probe_addresses.c: robdecls.h parse_robdecls.py
 $(OBJS) : $(INCS)
 
 robot: $(OBJS) $(INCS)
-	$(CC) $(LDFLAGS) $(OBJS) -o robot $(MATHLIBS)
+	$(CC) $(OBJS) $(LDFLAGS) -o robot $(MATHLIBS)
 
 clean:
 	rm -f robot pwrdaq*.o *\~ *\# $(OBJS) probe_addresses.c probe_addresses field_addresses.txt

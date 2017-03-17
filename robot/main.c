@@ -25,6 +25,10 @@ RT_TASK_INFO thread_info;
 #include "userfn.h"
 
 
+// FVV Added
+//#include "native/timer.h"
+
+
 /* 
 FVV Removed references to PCI4e 20170227.
 */
@@ -129,7 +133,7 @@ cleanup_signal(s32 sig)
         rt_task_delete(&thread);
     }
 
-    rt_timer_stop();
+    //rt_timer_stop();
     munlockall();
 
     // TODO: delete
@@ -307,10 +311,10 @@ start_routine(void *arg)
     ob->main_thread = thread;  
 
     // start timer
-    ret = rt_timer_start(TM_ONESHOT);
-    if (ret != 0) {
-      dpr(0, "%s:%d rt_timer_start() failed, ret == %d\n", __FILE__, __LINE__, ret);
-    }
+    //ret = rt_timer_start(TM_ONESHOT);
+    //if (ret != 0) {
+    //dpr(0, "%s:%d rt_timer_start() failed, ret == %d\n", __FILE__, __LINE__, ret);
+    //}
     
     ret = rt_task_set_periodic(NULL, TM_NOW, ob->irate);
     if (ret != 0) {
@@ -1141,8 +1145,9 @@ void
 wait_for_tick()
 {
     s32 ret;
-
-    ret = rt_task_wait_period();
+    unsigned long overr; // FVV added
+    ret = rt_task_wait_period(&overr); // FVV Added
+    //ret = rt_task_wait_period();
 }
 
 // sanity tests, run from console command 't'
