@@ -25,13 +25,6 @@ RT_TASK_INFO thread_info;
 #include "userfn.h"
 
 
-// FVV Added
-//#include "native/timer.h"
-
-
-/* 
-FVV Removed references to PCI4e 20170227.
-*/
 
 // Xenomai has 1 ns resolution.  Multipliers: seconds 10^0,
 // millisecond 10^-3, microsecond 10^-6, nanoseconds 10^-9.  
@@ -75,7 +68,6 @@ cleanup_devices()
 {
 	// shut down devices here.
 	uei_aio_close();
-	//pci4e_close();
 }
 
 /// cleanup_signal - 
@@ -146,7 +138,7 @@ cleanup_signal(s32 sig)
     shmdt(daq);
     shmdt(prev);
     shmdt(game);
-	shmdt(moh);
+    shmdt(moh);
     shmdt(dyncmp_var);
 
     shmctl(ob_shmid, IPC_RMID, NULL);
@@ -198,7 +190,7 @@ main(void)
 
     openlog("imt-robot",LOG_PID,LOG_USER);
     setlogmask(LOG_UPTO(LOG_INFO));
-    // syslog(LOG_INFO, "Starting robot realtime process.\n");
+    syslog(LOG_INFO, "Starting robot realtime process.\n");
     dpr(0,"Starting robot realtime process.\n");
 
     // install signal handler
@@ -218,17 +210,60 @@ main(void)
     /* Want to be a daemon.  As suggested by
        http://www.enderunix.org/docs/eng/daemon.php, first step is to
        fork.  */
-    ret=fork();
-    if (ret<0) exit(1); /* fork error */
-    if (ret>0) exit(0); /* parent exits */
+
+    pid_t pid;
+ 
+    /* Clone ourselves to make a child */  
+    pid = fork(); 
+    
+    /* If the pid is less than zero,
+       something went wrong when forking */
+    if (pid < 0) {
+      exit(EXIT_FAILURE);
+    }
+    
+    /* If the pid we got back was greater
+       than zero, then the clone was
+       successful and we are the parent. */
+    if (pid > 0)
+      {
+	// PARENT PROCESS. Need to kill it.
+	syslog(LOG_INFO,"Process id of child process %d \n", pid);
+	printf("process_id of child process %d \n", pid);
+	// return success in exit status
+	exit(0);
+      }
+    //exit(EXIT_SUCCESS);
+    //    }
+
+    //ret=fork();
+    //if (ret<0) exit(1); /* fork error */
+    //if (ret>0) exit(0); /* parent exits */
+
     /* child (daemon) continues */
 
-    setsid(); /* obtain a new process group */
+    /* Set the umask to zero */
+    umask(0);
 
+    pid_t sid;
+    
+    /* Try to create our own process group */
+    /* obtain a new process group (This call will place the server in a new process group and session and detach its controlling terminal. (setpgrp() is an alternative for this)) */
+    sid = setsid();
+    if (sid < 0) {
+      syslog(LOG_ERR, "Could not create process group\n");
+      exit(EXIT_FAILURE);
+    }
+
+    if (0)
     {
       int i;
 
-      for (i=getdtablesize();i>=0;--i) close(i); /* close all descriptors */
+      for (i=getdtablesize();i>=0;--i) {
+	printf("get i=%i ",i);
+	close(i); /* close all descriptors */
+	printf("closed\n",i);
+      }
     }
 
     ret=open("/dev/null",O_RDWR); /* open stdin */
@@ -252,6 +287,8 @@ main(void)
       sigfillset(&signalSet);
       pthread_sigmask(SIG_BLOCK, &signalSet, NULL);
     }
+
+    syslog(LOG_INFO,"rt_task_spawn.\n");
 
     // TODO: delete ret = pthread_create(&thread, &attr, start_routine, 0);
     // TODO: delete pthread_wakeup_np(thread);
@@ -430,12 +467,13 @@ main_init(void)
     ob->i = 0;
     ob->samplenum = 0;
     ob->total_samples = 0;
-    ob->debug_level = 0;
+    //ob->debug_level = 0;
+    ob->debug_level = 5;  // FVV see various calls to dpr(level,...) to see which kind of debug info you get
     ob->busy = 0;
 
 	// Sampling frequency is specifield as 400 Hz
     ob->Hz = 400;
-	ob->butcutoff = 0;
+    ob->butcutoff = 0;
 
     ob->ticks30Hz = ob->Hz / 30;
     ob->fifolen = FIFOLEN;
@@ -548,8 +586,6 @@ do_init(void)
     sensact_init();
     uei_aio_init();
     isa_ft_init();
-    //pc7266_init();
-    //pci4e_init();
     // this is no longer necessary since we read sensors
     // even if we are paused.
     // clear_sensors();
@@ -611,24 +647,6 @@ shm_copy_commands(void)
 		memset(&ob->copy_slot, 0, sizeof(Slot));
 		ob->copy_slot.go = 0;	// for good measure
 	}
-	/* FVV Removed 20170227 because we don't have this card.
-	if (rob->pc7266.zero) {
-		pc7266_reset_all_ctrs();
-		rob->pc7266.zero = 0;
-	}
-	*/
-	/* FVV removed 20170227 since we don't seem to have PCI4e here at McGill.
-	if (rob->pci4e.zero) {
-		pci4e_reset_all_ctrs();
-		rob->pci4e.zero = 0;
-	}
-	*/
-	/*	
-	if (rob->pc7266.docal) {
-		pc7266_calib();
-		// do not zero this.
-	}
-	*/
 	if (rob->ft.dobias) {
 		ft_zero_bias();
 		rob->ft.dobias = 0;
@@ -1145,9 +1163,7 @@ void
 wait_for_tick()
 {
     s32 ret;
-    unsigned long overr; // FVV added
-    ret = rt_task_wait_period(&overr); // FVV Added
-    //ret = rt_task_wait_period();
+    ret = rt_task_wait_period(NULL); // FVV Added argument
 }
 
 // sanity tests, run from console command 't'

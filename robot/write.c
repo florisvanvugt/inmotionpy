@@ -61,12 +61,16 @@ void
 dpr(s32 level, const s8 *format, ...)
 {
     va_list args;
-
-    if (level > ob->debug_level)
+    
+    /*
+    if (level) {
+    // FVV commented these next lines as it seems to cause a segfault
+      if (level > ob->debug_level)
 	return;
-    if ((level >= 1) && (ob->i % ob->Hz != 0))
+      if ((level >= 1) && (ob->i % ob->Hz != 0))
 	return;
-
+    }
+    */
     if ((dprbufp - dprbuf) > (FIFOLEN - 1024)) {
 	dpr1("\n<<dprbuf almost full>>\n");
 	dpr_flush();
@@ -109,7 +113,7 @@ void
 dpr_clear()
 {
     dprbufp = dprbuf;
-    dprbuf[0] = (s8) NULL;
+    dprbuf[0] = (intptr_t) NULL; // otherwise throws pointer conversion error
 }
 
 // write out the dprbuf
