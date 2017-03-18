@@ -48,13 +48,13 @@ OIR=/opt/imt/robot
 flist="
 	$CROB/robot
 	$CROB/imt2.cal
-	/usr/realtime/modules/xeno_hal.ko
-	$OIR/lib/imt.gif
 	/lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq.ko
 "
 # Removed from flist (fvv June 2014):
 #       	$OIR/pci4e/pci4e.ko  (because we don't have PCI4e)
 #	$IMT_CONFIG/robots/`cat $IMT_CONFIG/current_robot`/imt2.cal
+#	/usr/realtime/modules/xeno_hal.ko
+#	$OIR/lib/imt.gif
 
 
 

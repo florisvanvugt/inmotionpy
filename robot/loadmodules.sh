@@ -13,14 +13,18 @@ while [ -e /dev/rtp31 ]; do
 done
 
 # set -x
-sudo insmod /usr/realtime/modules/xeno_hal.ko
-sudo insmod /usr/realtime/modules/xeno_nucleus.ko
-sudo insmod /usr/realtime/modules/xeno_native.ko
-sudo insmod /usr/realtime/modules/xeno_rtdm.ko
+#sudo insmod /usr/realtime/modules/xeno_hal.ko
+#sudo insmod /usr/realtime/modules/xeno_nucleus.ko
+#sudo insmod /usr/realtime/modules/xeno_native.ko
+#sudo insmod /usr/realtime/modules/xeno_rtdm.ko
+#sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq.ko > /dev/null 2>&1 || {
+#    sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq_dummy.ko
+#}
+# FVV removed the modules insertion above, because with the new setup (Xenomai 2.6) there are no
+# longer modules to insert in the kernel, I believe.
 
-sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq.ko > /dev/null 2>&1 || {
-    sudo insmod /lib/modules/`uname -r`/kernel/drivers/misc/pwrdaq_dummy.ko
-}
+sudo modprobe pwrdaq
+
 
 
 # FVV removed the following lines because we don't seem to have PCI4e at McGill. 20170227
