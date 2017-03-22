@@ -158,19 +158,6 @@ cleanup_signal(s32 sig)
     }
 }
 
-/// unload_module - wrapper for cleanup_module
-///
-/// call this on error
-
-// TODO: delete
-// void
-// unload_module(void)
-// {
-//     // 
-//     dpr(3, "unload_module\n");
-// 
-//     cleanup_module();
-// }
 
 /// main - 
 ///
@@ -331,6 +318,8 @@ set_Hz ()
     }
 }
 
+
+
 /// start_routine - the thread starts here
 ///
 /// this is the thread entry point set up by pthread_create.
@@ -362,6 +351,9 @@ start_routine(void *arg)
     wait_for_tick();
     main_loop();
 }
+
+
+
 
 /// main_init - do this stuff once, before running main_loop
 ///
@@ -637,20 +629,20 @@ restart_init(void)
 void
 shm_copy_commands(void)
 {
-	// restart will start cleanly.
-	if (ob->restart.go) {
-	    restart_init();
+  // restart will start cleanly.
+  if (ob->restart.go) {
+    restart_init();
 	}
-	// if there's a new slot command, copy it in.
-	if (ob->copy_slot.go) {
-		ob->slot[ob->copy_slot.id] = ob->copy_slot;
-		memset(&ob->copy_slot, 0, sizeof(Slot));
-		ob->copy_slot.go = 0;	// for good measure
-	}
-	if (rob->ft.dobias) {
-		ft_zero_bias();
-		rob->ft.dobias = 0;
-	}
+  // if there's a new slot command, copy it in.
+  if (ob->copy_slot.go) {
+    ob->slot[ob->copy_slot.id] = ob->copy_slot;
+    memset(&ob->copy_slot, 0, sizeof(Slot));
+    ob->copy_slot.go = 0;	// for good measure
+  }
+  if (rob->ft.dobias) {
+    ft_zero_bias();
+    rob->ft.dobias = 0;
+  }
 }
 
 /// one 200Hz sample - this is where the action is.
