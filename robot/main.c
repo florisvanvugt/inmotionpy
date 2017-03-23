@@ -63,6 +63,10 @@ Game *game;
 Moh *moh;
 Dyncmp_var *dyncmp_var;
 
+
+
+
+/// Close the devices that are used for communication
 void
 cleanup_devices()
 {
@@ -70,26 +74,31 @@ cleanup_devices()
 	uei_aio_close();
 }
 
-/// cleanup_signal - 
-///
-/// deletes thread
 
-// : cleanup_module may be called when the main loop is busy.
-// if this happens, we must ensure that data structures are not deleted
-// while they are in use.  for this reason, the main loop checks
-// cleanup_module_in_progress, and sets cleanup_module_main_loop_done
-// to let cleanup_module know that it is done, and cleanup may proceed
-// safely.
+
 
 static u32 cleanup_module_in_progress = 0;
 static u32 cleanup_module_main_loop_done = 0;
 
-// TODO: Is the new circumstance analogous to old? Do we keep same
-// waiting architecture here? Would rt_task_delete() do the trick?
+
+
+/**
+   @brief cleanup_signal - deletes thread
+
+ cleanup_module may be called when the main loop is busy.
+ if this happens, we must ensure that data structures are not deleted
+ while they are in use.  for this reason, the main loop checks
+ cleanup_module_in_progress, and sets cleanup_module_main_loop_done
+ to let cleanup_module know that it is done, and cleanup may proceed
+ safely.
+
+ */
 
 void
 cleanup_signal(s32 sig)
 {
+  // TODO: Is the new circumstance analogous to old? Do we keep same
+  // waiting architecture here? Would rt_task_delete() do the trick?
     s32 ret;
 
     dpr(3, "cleanup_module\n");
@@ -141,12 +150,12 @@ cleanup_signal(s32 sig)
     shmdt(moh);
     shmdt(dyncmp_var);
 
-    shmctl(ob_shmid, IPC_RMID, NULL);
-    shmctl(rob_shmid, IPC_RMID, NULL);
-    shmctl(daq_shmid, IPC_RMID, NULL);
-    shmctl(prev_shmid, IPC_RMID, NULL);
-    shmctl(game_shmid, IPC_RMID, NULL);
-    shmctl(moh_shmid, IPC_RMID, NULL);
+    shmctl(ob_shmid,     IPC_RMID, NULL);
+    shmctl(rob_shmid,    IPC_RMID, NULL);
+    shmctl(daq_shmid,    IPC_RMID, NULL);
+    shmctl(prev_shmid,   IPC_RMID, NULL);
+    shmctl(game_shmid,   IPC_RMID, NULL);
+    shmctl(moh_shmid,    IPC_RMID, NULL);
     shmctl(dyncmp_shmid, IPC_RMID, NULL);
     syslog(LOG_INFO,"Stopping robot realtime process.\n");
     dpr(0,"Stopping robot realtime process.\n");
@@ -246,17 +255,18 @@ main(void)
       exit(EXIT_FAILURE);
     }
 
-    if (0) /* This causes trouble, I believe */
+    // FVV Here we close all file descriptors. Note that when closing 0 and 1 that means closing standard output and error.
     {
       int i;
 
       for (i=getdtablesize();i>=0;--i) {
-	printf("get i=%i ",i);
+	//printf("get i=%i ",i);
 	close(i); /* close all descriptors */
-	printf("closed\n",i);
+	//printf("closed\n",i);
       }
     }
 
+    // FVV Here below we re-open the standard input/output/error, but re-pipe it to null.
     ret=open("/dev/null",O_RDWR); /* open stdin */
     dup(ret); /* stdout */
     dup(ret); /* stderr */
@@ -279,7 +289,6 @@ main(void)
       pthread_sigmask(SIG_BLOCK, &signalSet, NULL);
     }
 
-    syslog(LOG_INFO,"rt_task_spawn.\n");
 
     // TODO: delete ret = pthread_create(&thread, &attr, start_routine, 0);
     // TODO: delete pthread_wakeup_np(thread);
@@ -303,8 +312,12 @@ main(void)
     return 0;
 }
 
-// adjust the tick rate, called by start_routine and restart_init
-// last reworked tick code 5/2007
+
+
+
+/// adjust the tick rate based on the desired loop frequency (in Hz)
+/// called by start_routine and restart_init
+/// last reworked tick code 5/2007
 
 void
 set_Hz ()
@@ -316,9 +329,9 @@ set_Hz ()
     ob->rate = 1.0 / ob->Hz;  // 0.005
 
     if (ob->Hz < 30) {
-	    ob->ticks30Hz = 1;
+      ob->ticks30Hz = 1;
     } else {
-	    ob->ticks30Hz = ob->Hz / 30;
+      ob->ticks30Hz = ob->Hz / 30;
     }
 }
 
@@ -775,20 +788,20 @@ do_time_before_sample()
 	ob->times.ns_max_delta_tick = ob->times.ns_delta_tick;
 }
 
-// add an error code to the rolling ob->error
+/// add an error code to the rolling ob->error
 void
 do_error(u32 code)
 {
-	u32 mod, ai;
-
-	// early errors are spurious.
-	if (ob->i < 10) return;
-
-	mod = ARRAY_SIZE(ob->errori);
-	ob->errorindex = ai = ob->nerrors % mod;
-	ob->errori[ai] = ob->i;
-	ob->errorcode[ai] = code;
-	ob->nerrors++;
+  u32 mod, ai;
+  
+  // early errors are spurious.
+  if (ob->i < 10) return;
+  
+  mod = ARRAY_SIZE(ob->errori);
+  ob->errorindex = ai = ob->nerrors % mod;
+  ob->errori[ai] = ob->i;
+  ob->errorcode[ai] = code;
+  ob->nerrors++;
 }
 
 /// check_late - see if the sample has taken longer than expected.
@@ -796,65 +809,67 @@ do_error(u32 code)
 void
 check_late()
 {
-    dpr(3, "check_late\n");
-    dpr(5, "check_late: assert not busy\n");
-    // is busy still set?
-    if (ob->busy != 0 && ob->i > 10) {
-	dpr(0, "check_late: error: we're late.  time = %d ms, i = %d ticks\n",
-			ob->times.ms_since_start, ob->i);
-	dpr(0, "\tsample took %d ns, tick took %d ns\n",
-	    ob->times.ns_delta_sample, ob->times.ns_delta_tick);
-
-	do_error(ERR_MAIN_LATE_TICK);
-
-	// stop or continue...
-    }
-
-    // is the tick too slow, i.e., if the thresh is 120 for a 200Hz (5ms) tick,
-    // did the tick take > 6ms?
-    if (ob->times.ns_delta_tick >
-	(ob->times.ns_delta_tick_thresh * ob->irate / 100)) {
-	dpr(0, "check_late: warning: slow tick.  time = %d ms, i = %d ticks\n",
-			ob->times.ms_since_start, ob->i);
-	dpr(0, "\ttick took %d ns > threshold (%d%%)\n",
-	    ob->times.ns_delta_tick, ob->times.ns_delta_tick_thresh);
-
-	do_error(WARN_MAIN_SLOW_TICK);
-
-	// stop or continue...
-    }
-
-    // is the tick too fast, i.e., if the thresh is 120 for a 200Hz (5ms) tick,
-    // did the tick take < 4ms?
-    if (ob->times.ns_delta_tick <
-	((100 - (ob->times.ns_delta_tick_thresh - 100)) * ob->irate / 100)) {
-	dpr(0, "check_late: warning: fast tick.  time = %d ms, i = %d ticks\n",
-			ob->times.ms_since_start, ob->i);
-	dpr(0, "\ttick took %d ns < lower threshold (%d%%)\n",
-	    ob->times.ns_delta_tick, 200 - ob->times.ns_delta_tick_thresh);
-
-	do_error(WARN_MAIN_FAST_TICK);
-
-    }
-
-    // else {
-    // dpr(5, "check_late: we're on time.\n");
-    // }
-
-    // we increment it here.  if it ever gets to be >1,
-    // something is really wrong.
-    ob->busy++;
+  dpr(3, "check_late\n");
+  dpr(5, "check_late: assert not busy\n");
+  // is busy still set?
+  if (ob->busy != 0 && ob->i > 10) {
+    dpr(0, "check_late: error: we're late.  time = %d ms, i = %d ticks\n",
+	ob->times.ms_since_start, ob->i);
+    dpr(0, "\tsample took %d ns, tick took %d ns\n",
+	ob->times.ns_delta_sample, ob->times.ns_delta_tick);
+    
+    do_error(ERR_MAIN_LATE_TICK);
+    
+    // stop or continue...
+  }
+  
+  // is the tick too slow, i.e., if the thresh is 120 for a 200Hz (5ms) tick,
+  // did the tick take > 6ms?
+  if (ob->times.ns_delta_tick >
+      (ob->times.ns_delta_tick_thresh * ob->irate / 100)) {
+    dpr(0, "check_late: warning: slow tick.  time = %d ms, i = %d ticks\n",
+	ob->times.ms_since_start, ob->i);
+    dpr(0, "\ttick took %d ns > threshold (%d%%)\n",
+	ob->times.ns_delta_tick, ob->times.ns_delta_tick_thresh);
+    
+    do_error(WARN_MAIN_SLOW_TICK);
+    
+    // stop or continue...
+  }
+  
+  // is the tick too fast, i.e., if the thresh is 120 for a 200Hz (5ms) tick,
+  // did the tick take < 4ms?
+  if (ob->times.ns_delta_tick <
+      ((100 - (ob->times.ns_delta_tick_thresh - 100)) * ob->irate / 100)) {
+    dpr(0, "check_late: warning: fast tick.  time = %d ms, i = %d ticks\n",
+	ob->times.ms_since_start, ob->i);
+    dpr(0, "\ttick took %d ns < lower threshold (%d%%)\n",
+	ob->times.ns_delta_tick, 200 - ob->times.ns_delta_tick_thresh);
+    
+    do_error(WARN_MAIN_FAST_TICK);
+    
+  }
+  
+  // else {
+  // dpr(5, "check_late: we're on time.\n");
+  // }
+  
+  // we increment it here.  if it ever gets to be >1,
+  // something is really wrong.
+  ob->busy++;
 }
 
-// no longer called by main loop, since we call read_sensors even
-// when we are paused.
 
-/// clear_sensors - read the sensors a few times, to clear them.
-// read_sensors and compute_controls must both be called
-// to prime filters.
-// zero torques too, can't hurt.
-// periodic thread must already exist.
-//
+
+/** no longer called by main loop, since we call read_sensors even
+ * when we are paused.
+ *
+ * clear_sensors - read the sensors a few times, to clear them.
+ *  read_sensors and compute_controls must both be called
+ *  to prime filters.
+ *  zero torques too, can't hurt.
+ *periodic thread must already exist.
+ */
 void
 clear_sensors()
 {
@@ -1068,6 +1083,9 @@ call_compute_controls(void)
 	func.compute_controls();
 }
 
+
+
+
 /// call_check_safety - make sure that new control outputs are safe
 
 void
@@ -1081,6 +1099,8 @@ call_check_safety(void)
 	func.check_safety();
 }
 
+
+
 /// call_write_actuators - apply transformation data to reposition arm
 
 void
@@ -1090,6 +1110,8 @@ call_write_actuators(void)
     if (func.write_actuators)
 	func.write_actuators();
 }
+
+
 
 /// call_write_log - write sample data to fifo for recording to disk
 
@@ -1113,6 +1135,8 @@ call_write_log()
     }
 }
 
+
+
 /// call_write_display - write variables used for periodic display update
 
 void
@@ -1123,6 +1147,8 @@ call_write_display()
     if (func.write_display)
 	func.write_display();
 }
+
+
 
 
 /// do_time_after_sample - do housekeeping after sample
@@ -1144,6 +1170,8 @@ do_time_after_sample()
 		   (ob->times.ns_delta_sample_thresh * ob->irate / 100)) {
 	dpr(0, "after_sample: warning: slow sample.  time = %d ms, i = %d ticks\n",
 			ob->times.ms_since_start, ob->i);
+	dpr(0, "\t t0 = %d  t1 = %d \n",
+	    ob->times.time_before_sample,  ob->times.time_after_sample );
 	dpr(0, "\tsample took %d ns, > threshold (%d%%)\n",
 	    ob->times.ns_delta_sample,
 	    ob->times.ns_delta_sample_thresh);
@@ -1159,9 +1187,15 @@ do_time_after_sample()
 void
 wait_for_tick()
 {
-    s32 ret;
-    ret = rt_task_wait_period(NULL); // FVV Added argument
+  s32 ret;
+  ret = rt_task_wait_period(NULL); // FVV Added argument
+  if (ret != 0) {
+    dpr(0, "rt_task_wait_period returned %d instead of 0.", ret);
+  }
 }
+
+
+
 
 // sanity tests, run from console command 't'
 
@@ -1187,6 +1221,8 @@ main_tests(void)
     dpr_flush();
 
 }
+
+
 
 // initialize constant array
 

@@ -50,27 +50,28 @@ static s8 *dprbufp = dprbuf;
 static void dpr1(const s8 *, ...);
 static void dpr2(const s8 *, va_list);
 
-// print debug messages
-// if level > ob->debug_level
-// save them up in dprbuf until they are dpr_flushed.
-// it's easier to use helper functions, so that dpr can "call itself."
 
-// note that we can't use sprintf in the kernel, hmmm.
+/**
+ * print debug messages
+ * if level > ob->debug_level
+ * save them up in dprbuf until they are dpr_flushed.
+ * it's easier to use helper functions, so that dpr can "call itself."
+ */
 
 void
 dpr(s32 level, const s8 *format, ...)
 {
     va_list args;
     
-    /*
     if (level) {
-    // FVV commented these next lines as it seems to cause a segfault
+      // FVV commented these next lines as it seems to cause a segfault
       if (level > ob->debug_level)
 	return;
       if ((level >= 1) && (ob->i % ob->Hz != 0))
 	return;
     }
-    */
+    
+    // note that we can't use sprintf in the kernel, hmmm.
     if ((dprbufp - dprbuf) > (FIFOLEN - 1024)) {
 	dpr1("\n<<dprbuf almost full>>\n");
 	dpr_flush();

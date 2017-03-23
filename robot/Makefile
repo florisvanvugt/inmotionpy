@@ -31,6 +31,12 @@ OBJS = main.o uei.o fifo.o math.o \
 
 default: all
 
+doc:
+	doxygen doxygen.conf
+
+run: all
+	sudo ./robot
+
 all: robot field_addresses.txt
 
 shm:	shm.c cmds.h $(INCS)
