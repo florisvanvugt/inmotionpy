@@ -145,9 +145,9 @@ fifo_input_handler(void)
     // TODO: delete     ret = rtf_get(fifo, ob->ci_fifo_buffer, ob->fifolen);
     ret = rt_pipe_read(&(ob->cififo), &ob->ci_fifo_buffer, ob->fifolen, TM_NONBLOCK);
     if (ret != -EWOULDBLOCK && ret < 0) {
-      dpr(0, "%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
+      dpr(0,          "%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
       syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
-      cleanup_signal(0);
+      cleanup_signal(0);  // Stop functioning, something went wrong.
     }
 
     // append null to string

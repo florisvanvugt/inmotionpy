@@ -207,6 +207,69 @@ Mar 23 16:45:17 suzuki imt-robot[6483]: Exited the child.
 Somehow Xenomai seems to have unilaterally decided to clean up the pipes? *UPDATE* No, this seems incorrect. When I changed the `POOLSIZE` to equal `FIFOLEN` in `fifo.c` then now the Xenomai clean up messages appear *after* the child has exited.
 
 
+```
+Mar 23 17:14:38 suzuki imt-robot[7131]: -- Initialising the robot.
+Mar 23 17:14:38 suzuki imt-robot[7131]: Cleaned up FIFOs (cleanup_fifos)
+Mar 23 17:14:38 suzuki imt-robot[7131]: init_fifos: done
+Mar 23 17:14:38 suzuki imt-robot[7131]: Starting robot realtime process.
+Mar 23 17:14:38 suzuki imt-robot[7131]: Process id of child process 7132 
+Mar 23 17:14:38 suzuki imt-robot[7132]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:14:38 suzuki imt-robot[7132]: Cleaned up FIFOs (cleanup_fifos)
+Mar 23 17:14:38 suzuki imt-robot[7132]: Stopping robot realtime process (got signal 0).
+Mar 23 17:14:38 suzuki imt-robot[7132]: Exited the child.
+Mar 23 17:14:38 suzuki kernel: [ 5819.093077] Xenomai: native: cleaning up pipe "crob_in" (ret=0).
+Mar 23 17:14:38 suzuki kernel: [ 5819.093089] Xenomai: native: cleaning up pipe "crob_out" (ret=0).
+Mar 23 17:14:38 suzuki kernel: [ 5819.093118] Xenomai: native: cleaning up pipe "crob_error" (ret=0).
+Mar 23 17:14:38 suzuki kernel: [ 5819.093125] Xenomai: native: cleaning up pipe "crob_cmd_in" (ret=0).
+Mar 23 17:14:38 suzuki kernel: [ 5819.093133] Xenomai: native: cleaning up pipe "crob_display_out" (ret=0).
+Mar 23 17:14:38 suzuki kernel: [ 5819.093140] Xenomai: native: cleaning up pipe "crob_tick" (ret=0).
+```
 
 
+However, the `-3` error code makes no sense: I don't understand where it comes from. It is not part of the error code list for `rt_pipe_read()`. 
 
+In a wave of desperation, if I let the robot continue in spite of this error:
+
+```
+Mar 23 17:27:19 suzuki kernel: [ 6580.299174] Xenomai: native: cleaning up pipe "crob_error" (ret=0).
+Mar 23 17:27:19 suzuki kernel: [ 6580.299187] Xenomai: native: cleaning up pipe "crob_cmd_in" (ret=0).
+Mar 23 17:27:19 suzuki kernel: [ 6580.299194] Xenomai: native: cleaning up pipe "crob_display_out" (ret=0).
+Mar 23 17:27:19 suzuki kernel: [ 6580.299201] Xenomai: native: cleaning up pipe "crob_tick" (ret=0).
+Mar 23 17:27:19 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:20  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:20 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:27:25 suzuki rsyslogd-2177: imuxsock lost 1921 messages from pid 7517 due to rate-limiting
+Mar 23 17:27:25 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:25  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:25 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:27:31 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:27:31 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:31  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:31 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:27:37 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:27:37 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:37  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:37 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:27:43 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:27:43 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:43  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:43 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:27:49 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:27:49 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:49  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:49 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:27:55 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:27:55 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:27:55  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:27:55 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:28:01 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:28:01 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:28:01  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:28:01 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:28:07 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:28:07 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 17:28:07  imt-robot[7517]: last message repeated 199 times
+Mar 23 17:28:07 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 7517 due to rate-limiting
+Mar 23 17:28:13 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
+Mar 23 17:28:13 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
+```

@@ -67,8 +67,10 @@ dpr(s32 level, const s8 *format, ...)
       // FVV commented these next lines as it seems to cause a segfault
       if (level > ob->debug_level)
 	return;
-      if ((level >= 1) && (ob->i % ob->Hz != 0))
-	return;
+      if (level >= 1) {
+	if (ob->i % ob->Hz != 0)
+	  return;
+      }
     }
     
     // note that we can't use sprintf in the kernel, hmmm.
