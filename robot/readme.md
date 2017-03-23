@@ -273,3 +273,7 @@ Mar 23 17:28:07 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 
 Mar 23 17:28:13 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
 Mar 23 17:28:13 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
 ```
+
+
+**NOTE** Also, the Nixsys computer which doesn't have the PowerDAQ board gives the exact same sequence of events (and same error message).
+
