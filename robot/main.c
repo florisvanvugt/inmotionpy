@@ -186,6 +186,15 @@ main(void)
     // init some variables
     main_init();
 
+
+    /* 
+       FVV - My understanding is that most of what follows below is
+       to turn this process into a daemon, that is, to make it an
+       independent-running task that is not closed when you close
+       the terminal from which you run it, and that returns control
+       to that terminal.
+    */
+
     // pthread_attr_t attr;
 
     openlog("imt-robot",LOG_PID,LOG_USER);
@@ -231,14 +240,9 @@ main(void)
 	syslog(LOG_INFO,"Process id of child process %d \n", pid);
 	printf("process_id of child process %d \n", pid);
 	// return success in exit status
-	exit(0);
+	exit(EXIT_SUCCESS);
       }
-    //exit(EXIT_SUCCESS);
-    //    }
 
-    //ret=fork();
-    //if (ret<0) exit(1); /* fork error */
-    //if (ret>0) exit(0); /* parent exits */
 
     /* child (daemon) continues */
 
@@ -255,7 +259,7 @@ main(void)
       exit(EXIT_FAILURE);
     }
 
-    if (0)
+    if (0) /* This causes trouble, I believe */
     {
       int i;
 
@@ -450,14 +454,14 @@ main_init(void)
       cleanup_signal(0);
     }
 
-    memset(ob, 0, sizeof(Ob));
-    memset(rob, 0, sizeof(Robot));
-    memset(daq, 0, sizeof(Daq));
-    memset(&func, 0, sizeof(Func));
-    memset(prev, 0, sizeof(Prev));
-    memset(game, 0, sizeof(Game));
-    memset(moh, 0, sizeof(Moh));
-    memset(dyncmp_var, 0, sizeof(Dyncmp_var));
+    memset(ob,        0, sizeof(Ob));
+    memset(rob,       0, sizeof(Robot));
+    memset(daq,       0, sizeof(Daq));
+    memset(&func,     0, sizeof(Func));
+    memset(prev,      0, sizeof(Prev));
+    memset(game,      0, sizeof(Game));
+    memset(moh,       0, sizeof(Moh));
+    memset(dyncmp_var,0, sizeof(Dyncmp_var));
 
     // set up some daq-> pointers
     uei_ptr_init();
@@ -471,7 +475,7 @@ main_init(void)
     ob->debug_level = 5;  // FVV see various calls to dpr(level,...) to see which kind of debug info you get
     ob->busy = 0;
 
-	// Sampling frequency is specifield as 400 Hz
+    // Sampling frequency is specifield as 400 Hz
     ob->Hz = 400;
     ob->butcutoff = 0;
 
@@ -510,7 +514,7 @@ main_init(void)
     rob->offset.x = 0;
     rob->offset.y = -0.65;
 	
-	moh->counter = 0.0;
+    moh->counter = 0.0;
 
 //    wrist_init();
 //    ankle_init();
@@ -737,8 +741,9 @@ main_loop(void)
     // (2^31)/(1000*60*60*24) == 24.85 days.
     for (;;) {
         if (ob->quit) {
-	    cleanup_module_main_loop_done = 1;
-	    cleanup_signal(0);
+	  syslog(LOG_INFO,"ob->quit found in main loop\n");
+	  cleanup_module_main_loop_done = 1;
+	  cleanup_signal(0);
 	}
 	// do no i/o, shmem.  see cleanup_module().
 	if (cleanup_module_in_progress) {
