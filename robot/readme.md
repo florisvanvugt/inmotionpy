@@ -163,3 +163,50 @@ RTD|      0.964|      1.026|      1.830|       0|     0|      0.695|      3.048
 ^C---|-----------|-----------|-----------|--------|------|-------------------------
 RTS|      0.695|      1.033|      3.048|       0|     0|    00:00:39/00:00:39
 ```
+
+
+
+
+
+
+
+## Why the robot process stops
+
+I think I found the reason why the robot process kills itself. From within `fifo.c` it appears that `rt_pipe_read()` experiences an error and then calls `cleanup_signal(0)` which quits the robot.
+This is the error message corresponding to this (from `/var/log/syslog`), when I added the call:
+
+```
+Mar 23 16:19:16 suzuki imt-robot[6101]: fifo.c:145 -3 return from rt_pipe_read()
+```
+
+The error code is part of [Linux System Errors](http://www-numi.fnal.gov/offline_software/srt_public_context/WebDocs/Errors/unix_system_errors.html).
+
+
+
+
+The anatomy of what happens (from `/var/log/syslog`):
+
+```
+Mar 23 16:45:17 suzuki imt-robot[6482]: -- Initialising the robot.
+Mar 23 16:45:17 suzuki imt-robot[6482]: Cleaned up FIFOs (cleanup_fifos)
+Mar 23 16:45:17 suzuki imt-robot[6482]: init_fifos: done
+Mar 23 16:45:17 suzuki imt-robot[6482]: Starting robot realtime process.
+Mar 23 16:45:17 suzuki imt-robot[6482]: Process id of child process 6483 
+Mar 23 16:45:17 suzuki kernel: [ 4058.439180] Xenomai: native: cleaning up pipe "crob_in" (ret=0).
+Mar 23 16:45:17 suzuki kernel: [ 4058.439197] Xenomai: native: cleaning up pipe "crob_out" (ret=0).
+Mar 23 16:45:17 suzuki kernel: [ 4058.439243] Xenomai: native: cleaning up pipe "crob_error" (ret=0).
+Mar 23 16:45:17 suzuki kernel: [ 4058.439249] Xenomai: native: cleaning up pipe "crob_cmd_in" (ret=0).
+Mar 23 16:45:17 suzuki kernel: [ 4058.439255] Xenomai: native: cleaning up pipe "crob_display_out" (ret=0).
+Mar 23 16:45:17 suzuki kernel: [ 4058.439261] Xenomai: native: cleaning up pipe "crob_tick" (ret=0).
+Mar 23 16:45:17 suzuki imt-robot[6483]: fifo.c:149 -3 return from rt_pipe_read()
+Mar 23 16:45:17 suzuki imt-robot[6483]: Cleaned up FIFOs (cleanup_fifos)
+Mar 23 16:45:17 suzuki imt-robot[6483]: Stopping robot realtime process (got signal 0).
+Mar 23 16:45:17 suzuki imt-robot[6483]: Exited the child.
+```
+
+Somehow Xenomai seems to have unilaterally decided to clean up the pipes? *UPDATE* No, this seems incorrect. When I changed the `POOLSIZE` to equal `FIFOLEN` in `fifo.c` then now the Xenomai clean up messages appear *after* the child has exited.
+
+
+
+
+

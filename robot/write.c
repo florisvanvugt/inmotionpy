@@ -62,8 +62,8 @@ void
 dpr(s32 level, const s8 *format, ...)
 {
     va_list args;
-    
-    if (level) {
+
+    if (level!=NULL) {
       // FVV commented these next lines as it seems to cause a segfault
       if (level > ob->debug_level)
 	return;
@@ -83,6 +83,9 @@ dpr(s32 level, const s8 *format, ...)
     va_end(args);
 }
 
+
+
+
 // dpr1 helper function takes a normal arglist
 
 static void
@@ -97,7 +100,9 @@ dpr1(const s8 *format, ...)
     va_end(args);
 }
 
-// dpr2 helper function takes a va_list
+
+
+/// dpr2 helper function takes a va_list
 
 static void
 dpr2(const s8 *format, va_list args)
@@ -108,7 +113,9 @@ dpr2(const s8 *format, va_list args)
     dprbufp += len;
 }
 
-// clear the dprbuf
+
+
+/// clear the dprbuf
 
 void
 dpr_clear()
@@ -117,7 +124,14 @@ dpr_clear()
     dprbuf[0] = (intptr_t) NULL; // otherwise throws pointer conversion error
 }
 
-// write out the dprbuf
+
+
+/**
+ * @brief write out the buffer for messages (dprbuf)
+ *
+ * This will call rt_pipe_write and push any messages to the corresponding /dev/rtpX output
+ * device pipe.
+ */
 
 void
 dpr_flush()

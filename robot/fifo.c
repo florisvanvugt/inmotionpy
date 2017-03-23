@@ -18,7 +18,7 @@
 // TODO: delete // uses the traditional stdin/stdout/stderr numbering, with 3 for command-in
 
 
-#define POOLSIZE 0
+#define POOLSIZE FIFOLEN
 
 void
 init_fifos(void)
@@ -88,7 +88,7 @@ init_fifos(void)
     // cleanup_fifos uses this
     // TODO: delete ob->nfifos = ob->tcfifo + 1;
 
-    dpr(5, "init_fifos: done\n");
+    syslog(LOG_INFO, "init_fifos: done\n");
 
 }
 
@@ -126,12 +126,16 @@ cleanup_fifos(void)
     if (ret < 0) {
       dpr(0, "%s:%d %d return from rt_pipe_delete()\n", __FILE__, __LINE__, ret);
     }
+
+    syslog(LOG_INFO, "Cleaned up FIFOs (cleanup_fifos)\n");
+
 }
 
-// fifo_input_handler
-// gets invoked when the command fifo has input ready.
-//
-// overwrite previous buffer for now.  (does not append)
+
+/// fifo_input_handler
+/// gets invoked when the command fifo has input ready.
+///
+/// overwrite previous buffer for now.  (does not append)
 
 void
 fifo_input_handler(void)
@@ -142,6 +146,7 @@ fifo_input_handler(void)
     ret = rt_pipe_read(&(ob->cififo), &ob->ci_fifo_buffer, ob->fifolen, TM_NONBLOCK);
     if (ret != -EWOULDBLOCK && ret < 0) {
       dpr(0, "%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
       cleanup_signal(0);
     }
 

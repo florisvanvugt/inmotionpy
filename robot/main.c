@@ -83,16 +83,15 @@ static u32 cleanup_module_main_loop_done = 0;
 
 
 /**
-   @brief cleanup_signal - deletes thread
-
- cleanup_module may be called when the main loop is busy.
- if this happens, we must ensure that data structures are not deleted
- while they are in use.  for this reason, the main loop checks
- cleanup_module_in_progress, and sets cleanup_module_main_loop_done
- to let cleanup_module know that it is done, and cleanup may proceed
- safely.
-
- */
+  @brief cleanup_signal - stops our current process, quitting the robot
+  
+  cleanup_module may be called when the main loop is busy.
+  if this happens, we must ensure that data structures are not deleted
+  while they are in use.  for this reason, the main loop checks
+  cleanup_module_in_progress, and sets cleanup_module_main_loop_done
+  to let cleanup_module know that it is done, and cleanup may proceed
+  safely.
+*/
 
 void
 cleanup_signal(s32 sig)
@@ -101,7 +100,7 @@ cleanup_signal(s32 sig)
   // waiting architecture here? Would rt_task_delete() do the trick?
     s32 ret;
 
-    dpr(3, "cleanup_module\n");
+    dpr(3, "cleanup_module because of signal %d\n",sig);
 
     if (ob->quit) {
         rt_task_sleep(100);
@@ -124,7 +123,7 @@ cleanup_signal(s32 sig)
     write_zero_torque();
 
     cleanup_devices();
-    cleanup_fifos();
+    cleanup_fifos();   /* Stops communication through pipes (e.g. dpr() logging) */
 
     // TODO: delete pthread_delete_np(thread);
     ret = rt_task_inquire(NULL, &thread_info);
@@ -157,28 +156,37 @@ cleanup_signal(s32 sig)
     shmctl(game_shmid,   IPC_RMID, NULL);
     shmctl(moh_shmid,    IPC_RMID, NULL);
     shmctl(dyncmp_shmid, IPC_RMID, NULL);
-    syslog(LOG_INFO,"Stopping robot realtime process.\n");
+    syslog(LOG_INFO,"Stopping robot realtime process (got signal %d).\n",sig);
     dpr(0,"Stopping robot realtime process.\n");
 
     ret = rt_task_inquire(NULL, &thread_info);
     if (!strcmp(thread_info.name, ROBOT_LOOP_THREAD_NAME)) {
         // Exit if we are the child
+      syslog(LOG_INFO,"Exited the child.\n",sig);
 	exit(0);
     }
 }
 
 
-/// main - 
-///
-/// inits some variables
-/// enables floating point 
-/// and creates thread with start_routine.
 
+
+/**
+ * main - 
+ *
+ * - inits some variables
+ * - enables floating point 
+ * - and creates thread with start_routine.
+ */
 s32
 main(void)
 {
     s32 ret;
 
+    /* Open log functionality */
+    openlog("imt-robot",LOG_PID,LOG_USER);
+    setlogmask(LOG_UPTO(LOG_INFO));
+    syslog(LOG_INFO, "-- Initialising the robot.\n");
+    
     // init some variables
     main_init();
 
@@ -193,12 +201,10 @@ main(void)
 
     // pthread_attr_t attr;
 
-    openlog("imt-robot",LOG_PID,LOG_USER);
-    setlogmask(LOG_UPTO(LOG_INFO));
     syslog(LOG_INFO, "Starting robot realtime process.\n");
     dpr(0,"Starting robot realtime process.\n");
 
-    // install signal handler
+    // install signal handler - this allows us to catch signals and basically quit ourselves safely when they come.
     ret = (s32)signal(SIGTERM, cleanup_signal);
     if (ret == (s32)SIG_ERR) {
       printf( "%s:%d signal() returned SIG_ERR\n", __FILE__, __LINE__);
@@ -212,9 +218,10 @@ main(void)
       printf("%s:%d signal() returned SIG_ERR\n", __FILE__, __LINE__);
     }
 
-    /* Want to be a daemon.  As suggested by
+
+    /* We want to turn ourselves into a daemon.  As suggested by
        http://www.enderunix.org/docs/eng/daemon.php, first step is to
-       fork.  */
+       fork. */
 
     pid_t pid;
  
@@ -353,7 +360,7 @@ start_routine(void *arg)
     // TODO: delete ob->main_thread = pthread_self();
     ob->main_thread = thread;  
 
-    // start timer
+    // start timer  (commented out by FVV because I believe this is deprecated)
     //ret = rt_timer_start(TM_ONESHOT);
     //if (ret != 0) {
     //dpr(0, "%s:%d rt_timer_start() failed, ret == %d\n", __FILE__, __LINE__, ret);
@@ -477,7 +484,7 @@ main_init(void)
     ob->samplenum = 0;
     ob->total_samples = 0;
     //ob->debug_level = 0;
-    ob->debug_level = 5;  // FVV see various calls to dpr(level,...) to see which kind of debug info you get
+    ob->debug_level = 6;  // FVV see various calls to dpr(level,...) to see which kind of debug info you get
     ob->busy = 0;
 
     // Sampling frequency is specifield as 400 Hz
@@ -572,9 +579,6 @@ main_init(void)
     ob->pi = 4.0 * atan(1.0);
 
 
-    // set default
-    ob->fvv_trial_phase = -1;
-
     // set system flag
 #ifdef _ISMCGILL
     ob->mkt_isMcGill = 1;
@@ -662,22 +666,33 @@ shm_copy_commands(void)
   }
 }
 
-/// one 200Hz sample - this is where the action is.
-/// this is where the actuators are written
-/// and the logging is done.
-///
-/// the work that happens here is:
-/// check exit conditions (late and quit)
-/// read sensors
-/// read references
-/// compute control outputs
-/// check safety
-/// write actuators
-/// write log data
-/// wait for next tick
-///
-/// if ob->paused is set, sampling is done,
-/// but no actuators are written.
+
+
+
+
+
+
+/**
+ * @brief Process one sample (one tick of the clock)
+ *
+ * one 200Hz sample - this is where the action is.
+ * this is where the actuators are written
+ * and the logging is done.
+ *
+ * the work that happens here is:
+ *
+ * - check exit conditions (late and quit)
+ * - read sensors
+ * - read references
+ * - compute control outputs
+ * - check safety
+ * - write actuators
+ * - write log data
+ * - wait for next tick
+ *
+ * if ob->paused is set, sampling is done,
+ * but no actuators are written.
+*/
 
 static void
 one_sample(void) {
@@ -738,6 +753,15 @@ one_sample(void) {
     ob->i++;
 }
 
+
+
+
+
+/**
+ * @brief The main loop of the robot (will remain active until ob->quit is set)
+ *
+ */
+
 void
 main_loop(void)
 {
@@ -746,6 +770,7 @@ main_loop(void)
     // (2^31)/(1000*60*60*24) == 24.85 days.
     for (;;) {
         if (ob->quit) {
+	  dpr(4, "Quitting because ob->quit was non-zero.\n");
 	  syslog(LOG_INFO,"ob->quit found in main loop\n");
 	  cleanup_module_main_loop_done = 1;
 	  cleanup_signal(0);
