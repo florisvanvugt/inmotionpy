@@ -56,6 +56,6 @@ clean:
 tags: $(INCS) $(SRCS)
 	ctags $(INCS) $(SRCS)
 
-LINCS=-I/usr/realtime/include\
+LINCS=-I/usr/xenomai/include\
 	-I/usr/i386-glibc21-linux/include
 
