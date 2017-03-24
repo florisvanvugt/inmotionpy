@@ -148,9 +148,44 @@ dpr2(const s8 *format, va_list args)
 void
 dpr_clear()
 {
-  dprbufp = dprbuf; // Point to the beginning of the debug buffer
+  dprbufp = dprbuf;            // Point to the beginning of the debug buffer
   dprbuf[0] = (intptr_t) NULL; // otherwise throws pointer conversion error
 }
+
+
+
+
+
+
+
+
+
+
+
+
+char* buffer_to_string(s8 dprbuf[],int len) {
+
+  /*
+    char array[len+1];
+    int i;
+    for (i=0; i < len; i++)
+    array[i] = dprbuf[i];
+    array[i] = '\0';
+    char *bar = array; // make a pointer to the array
+    return bar;
+  */
+  char *array =  malloc(len+1);
+  int i;
+  for (i=0; i<len; i++) {
+    array[i]=dprbuf[i];
+  }
+  array[len]='\0'; // null termination 
+  return array;
+}
+
+
+
+
 
 
 
@@ -177,12 +212,20 @@ dpr_flush()
 
     // TODO: delete ret = rtf_put(ob->eofifo, dprbuf, len);
     ret = rt_pipe_write( &(ob->eofifo), dprbuf, len, P_NORMAL);
-    dpr_clear();
+    syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write() message of length %d\n", __FILE__, __LINE__, ret, len);
     if (ret != len) {
-      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write()\n", __FILE__, __LINE__, ret);
       fprf(&(ob->eofifo), "dpr_flush: ret = %d, len = %d\n", ret, len);
+      // Try to write the missing message to SYSLOG
+      char* buf = buffer_to_string(dprbuf,len);
+      syslog(LOG_INFO,"message that was not written: <<%s>>\n",buf);
     }
-    // usleep(100*1000);
 
+    dpr_clear();
+    // usleep(100*1000);
+    
     // fprintf(stderr, "dpr_flush: done\n");
 }
+
+
+
+    

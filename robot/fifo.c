@@ -148,12 +148,24 @@ fifo_input_handler(void)
     ret = rt_pipe_read(&(ob->cififo), &ob->ci_fifo_buffer, ob->fifolen, TM_NONBLOCK);
     if (ret != -EWOULDBLOCK && ret < 0) {
       dpr(0,          "%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
-      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read(), which I believe is -%d\n", __FILE__, __LINE__, ret, -ESRCH);
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read() which I believe is %d\n", __FILE__, __LINE__, ret, -ESRCH);
       if (ob->times.ms_since_start) {
 	//dpr1("%10d ms ",);
+	syslog(LOG_INFO,"ob->cififo %d\n", ob->cififo);
 	syslog(LOG_INFO,"time is %d ms\n", ob->times.ms_since_start);
       }
+
+      /*
+      RT_TASK_INFO thread_info;
+      ret = rt_task_inquire(NULL, &thread_info);
+      syslog(LOG_INFO,"thread_info %s status %d page faults %d",thread_info.name,thread_info.status,thread_info.pagefaults);
+      */
+      
       cleanup_signal(0);  // Stop functioning, something went wrong.
+    }
+
+    if (ret>0) {
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
     }
 
     // append null to string
@@ -164,6 +176,9 @@ fifo_input_handler(void)
     return;
 }
 
+
+
+/// Print what information was received over the FIFO input.
 void
 print_fifo_input(void)
 {
@@ -171,6 +186,9 @@ print_fifo_input(void)
 	prf(&(ob->eofifo), "\n##### fifo input: %s\n", ob->ci_fifo_buffer);
     }
 }
+
+
+
 
 /// handle_fifo_input - act on data in the command input fifo.
 ///
@@ -182,62 +200,62 @@ handle_fifo_input()
 {
     // int ret;
 
-    fifo_input_handler(); // Under RTLinux this was called by RTLinux,
+  fifo_input_handler(); // Under RTLinux this was called by RTLinux,
 			  // now we call it as part of the polling.
                           // TODO: fix this architectural history.
-    switch (ob->ci_fifo_buffer[0]) {
-    case 0:			// no input (this gets called every sample)
-	return;
-
-    case 'c':
-	dpr(0, "continuing thread...\n");
-	ob->paused = 0;
-	clear_sensors();
-	break;
-
-    case 'g':
-	dpr(0, "trying aout...\n");
-	// test_uei_write();
-	break;
-
-    case '\n':
-    case 'h':
-	dpr(0, "help:\n");
-	dpr(0, "c - continue sampling\n");
-	dpr(0, "h - this help\n");
-	dpr(0, "i - init system and restart\n");
-	dpr(0, "k - unload module (kill thread)\n");
-	dpr(0, "p - pause sampling\n");
-	dpr(0, "t - sanity test (while paused)\n");
-	dpr(0, "^C to exit iofifo\n");
-	break;
-
-    case 'i':
-	dpr(0, "init - restarting thread...\n");
-	ob->paused++;
-	main_init();
-	break;
-
-    case 'k':
-	dpr(0, "killing thread...\n");
-	// TODO: delete unload_module();
-	cleanup_signal(0);
-	break;
-
-    case 'p':
-	dpr(0, "pausing thread...\n");
-	ob->paused++;
-	break;
-
-    case 't':
-	main_tests();
-	break;
-
-    default:
-	print_fifo_input();
-	break;
-    }
-    // prompt
-    dpr(0, "\n> ");
-    ob->ci_fifo_buffer[0] = 0;
+  switch (ob->ci_fifo_buffer[0]) {
+  case 0:			// no input (this gets called every sample)
+    return;
+    
+  case 'c':
+    dpr(0, "continuing thread...\n");
+    ob->paused = 0;
+    clear_sensors();
+    break;
+    
+  case 'g':
+    dpr(0, "trying aout...\n");
+    // test_uei_write();
+    break;
+    
+  case '\n':
+  case 'h':
+    dpr(0, "help:\n");
+    dpr(0, "c - continue sampling\n");
+    dpr(0, "h - this help\n");
+    dpr(0, "i - init system and restart\n");
+    dpr(0, "k - unload module (kill thread)\n");
+    dpr(0, "p - pause sampling\n");
+    dpr(0, "t - sanity test (while paused)\n");
+    dpr(0, "^C to exit iofifo\n");
+    break;
+    
+  case 'i':
+    dpr(0, "init - restarting thread...\n");
+    ob->paused++;
+    main_init();
+    break;
+    
+  case 'k':
+    dpr(0, "killing thread...\n");
+    // TODO: delete unload_module();
+    cleanup_signal(0);
+    break;
+    
+  case 'p':
+    dpr(0, "pausing thread...\n");
+    ob->paused++;
+    break;
+    
+  case 't':
+    main_tests();
+    break;
+    
+  default:
+    print_fifo_input();
+    break;
+  }
+  // prompt
+  dpr(0, "\n> ");
+  ob->ci_fifo_buffer[0] = 0;
 }

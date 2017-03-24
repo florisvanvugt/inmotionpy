@@ -226,7 +226,7 @@ Mar 23 17:14:38 suzuki kernel: [ 5819.093140] Xenomai: native: cleaning up pipe 
 ```
 
 
-However, the `-3` error code makes no sense: I don't understand where it comes from. It is not part of the error code list for `rt_pipe_read()`. 
+However, the `-3` error code makes no sense: I don't understand where it comes from. It is not part of the error code list for `rt_pipe_read()`, but instead seems to be `ESRCH`, "no such process".
 
 In a wave of desperation, if I let the robot continue in spite of this error:
 
@@ -291,6 +291,59 @@ Mar 24 14:04:26 nixsys imt-robot[17077]: Cleaned up FIFOs (cleanup_fifos)
 Mar 24 14:04:26 nixsys imt-robot[17077]: Stopping robot realtime process (got signal 0).
 Mar 24 14:04:26 nixsys imt-robot[17077]: Exited the child.
 ```
+
+
+If I disable the function that calls the pipe read, i.e. `handle_fifo_input()` then the robot stays alive, but I have no idea whether it does what it should.
+Here is what the log looks like:
+
+```
+Mar 24 17:39:27 nixsys imt-robot[19971]: -- Initialising the robot.
+Mar 24 17:39:27 nixsys imt-robot[19971]: Cleaned up FIFOs (cleanup_fifos)
+Mar 24 17:39:27 nixsys imt-robot[19971]: init_fifos: done
+Mar 24 17:39:27 nixsys imt-robot[19971]: Starting robot realtime process.
+Mar 24 17:39:27 nixsys imt-robot[19971]: Process id of child process 19972 
+Mar 24 17:39:27 nixsys imt-robot[19972]: Pausing.
+Mar 24 17:39:27 nixsys imt-robot[19972]: write.c:215 861 return from rt_pipe_write() message of length 861
+Mar 24 17:39:28 nixsys imt-robot[19972]: write.c:215 -3 return from rt_pipe_write() message of length 431
+Mar 24 17:39:28 nixsys imt-robot[19972]: message that was not written: <<[2]       1003 ms --- one_sample: top, i = 400, samples = 0, time since start = 1003 ms#012[4]       1003 ms ----- do_time_before_sample#012[3]       1005 ms ---- check_late#012[5]       1005 ms ------ check_late: assert not busy#012[3]       1005 ms ---- call_read_sensors#012[3]       1005 ms ---- call_read_reference#012[3]       1005 ms ---- compute_controls#012[3]       1005 ms ---- call_check_safety#012[4]       1005 ms ----- do_time_after_sample#012>>
+Mar 24 17:39:29 nixsys imt-robot[19972]: write.c:215 -3 return from rt_pipe_write() message of length 431
+Mar 24 17:39:29 nixsys imt-robot[19972]: message that was not written: <<[2]       2003 ms --- one_sample: top, i = 800, samples = 0, time since start = 2003 ms#012[4]       2003 ms ----- do_time_before_sample#012[3]       2005 ms ---- check_late#012[5]       2005 ms ------ check_late: assert not busy#012[3]       2005 ms ---- call_read_sensors#012[3]       2005 ms ---- call_read_reference#012[3]       2005 ms ---- compute_controls#012[3]       2005 ms ---- call_check_safety#012[4]       2005 ms ----- do_time_after_sample#012>>
+```
+
+So these look like very respectable feedback, not giving any hint of something being wrong.
+
+
+
+
+
+## Timer issues
+
+Oddly, when I add `#include <native/timer.h>` then the robot runs only for 5ms and then fails.
+
+You can also get info about the timer from the CLI:
+
+```
+cat /proc/xenomai/timer
+```
+
+For me this returns something like this:
+
+```
+status=on:setup=78:clock=350915393776992:timerdev=lapic:clockdev=tsc
+```
+
+
+
+
+## Summary of what I learned so far
+
+The robot process is starting, but in 1-2 seconds dies. It dies by shutting itself down. What triggers this is that we can't read or write to pipes anymore, giving us error code `-3`. After this time no read or write succeeds anymore except writing to `SYSLOG`, where I see a normal looking shut down procedure.
+
+The reading is part of the code because it allows the robot to read from a command pipe where you can tell it to do things, other than having to pass through shared memory (shm). If I disable this, i.e. disable the function `handle_fifo_input();` then the robot no longer dies, but any reads or writes to any pipes still fail. Everything else seems to be working fine. When this process is running I can even go in and `wshm('quit',1)` and the robot will quit of its own accord... nice!
+
+In addition to this, there seems to be something wrong with the time stamps that we get from Xenomai. I see that the loop is set up accurately at 400 Hz and indeed the millisecond time stamps reflect this (increments of 2-3 ms on every turn). However, the timestamps in nanoseconds or microseconds appear to be off.
+
+
 
 
 

@@ -14,6 +14,7 @@
 #include <native/queue.h>
 #include <native/intr.h>
 #include <native/pipe.h>
+#include <native/timer.h>
 
 #include <sys/mman.h>
 

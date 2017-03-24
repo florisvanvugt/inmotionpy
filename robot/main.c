@@ -48,7 +48,7 @@ RT_TASK_INFO thread_info;
 						    // number of ticks
 						    // each loop.
 #define STACK_SIZE 8192
-#define STD_PRIO 1
+#define STD_PRIO 99 /* Highest RT priority */
 
 // ob storage definition
 // the ob structure contains globals
@@ -78,8 +78,8 @@ Dyncmp_var *dyncmp_var;
 void
 cleanup_devices()
 {
-	// shut down devices here.
-	uei_aio_close();
+  // shut down devices here.
+  uei_aio_close();
 }
 
 
@@ -108,6 +108,7 @@ cleanup_signal(s32 sig)
   // waiting architecture here? Would rt_task_delete() do the trick?
     s32 ret;
 
+    syslog(LOG_INFO,"cleanup_module called with signal %d\n",sig);
     dpr(3, "cleanup_module because of signal %d\n",sig);
 
     if (ob->quit) {
@@ -138,7 +139,8 @@ cleanup_signal(s32 sig)
     if (strcmp(thread_info.name, ROBOT_LOOP_THREAD_NAME)) {
         // Don't delete ourself (if we are the child thread). Only do
         // this if we got a signal in parent thread.
-        rt_task_delete(&thread);
+      syslog(LOG_INFO,"Deleting thread.\n", __FILE__, __LINE__);
+      rt_task_delete(&thread);
     }
 
     //rt_timer_stop();
@@ -166,6 +168,7 @@ cleanup_signal(s32 sig)
     shmctl(game_shmid,   IPC_RMID, NULL);
     shmctl(moh_shmid,    IPC_RMID, NULL);
     shmctl(dyncmp_shmid, IPC_RMID, NULL);
+
     syslog(LOG_INFO,"Stopping robot realtime process (got signal %d).\n",sig);
     //dpr(0,"Stopping robot realtime process.\n");  // Can't do this because ob is now detached
 
@@ -173,7 +176,7 @@ cleanup_signal(s32 sig)
     if (!strcmp(thread_info.name, ROBOT_LOOP_THREAD_NAME)) {
         // Exit if we are the child
       syslog(LOG_INFO,"Exited the child.\n",sig);
-	exit(0);
+      exit(0);
     }
 }
 
@@ -275,10 +278,10 @@ main(void)
     // FVV Here we close all file descriptors. Note that when closing 0 and 1 that means closing standard output and error.
     {
       int i;
-
+      
       for (i=getdtablesize();i>=0;--i) {
 	//printf("get i=%i ",i);
-	close(i); /* close all descriptors */
+	close(i); // close all descriptors
 	//printf("closed\n",i);
       }
     }
@@ -311,6 +314,8 @@ main(void)
     // TODO: delete pthread_wakeup_np(thread);
     ret = rt_task_spawn(&thread, ROBOT_LOOP_THREAD_NAME, STACK_SIZE, STD_PRIO, 0, &start_routine, NULL);
 
+    dpr(4, "main: rt_task_spawn completed.\n");
+    
     { // Now that child is spawned, set signals so we will get them.
       sigset_t  signalSet;
     
@@ -321,11 +326,13 @@ main(void)
       pthread_sigmask(SIG_UNBLOCK, &signalSet, NULL);
     }
 
-    pause();
+    syslog(LOG_INFO,"Pausing.\n", pid);
+
+    pause(); // stuff coming after this probably will not happen
 
     // fflush(NULL);  // TODO: move to someplace where this executes
 
-    dpr(4, "main: return\n");
+    syslog(LOG_INFO,"main() returned.\n", pid);
     return 0;
 }
 
@@ -368,13 +375,17 @@ start_routine(void *arg)
 
     dpr(3, "start_routine: top of thread, %d Hz, i.e. %d ns\n", ob->Hz, ob->irate);
     // TODO: delete ob->main_thread = pthread_self();
-    ob->main_thread = thread;  
+    ob->main_thread = thread;
 
     // start timer  (commented out by FVV because I believe this is deprecated)
     //ret = rt_timer_start(TM_ONESHOT);
-    //if (ret != 0) {
-    //dpr(0, "%s:%d rt_timer_start() failed, ret == %d\n", __FILE__, __LINE__, ret);
-    //}
+
+    /*
+    ret = rt_timer_set_mode(TM_ONESHOT); 
+    if (ret != 0) {
+      dpr(0, "%s:%d rt_timer_start() failed, ret == %d\n", __FILE__, __LINE__, ret);
+    }
+    */
     
     ret = rt_task_set_periodic(NULL, TM_NOW, ob->irate);
     if (ret != 0) {
@@ -599,21 +610,23 @@ main_init(void)
     dpr(3, "return from main_init\n");
 }
 
-// do init after calibration file is read
-// for stuff like starting boards.
+
+/// do init after calibration file is read
+/// for stuff like starting boards.
 
 void
 do_init(void)
 {
-    user_init();
-    sensact_init();
-    uei_aio_init();
-    isa_ft_init();
-    // this is no longer necessary since we read sensors
-    // even if we are paused.
-    // clear_sensors();
-    ob->didinit = 1;
-    ob->doinit = 0;
+  syslog(LOG_INFO, "do_init()");
+  user_init();
+  sensact_init();
+  uei_aio_init();
+  isa_ft_init();
+  // this is no longer necessary since we read sensors
+  // even if we are paused.
+  // clear_sensors();
+  ob->didinit = 1;
+  ob->doinit = 0;
 }
 
 // we get here because ob->restart.go was set.
@@ -623,54 +636,59 @@ do_init(void)
 void
 restart_init(void)
 {
-    hrtime_t t;
-
-    if (ob->restart.Hz < 1) {
-	ob->restart.go = 0;
-	return;
-    }
-
-    t = rt_timer_tsc2ns(rt_timer_tsc());
-    ob->times.time_before_last_sample = t;
-    ob->times.time_after_last_sample = t;
-    ob->times.time_after_sample = t;
-    ob->times.time_before_sample = t;
-    ob->times.time_at_start = t;
-    ob->times.time_since_start = 0;
-    ob->times.ms_since_start = 0;
-    ob->times.sec = 0;
-
-    // ob->stiff = ob->restart.stiff;
-    // ob->damp = ob->restart.damp;
-
-    ob->i = 0;
-    ob->samplenum = 0;
-
-    // adjust actual timer
-    ob->Hz = ob->restart.Hz;
-
-    set_Hz();
-
-    rt_task_set_periodic(NULL, TM_NOW, ob->irate);
+  hrtime_t t;
+  
+  if (ob->restart.Hz < 1) {
     ob->restart.go = 0;
+    return;
+  }
+  
+  t = rt_timer_tsc2ns(rt_timer_tsc());
+  ob->times.time_before_last_sample = t;
+  ob->times.time_after_last_sample = t;
+  ob->times.time_after_sample = t;
+  ob->times.time_before_sample = t;
+  ob->times.time_at_start = t;
+  ob->times.time_since_start = 0;
+  ob->times.ms_since_start = 0;
+  ob->times.sec = 0;
+  
+  // ob->stiff = ob->restart.stiff;
+  // ob->damp = ob->restart.damp;
+  
+  ob->i = 0;
+  ob->samplenum = 0;
+  
+  // adjust actual timer
+  ob->Hz = ob->restart.Hz;
+  
+  set_Hz();
+  
+  rt_task_set_periodic(NULL, TM_NOW, ob->irate);
+  ob->restart.go = 0;
 }
 
-// this needs to happen all at once between samples.
 
+
+
+/// Shared memory operations - this needs to happen all at once between samples.
 void
 shm_copy_commands(void)
 {
   // restart will start cleanly.
   if (ob->restart.go) {
+    dpr(1, "restarting thread\n");
     restart_init();
-	}
+  }
   // if there's a new slot command, copy it in.
   if (ob->copy_slot.go) {
+    dpr(1, "copying slot\n");
     ob->slot[ob->copy_slot.id] = ob->copy_slot;
     memset(&ob->copy_slot, 0, sizeof(Slot));
     ob->copy_slot.go = 0;	// for good measure
   }
   if (rob->ft.dobias) {
+    dpr(1, "running ft_zero_bias()\n");
     ft_zero_bias();
     rob->ft.dobias = 0;
   }
@@ -707,60 +725,71 @@ shm_copy_commands(void)
 static void
 one_sample(void) {
     // in debug mode, print tick once a second.
-    if ((ob->i % ob->Hz) == 0) {
-	dpr(2, "main_loop: top, i = %d, samples = %d, "
-	    "time since start = %d ms\n",
-	    ob->i, ob->samplenum, ob->times.ms_since_start);
-    }
-    do_time_before_sample();
+  if ((ob->i % ob->Hz) == 0) {
+    dpr(2, "one_sample: top, i = %d, samples = %d, "
+    "time since start = %d ms\n",
+    ob->i, ob->samplenum, ob->times.ms_since_start);
+  }
+  /*
+    syslog(LOG_INFO, "one_sample: top, i = %d, samples = %d, "
+    "time since start = %d ms\n",
+    ob->i, ob->samplenum, ob->times.ms_since_start);
+  */
+  /*
+  RT_TASK_INFO thread_info;
+  int ret = rt_task_inquire(NULL, &thread_info);
+  syslog(LOG_INFO,"thread_info %s status %d",thread_info.name,thread_info.status);
+  */
+      
+  do_time_before_sample();
+  
+  shm_copy_commands();
+  //handle_fifo_input(); // Commented out by FVV but probably you want to re-enable this once it no longer gives an error.
+  
+  if (ob->doinit && !ob->didinit) {
+    do_init();
+  }
+  check_late();
+  
+  // do all this stuff even when we're paused,
+  // so that filters are properly primed when we unpause
+  call_read_sensors();
+  call_read_reference();
+  call_compute_controls();
+  call_check_safety();
+  
+  if (!ob->paused) {
+    // only write stuff (including motor forces) when not paused
+    call_write_actuators();
+    call_write_log();
+    call_write_display();
+    ob->samplenum++;
+    
+  } else {
+    // zero douts, might be leds, etc
+    // this really happens in read_sensors above.
+    daq->dout0 = 0;
+    daq->dout1 = 0;
+    // send zeros to motors on every paused cycle.
+    stop_all_slots();
+    write_zero_torque();
+  }
+  
+  do_time_after_sample();
+  
+  // put a newline to tcfifo every ntickfifo samples.
+  // you read from this tick fifo as a sample timer in user space.
+  // this is telling the user to wake up, so do it *right* before
+  // the control loop goes to sleep, when *all* the variables
+  // (even do_time_after_sample) are written.
+  if(ob->ntickfifo && ((ob->i % ob->ntickfifo) == 0)) {
+    // TODO: delete rtf_put(ob->tcfifo, "\n" , 1);
+    rt_pipe_write(&(ob->tcfifo), "\n", 1, P_NORMAL);      
+  }
 
-    shm_copy_commands();
-    handle_fifo_input();
-
-    if (ob->doinit && !ob->didinit) {
-	do_init();
-    }
-    check_late();
-
-    // do all this stuff even when we're paused,
-    // so that filters are properly primed when we unpause
-    call_read_sensors();
-    call_read_reference();
-    call_compute_controls();
-    call_check_safety();
-
-    if (!ob->paused) {
-	// only write stuff (including motor forces) when not paused
-	call_write_actuators();
-	call_write_log();
-	call_write_display();
-	ob->samplenum++;
-
-    } else {
-	// zero douts, might be leds, etc
-	// this really happens in read_sensors above.
-	daq->dout0 = 0;
-	daq->dout1 = 0;
-	// send zeros to motors on every paused cycle.
-	stop_all_slots();
-	write_zero_torque();
-    }
-
-    do_time_after_sample();
-
-    // put a newline to tcfifo every ntickfifo samples.
-    // you read from this tick fifo as a sample timer in user space.
-    // this is telling the user to wake up, so do it *right* before
-    // the control loop goes to sleep, when *all* the variables
-    // (even do_time_after_sample) are written.
-    if(ob->ntickfifo && ((ob->i % ob->ntickfifo) == 0)) {
-        // TODO: delete rtf_put(ob->tcfifo, "\n" , 1);
-        rt_pipe_write(&(ob->tcfifo), "\n", 1, P_NORMAL);      
-    }
-
-    ob->busy = 0;
-    wait_for_tick();
-    ob->i++;
+  ob->busy = 0;
+  wait_for_tick();
+  ob->i++;
 }
 
 
@@ -776,7 +805,7 @@ void
 main_loop(void)
 {
     s32 ret;
-    // ticking at 1000 Hz, ob->i (31 bits) will overflow in
+    // If ticking at 1000 Hz, ob->i (31 bits) will overflow in
     // (2^31)/(1000*60*60*24) == 24.85 days.
     for (;;) {
         if (ob->quit) {
@@ -801,6 +830,10 @@ main_loop(void)
     }
 }
 
+
+
+
+
 /// do_time_before_sample - do housekeeping before sample
 
 void
@@ -822,6 +855,8 @@ do_time_before_sample()
     if (ob->times.ns_max_delta_tick < ob->times.ns_delta_tick)
 	ob->times.ns_max_delta_tick = ob->times.ns_delta_tick;
 }
+
+
 
 
 
@@ -900,7 +935,7 @@ check_late()
 
 
 
-/** no longer called by main loop, since we call read_sensors even
+/** no longer called by main loop, since we call read_sensors() even
  * when we are paused.
  *
  * clear_sensors - read the sensors a few times, to clear them.
@@ -1220,6 +1255,8 @@ do_time_after_sample()
 
     dpr_flush();
 }
+
+
 
 /// wait_for_tick - wait for thread to wake up again
 
