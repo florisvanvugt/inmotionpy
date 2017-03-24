@@ -18,7 +18,8 @@
 // TODO: delete // uses the traditional stdin/stdout/stderr numbering, with 3 for command-in
 
 
-#define POOLSIZE FIFOLEN
+#define POOLSIZE 1000000 /* Not sure what this setting should be */
+
 
 void
 init_fifos(void)
@@ -151,7 +152,7 @@ fifo_input_handler(void)
       syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read() which I believe is %d\n", __FILE__, __LINE__, ret, -ESRCH);
       if (ob->times.ms_since_start) {
 	//dpr1("%10d ms ",);
-	syslog(LOG_INFO,"ob->cififo %d\n", ob->cififo);
+	//syslog(LOG_INFO,"ob->cififo %d\n", &(ob->cififo));
 	syslog(LOG_INFO,"time is %d ms\n", ob->times.ms_since_start);
       }
 

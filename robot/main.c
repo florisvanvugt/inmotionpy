@@ -48,7 +48,9 @@ RT_TASK_INFO thread_info;
 						    // number of ticks
 						    // each loop.
 #define STACK_SIZE 8192
-#define STD_PRIO 99 /* Highest RT priority */
+#define STD_PRIO 99        /* Highest RT priority */
+
+#define RECEIVE_INPUT 0    /* Whether we will listen to the input pipe for commands from the user */
 
 // ob storage definition
 // the ob structure contains globals
@@ -724,12 +726,14 @@ shm_copy_commands(void)
 
 static void
 one_sample(void) {
-    // in debug mode, print tick once a second.
+
+  // in debug mode, print tick once a second.
   if ((ob->i % ob->Hz) == 0) {
     dpr(2, "one_sample: top, i = %d, samples = %d, "
     "time since start = %d ms\n",
     ob->i, ob->samplenum, ob->times.ms_since_start);
   }
+  
   /*
     syslog(LOG_INFO, "one_sample: top, i = %d, samples = %d, "
     "time since start = %d ms\n",
@@ -744,7 +748,8 @@ one_sample(void) {
   do_time_before_sample();
   
   shm_copy_commands();
-  //handle_fifo_input(); // Commented out by FVV but probably you want to re-enable this once it no longer gives an error.
+  if (RECEIVE_INPUT)
+    handle_fifo_input(); // Commented out by FVV but probably you want to re-enable this once it no longer gives an error.
   
   if (ob->doinit && !ob->didinit) {
     do_init();
