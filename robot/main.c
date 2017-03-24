@@ -251,7 +251,7 @@ main(void)
       {
 	// PARENT PROCESS. Need to kill it.
 	syslog(LOG_INFO,"Process id of child process %d \n", pid);
-	printf("process_id of child process %d \n", pid);
+	printf("spawned child process %d \n", pid);
 	// return success in exit status
 	exit(EXIT_SUCCESS);
       }
@@ -343,7 +343,7 @@ set_Hz ()
 
     // nanoseconds
     ob->irate = 1000 * 1000 * 1000 / ob->Hz; // 5,000,000 for 200 Hz
-    ob->rate = 1.0 / ob->Hz;  // 0.005
+    ob->rate = 1.0 / ob->Hz;  // 0.005   (unit: s^-1)
 
     if (ob->Hz < 30) {
       ob->ticks30Hz = 1;
@@ -366,7 +366,7 @@ start_routine(void *arg)
 
     set_Hz();
 
-    dpr(3, "start_routine: top of thread, %d Hz\n", ob->Hz);
+    dpr(3, "start_routine: top of thread, %d Hz, i.e. %d ns\n", ob->Hz, ob->irate);
     // TODO: delete ob->main_thread = pthread_self();
     ob->main_thread = thread;  
 
@@ -823,6 +823,8 @@ do_time_before_sample()
 	ob->times.ns_max_delta_tick = ob->times.ns_delta_tick;
 }
 
+
+
 /// add an error code to the rolling ob->error
 void
 do_error(u32 code)
@@ -839,6 +841,8 @@ do_error(u32 code)
   ob->nerrors++;
 }
 
+
+
 /// check_late - see if the sample has taken longer than expected.
 
 void
@@ -850,7 +854,7 @@ check_late()
   if (ob->busy != 0 && ob->i > 10) {
     dpr(0, "check_late: error: we're late.  time = %d ms, i = %d ticks\n",
 	ob->times.ms_since_start, ob->i);
-    dpr(0, "\tsample took %d ns, tick took %d ns\n",
+    dpr(0, "sample took %d ns, tick took %d ns\n",
 	ob->times.ns_delta_sample, ob->times.ns_delta_tick);
     
     do_error(ERR_MAIN_LATE_TICK);
@@ -864,7 +868,7 @@ check_late()
       (ob->times.ns_delta_tick_thresh * ob->irate / 100)) {
     dpr(0, "check_late: warning: slow tick.  time = %d ms, i = %d ticks\n",
 	ob->times.ms_since_start, ob->i);
-    dpr(0, "\ttick took %d ns > threshold (%d%%)\n",
+    dpr(0, "tick took %d ns > threshold (%d%%)\n",
 	ob->times.ns_delta_tick, ob->times.ns_delta_tick_thresh);
     
     do_error(WARN_MAIN_SLOW_TICK);
@@ -878,7 +882,7 @@ check_late()
       ((100 - (ob->times.ns_delta_tick_thresh - 100)) * ob->irate / 100)) {
     dpr(0, "check_late: warning: fast tick.  time = %d ms, i = %d ticks\n",
 	ob->times.ms_since_start, ob->i);
-    dpr(0, "\ttick took %d ns < lower threshold (%d%%)\n",
+    dpr(0, "tick took %d ns < lower threshold (%d%%)\n",
 	ob->times.ns_delta_tick, 200 - ob->times.ns_delta_tick_thresh);
     
     do_error(WARN_MAIN_FAST_TICK);
@@ -1205,9 +1209,9 @@ do_time_after_sample()
 		   (ob->times.ns_delta_sample_thresh * ob->irate / 100)) {
 	dpr(0, "after_sample: warning: slow sample.  time = %d ms, i = %d ticks\n",
 			ob->times.ms_since_start, ob->i);
-	dpr(0, "\t t0 = %d  t1 = %d \n",
+	dpr(0, "t0 = %d  t1 = %d \n",
 	    ob->times.time_before_sample,  ob->times.time_after_sample );
-	dpr(0, "\tsample took %d ns, > threshold (%d%%)\n",
+	dpr(0, "sample took %d ns, > threshold (%d%%)\n",
 	    ob->times.ns_delta_sample,
 	    ob->times.ns_delta_sample_thresh);
 

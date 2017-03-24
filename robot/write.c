@@ -94,8 +94,13 @@ dpr(s32 level, const s8 *format, ...)
        debug level. */
     //if (level!=NULL) {
     dpr1("[%d] ",level);
+    if (ob->times.ms_since_start) {
+      dpr1("%10d ms ",ob->times.ms_since_start);
+    } else {
+      dpr1("              ");
+    }
     int i;
-    for (i=0; i<level; i++) 
+    for (i=0; i<=level; i++) 
       dpr1("-");
     //dpr1(dbg);
     //}
@@ -161,8 +166,9 @@ dpr_flush()
 {
     s32 len;
     // TODO: delete if proves unneeded    s32 ret;
-    s32 ret = 0; // to stop warning  TODO: delete
+    s32 ret; // to stop warning  TODO: delete (previously this was set to zero, perhaps to quelch error messages?)
 
+    /* Determine the length of the buffer to-be-flushed, quit if nothing */
     len = dprbufp - dprbuf;
     if (len <= 0)
 	return;
@@ -170,10 +176,12 @@ dpr_flush()
     // fprf(ob->eofifo, "\n\ndpr_flush: writing %d chars\n", len);
 
     // TODO: delete ret = rtf_put(ob->eofifo, dprbuf, len);
-    rt_pipe_write(             &(ob->eofifo), dprbuf, len, P_NORMAL);
+    ret = rt_pipe_write( &(ob->eofifo), dprbuf, len, P_NORMAL);
     dpr_clear();
-    if (ret != len)
-	fprf(&(ob->eofifo), "\n\ndpr_flush: ret = %d, len = %d\n", ret, len);
+    if (ret != len) {
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write()\n", __FILE__, __LINE__, ret);
+      fprf(&(ob->eofifo), "dpr_flush: ret = %d, len = %d\n", ret, len);
+    }
     // usleep(100*1000);
 
     // fprintf(stderr, "dpr_flush: done\n");

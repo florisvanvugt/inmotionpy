@@ -277,6 +277,29 @@ Mar 23 17:28:13 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
 
 
 
+Now I'm starting to think that the issues arise when the child process starts somehow?
+
+```
+Mar 24 14:04:26 nixsys imt-robot[17076]: -- Initialising the robot.
+Mar 24 14:04:26 nixsys imt-robot[17076]: Cleaned up FIFOs (cleanup_fifos)
+Mar 24 14:04:26 nixsys imt-robot[17076]: init_fifos: done
+Mar 24 14:04:26 nixsys imt-robot[17076]: Starting robot realtime process.
+Mar 24 14:04:26 nixsys imt-robot[17076]: Process id of child process 17077 
+Mar 24 14:04:26 nixsys imt-robot[17077]: fifo.c:151 -3 return from rt_pipe_read(), which I believe is --3
+Mar 24 14:04:26 nixsys imt-robot[17077]: write.c:177 -3 return from rt_pipe_write()
+Mar 24 14:04:26 nixsys imt-robot[17077]: Cleaned up FIFOs (cleanup_fifos)
+Mar 24 14:04:26 nixsys imt-robot[17077]: Stopping robot realtime process (got signal 0).
+Mar 24 14:04:26 nixsys imt-robot[17077]: Exited the child.
+```
+
+
+
+
+
+
+
+
+
 ## Another interesting observation
 
 Suddenly ob->Hz goes to zero; this is when I print the syslog with horrendously verbose debug messaging:

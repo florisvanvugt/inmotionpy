@@ -100,6 +100,8 @@ cleanup_fifos(void)
     // TODO: delete fs32 i;
     int ret;
 
+    dpr_flush(); // flush anything that may be in the pipelines
+    
     // TODO: delete for (i = 0; i < ob->nfifos; i++)
     // TODO: delete 	rtf_destroy(i);
     ret = rt_pipe_delete(&(ob->dififo));
@@ -147,6 +149,10 @@ fifo_input_handler(void)
     if (ret != -EWOULDBLOCK && ret < 0) {
       dpr(0,          "%s:%d %d return from rt_pipe_read()\n", __FILE__, __LINE__, ret);
       syslog(LOG_INFO,"%s:%d %d return from rt_pipe_read(), which I believe is -%d\n", __FILE__, __LINE__, ret, -ESRCH);
+      if (ob->times.ms_since_start) {
+	//dpr1("%10d ms ",);
+	syslog(LOG_INFO,"time is %d ms\n", ob->times.ms_since_start);
+      }
       cleanup_signal(0);  // Stop functioning, something went wrong.
     }
 
