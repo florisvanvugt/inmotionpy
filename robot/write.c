@@ -44,8 +44,8 @@ fprf(RT_PIPE *fifo, const s8 *fmt, ...)
 // maybe this should be malloc'd, but we shouldn't be printing
 // more than 16k bytes of error per cycle.
 
-static s8 dprbuf[FIFOLEN];
-static s8 *dprbufp = dprbuf;
+static s8 dprbuf[FIFOLEN];    // Buffer that holds the debug messages
+static s8 *dprbufp = dprbuf;  // Pointer to the end of the buffer
 
 static void dpr1(const s8 *, ...);
 static void dpr2(const s8 *, va_list);
@@ -63,22 +63,43 @@ dpr(s32 level, const s8 *format, ...)
 {
     va_list args;
 
-    if (level!=NULL) {
+    //if (level!=NULL) {
       // FVV commented these next lines as it seems to cause a segfault
-      if (level > ob->debug_level)
-	return;
-      if (level >= 1) {
+    //syslog(LOG_INFO,"ob->debug_level %d.\n",ob->debug_level); 
+    //syslog(LOG_INFO,"level %d.\n",level); 
+    //syslog(LOG_INFO,"ob->i %d.\n",ob->i); 
+    //syslog(LOG_INFO,"ob->Hz %f.\n",ob->Hz); 
+
+    if (level > ob->debug_level)
+      return;
+    if (level >= 1) {
+      if (ob->Hz && ob->i) {
 	if (ob->i % ob->Hz != 0)
 	  return;
       }
     }
-    
+
+    /* If the buffer is almost full, flush it to prevent overflow. */
     // note that we can't use sprintf in the kernel, hmmm.
     if ((dprbufp - dprbuf) > (FIFOLEN - 1024)) {
 	dpr1("\n<<dprbuf almost full>>\n");
 	dpr_flush();
     }
     // if (level > 0) dpr1("%d:", level);
+
+    
+
+    //dpr1(format, args);
+    /* Just for prettiness, add a prefix that will indicate the
+       debug level. */
+    //if (level!=NULL) {
+    dpr1("[%d] ",level);
+    int i;
+    for (i=0; i<level; i++) 
+      dpr1("-");
+    //dpr1(dbg);
+    //}
+    dpr1(" ");
 
     va_start(args, format);
     dpr2(format, args);
@@ -112,18 +133,18 @@ dpr2(const s8 *format, va_list args)
     s32 len;
 
     len = vsprintf(dprbufp, format, args);
-    dprbufp += len;
+    dprbufp += len; // update the pointer that points to the end of the buffer
 }
 
 
 
-/// clear the dprbuf
+/// clear the debug buffer
 
 void
 dpr_clear()
 {
-    dprbufp = dprbuf;
-    dprbuf[0] = (intptr_t) NULL; // otherwise throws pointer conversion error
+  dprbufp = dprbuf; // Point to the beginning of the debug buffer
+  dprbuf[0] = (intptr_t) NULL; // otherwise throws pointer conversion error
 }
 
 

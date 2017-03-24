@@ -273,3 +273,37 @@ Mar 23 17:28:07 suzuki rsyslogd-2177: imuxsock begins to drop messages from pid 
 Mar 23 17:28:13 suzuki rsyslogd-2177: imuxsock lost 2200 messages from pid 7517 due to rate-limiting
 Mar 23 17:28:13 suzuki imt-robot[7517]: fifo.c:149 -3 return from rt_pipe_read()
 ```
+
+
+
+
+## Another interesting observation
+
+Suddenly ob->Hz goes to zero; this is when I print the syslog with horrendously verbose debug messaging:
+
+```
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.499977.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
+Mar 24 07:54:51 nixsys imt-robot[12767]: level 4.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 11.472839.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
+Mar 24 07:54:51 nixsys imt-robot[12767]: level 0.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.471199.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
+Mar 24 07:54:51 nixsys imt-robot[12767]: level 0.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.471199.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
+Mar 24 07:54:51 nixsys imt-robot[12767]: level 0.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.471199.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
+Mar 24 07:54:51 nixsys imt-robot[12767]: level 4.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 4.
+Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 0.000000.
+Mar 24 07:54:51 nixsys rsyslogd-2177: imuxsock begins to drop messages from pid 12767 due to rate-limiting
+Mar 24 07:54:51 nixsys kernel: [74551.048450] IMT Robot Contr[12768]: segfault at 4002f994 ip 0804e446 sp 4026f1a0 error 4 in robot[8048000+11000]
+```

@@ -140,7 +140,9 @@ cleanup_signal(s32 sig)
     // mbuff_free("ob", ob); // free it   
     // mbuff_free("rob", rob); // free it   
     // mbuff_free("daq", daq); // free it   
-    // mbuff_free("prev", prev); // free it   
+    // mbuff_free("prev", prev); // free it
+
+    /* Detach the shared memory */
     shmdt(ob);
     shmdt(rob);
     shmdt(daq);
@@ -157,7 +159,7 @@ cleanup_signal(s32 sig)
     shmctl(moh_shmid,    IPC_RMID, NULL);
     shmctl(dyncmp_shmid, IPC_RMID, NULL);
     syslog(LOG_INFO,"Stopping robot realtime process (got signal %d).\n",sig);
-    dpr(0,"Stopping robot realtime process.\n");
+    //dpr(0,"Stopping robot realtime process.\n");  // Can't do this because ob is now detached
 
     ret = rt_task_inquire(NULL, &thread_info);
     if (!strcmp(thread_info.name, ROBOT_LOOP_THREAD_NAME)) {
