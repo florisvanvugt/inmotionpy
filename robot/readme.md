@@ -307,3 +307,7 @@ Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 0.000000.
 Mar 24 07:54:51 nixsys rsyslogd-2177: imuxsock begins to drop messages from pid 12767 due to rate-limiting
 Mar 24 07:54:51 nixsys kernel: [74551.048450] IMT Robot Contr[12768]: segfault at 4002f994 ip 0804e446 sp 4026f1a0 error 4 in robot[8048000+11000]
 ```
+
+**NOTE** Also, the Nixsys computer which doesn't have the PowerDAQ board gives the exact same sequence of events (and same error message).
+
+
