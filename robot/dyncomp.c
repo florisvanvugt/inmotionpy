@@ -86,20 +86,22 @@ void   neuralnetcorrection(double *inp, double *out)
 #endif       /* home_trained or montreal trained */
 
 
-void dynamics_compensation(double inforcex,double inforcey,int method, double diagD)
-/*  Version of the above model compensation subroutine 
-    in which the computation of the force field is 
-    computed before and outside of the subroutine.
-    This subroutine computes the motor torque forces 
-    directly. 
-    The method parameter can have the following values:
-     0:  no compensation
-     1:  Corriolis removed
-     2:  Corriolis and neural correction removed
-     3:  like 2 plus dynamic compensation with diagonal mass matrix
-     4:  like 2 plus replacing mass matrix by different mass matrix.
 
+/**
+  Version of the above model compensation subroutine 
+  in which the computation of the force field is 
+  computed before and outside of the subroutine.
+  This subroutine computes the motor torque forces 
+  directly. 
+  The method parameter can have the following values:
+  - 0:  no compensation
+  - 1:  Corriolis removed
+  - 2:  Corriolis and neural correction removed
+  - 3:  like 2 plus dynamic compensation with diagonal mass matrix
+  - 4:  like 2 plus replacing mass matrix by different mass matrix.
 */
+
+void dynamics_compensation(double inforcex,double inforcey,int method, double diagD)
 {
   mat22 Jinv;
   mat22 Bq;

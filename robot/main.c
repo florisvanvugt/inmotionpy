@@ -8,6 +8,14 @@
 // http://www.interactive-motion.com
 // All rights reserved
 
+
+/** \mainpage Porting the robot code
+ * The aim of this project is to port the Inmotion-2 robot operating
+ * code to a Linux 3.x kernel and Xenomai 2.6.
+ */
+
+
+
 // uncomment this for McGill environment
 #define _ISMCGILL
 

@@ -28,7 +28,7 @@
 #define f32 woops!
 typedef double f64;
 
-#define FIFOLEN 0x4000
+#define FIFOLEN 0x4000   // i.e. 16384
 
 // errors, see main.c and uei.c
 // if you change this, you MUST change tools/errpt
