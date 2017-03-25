@@ -52,6 +52,8 @@ RT_TASK_INFO thread_info;
 
 #define RECEIVE_INPUT 1    /* Whether we will listen to the input pipe for commands from the user */
 
+#define FORK 0             /* Whether to fork off a separate, child process. */
+
 // ob storage definition
 // the ob structure contains globals
 
@@ -238,34 +240,37 @@ main(void)
        http://www.enderunix.org/docs/eng/daemon.php, first step is to
        fork. */
 
-    pid_t pid;
- 
-    /* Clone ourselves to make a child */  
-    pid = fork(); 
-    
-    /* If the pid is less than zero,
-       something went wrong when forking */
-    if (pid < 0) {
-      syslog(LOG_INFO,"Forking failed, return value %d.\n", pid);
-      exit(EXIT_FAILURE);
-    }
-    
-    /* If the pid we got back was greater
-       than zero, then the clone was
-       successful and we are the parent. */
-    if (pid > 0)
-      {
-	// PARENT PROCESS. Need to kill it.
-	syslog(LOG_INFO,"Process id of child process %d \n", pid);
-	printf("spawned child process %d \n", pid);
-	// return success in exit status
-	//exit(EXIT_SUCCESS); // FVV I notice that when we don't exit the parent, then rt_pipes remain open.
-      }
 
-    if (pid==0)
-      {
-	printf("This is the child speaking (%d).\n", pid);
+    if (FORK) {
+      pid_t pid;
+      
+      /* Clone ourselves to make a child */  
+      pid = fork(); 
+      
+      /* If the pid is less than zero,
+	 something went wrong when forking */
+      if (pid < 0) {
+	syslog(LOG_INFO,"Forking failed, return value %d.\n", pid);
+	exit(EXIT_FAILURE);
       }
+      
+      /* If the pid we got back was greater
+	 than zero, then the clone was
+	 successful and we are the parent. */
+      if (pid > 0)
+	{
+	  // PARENT PROCESS. Need to kill it.
+	  syslog(LOG_INFO,"Process id of child process %d \n", pid);
+	  printf("spawned child process %d \n", pid);
+	  // return success in exit status
+	  //exit(EXIT_SUCCESS); // FVV I notice that when we don't exit the parent, then rt_pipes remain open.
+	}
+      
+      if (pid==0)
+	{
+	  printf("This is the child speaking (%d).\n", pid);
+	}
+    }
 
     /* child (daemon) continues */
     
@@ -335,11 +340,11 @@ main(void)
       pthread_sigmask(SIG_UNBLOCK, &signalSet, NULL);
     }
     
-    syslog(LOG_INFO,"Pausing.\n", pid);
+    syslog(LOG_INFO,"Pausing.\n");
     
     pause(); // stuff coming after this probably will not happen
     
-    syslog(LOG_INFO,"main() returned.\n", pid);
+    syslog(LOG_INFO,"main() returned.\n");
     return 0;
 }
 
