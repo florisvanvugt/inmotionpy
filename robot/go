@@ -67,7 +67,7 @@ while [ ! -r /proc/pwrdaq ]; do
     sleep 0.1
 done
 
-./robot &
+sudo ./robot &
 
 I=0
 while ! pkill -0 -x robot ; do

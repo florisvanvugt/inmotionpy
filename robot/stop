@@ -52,9 +52,9 @@ done
 # pkill (with the default SIGTERM) should work as well as sending quit above.
 
 if pkill -0 -x robot; then
-      pkill -x robot
-      echo "stop: sent pkill to robot process."
-      sleep 2
+    sudo pkill -x robot
+    echo "stop: sent pkill to robot process."
+    sleep 2
 fi
 
 # last resort, try SIGKILL.

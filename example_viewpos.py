@@ -1,4 +1,5 @@
-from tkinter import *
+#from tkinter import *  # py3
+from Tkinter import *   # py2
 
 import time
 import robot
@@ -21,7 +22,8 @@ moving = False # whether we are currently moving to a target
 
 
 robot.load()
-robot.bias_force_transducers()
+#robot.bias_force_transducers()
+robot.zeroft()
 #robot.stay() # stay put
 robot.status()
 

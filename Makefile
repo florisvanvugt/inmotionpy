@@ -30,14 +30,14 @@ rob:
 	make -C robot
 
 run: rob
-	python3 example_simple.py
+	python example_simple.py
 
 
 proto: rob
 	python3 example_proto.py
 
 viewpos: rob
-	python3 example_viewpos.py
+	python example_viewpos.py
 
 
 cursor: rob

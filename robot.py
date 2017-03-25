@@ -114,7 +114,7 @@ def load():
     """
 
     print("Loading robot...")
-    start_lkm()
+    spawn_robot()
     start_shm()
     put_init_calib()
     start_loop()
@@ -187,8 +187,12 @@ def put_init_calib():
 
 
 
-def start_lkm():
+def spawn_robot():
     """ Starts the robot process. """
+
+    # Load the powerdaq module 
+    # insmod = subprocess.call(['sudo','modprobe','pwrdaq'],cwd=robot_dir) # probably not necessary because done within the go script.
+
     global rob
     rob = subprocess.call(robot_start,cwd=robot_dir)
 
