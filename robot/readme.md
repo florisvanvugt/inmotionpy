@@ -349,41 +349,48 @@ In addition to this, there seems to be something wrong with the time stamps that
 
 
 
+## A solution...?
 
+Here is a surprising turn of events. If after turning the main process into a daemon, we *don't* kill the parent process but leave it running, it turns out the pipes remain *open*! Everything works as expected in that case.
 
-
-
-## Another interesting observation
-
-Suddenly ob->Hz goes to zero; this is when I print the syslog with horrendously verbose debug messaging:
+It is this line in `main.c` that, when I comment it out, leaves the pipes open:
 
 ```
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.499977.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
-Mar 24 07:54:51 nixsys imt-robot[12767]: level 4.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 11.472839.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
-Mar 24 07:54:51 nixsys imt-robot[12767]: level 0.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.471199.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
-Mar 24 07:54:51 nixsys imt-robot[12767]: level 0.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.471199.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
-Mar 24 07:54:51 nixsys imt-robot[12767]: level 0.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 3.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 2.471199.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->debug_level 6.
-Mar 24 07:54:51 nixsys imt-robot[12767]: level 4.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->i 4.
-Mar 24 07:54:51 nixsys imt-robot[12767]: ob->Hz 0.000000.
-Mar 24 07:54:51 nixsys rsyslogd-2177: imuxsock begins to drop messages from pid 12767 due to rate-limiting
-Mar 24 07:54:51 nixsys kernel: [74551.048450] IMT Robot Contr[12768]: segfault at 4002f994 ip 0804e446 sp 4026f1a0 error 4 in robot[8048000+11000]
+//exit(EXIT_SUCCESS);
 ```
 
-**NOTE** Also, the Nixsys computer which doesn't have the PowerDAQ board gives the exact same sequence of events (and same error message).
+
+
+
+
+See the syslog here below, where at 14:56:48 I stopped the main process with <ctrl+c>.
+
+```
+Mar 25 14:55:49 nixsys imt-robot[26741]: -- Initialising the robot.
+Mar 25 14:55:49 nixsys imt-robot[26741]: Cleaned up FIFOs (cleanup_fifos)
+Mar 25 14:55:49 nixsys imt-robot[26741]: init_fifos: done
+Mar 25 14:55:49 nixsys imt-robot[26741]: Starting robot realtime process.
+Mar 25 14:55:49 nixsys imt-robot[26741]: Process id of child process 26742 
+Mar 25 14:55:49 nixsys imt-robot[26741]: Pausing.
+Mar 25 14:55:49 nixsys imt-robot[26742]: Pausing.
+Mar 25 14:55:49 nixsys imt-robot[26741]: write.c:215 861 return from rt_pipe_write() message of length 861
+Mar 25 14:55:50 nixsys imt-robot[26741]: write.c:215 431 return from rt_pipe_write() message of length 431
+Mar 25 14:55:51 nixsys imt-robot[26741]: write.c:215 431 return from rt_pipe_write() message of length 431
+Mar 25 14:55:52 nixsys imt-robot[26741]: write.c:215 432 return from rt_pipe_write() message of length 432
+Mar 25 14:55:59  imt-robot[26741]: last message repeated 6 times
+Mar 25 14:55:59 nixsys imt-robot[26741]: write.c:215 433 return from rt_pipe_write() message of length 433
+Mar 25 14:56:14  imt-robot[26741]: last message repeated 14 times
+Mar 25 14:56:14 nixsys imt-robot[26741]: write.c:215 434 return from rt_pipe_write() message of length 434
+Mar 25 14:56:48  imt-robot[26741]: last message repeated 33 times
+Mar 25 14:56:48 nixsys imt-robot[26741]: cleanup_module called with signal 2
+Mar 25 14:56:48 nixsys imt-robot[26741]: Cleaned up FIFOs (cleanup_fifos)
+Mar 25 14:56:48 nixsys imt-robot[26741]: Deleting thread.
+Mar 25 14:56:48 nixsys imt-robot[26741]: Stopping robot realtime process (got signal 2).
+Mar 25 14:56:48 nixsys imt-robot[26741]: main() returned.
+
+```
+
+
+
 
 

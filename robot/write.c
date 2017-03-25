@@ -212,10 +212,10 @@ dpr_flush()
 
     // TODO: delete ret = rtf_put(ob->eofifo, dprbuf, len);
     ret = rt_pipe_write( &(ob->eofifo), dprbuf, len, P_NORMAL);
-    syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write() message of length %d\n", __FILE__, __LINE__, ret, len);
     if (ret != len) {
       fprf(&(ob->eofifo), "dpr_flush: ret = %d, len = %d\n", ret, len);
       // Try to write the missing message to SYSLOG
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write() message of length %d\n", __FILE__, __LINE__, ret, len);
       char* buf = buffer_to_string(dprbuf,len);
       syslog(LOG_INFO,"message that was not written: <<%s>>\n",buf);
     }

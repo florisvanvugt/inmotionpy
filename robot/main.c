@@ -50,7 +50,7 @@ RT_TASK_INFO thread_info;
 #define STACK_SIZE 8192
 #define STD_PRIO 99        /* Highest RT priority */
 
-#define RECEIVE_INPUT 0    /* Whether we will listen to the input pipe for commands from the user */
+#define RECEIVE_INPUT 1    /* Whether we will listen to the input pipe for commands from the user */
 
 // ob storage definition
 // the ob structure contains globals
@@ -246,6 +246,7 @@ main(void)
     /* If the pid is less than zero,
        something went wrong when forking */
     if (pid < 0) {
+      syslog(LOG_INFO,"Forking failed, return value %d.\n", pid);
       exit(EXIT_FAILURE);
     }
     
@@ -258,7 +259,12 @@ main(void)
 	syslog(LOG_INFO,"Process id of child process %d \n", pid);
 	printf("spawned child process %d \n", pid);
 	// return success in exit status
-	exit(EXIT_SUCCESS);
+	//exit(EXIT_SUCCESS);
+      }
+
+    if (pid==0)
+      {
+	printf("This is the child speaking (%d).\n", pid);
       }
 
 
