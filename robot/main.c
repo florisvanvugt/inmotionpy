@@ -259,7 +259,7 @@ main(void)
 	syslog(LOG_INFO,"Process id of child process %d \n", pid);
 	printf("spawned child process %d \n", pid);
 	// return success in exit status
-	//exit(EXIT_SUCCESS);
+	//exit(EXIT_SUCCESS); // FVV I notice that when we don't exit the parent, then rt_pipes remain open.
       }
 
     if (pid==0)
@@ -267,12 +267,11 @@ main(void)
 	printf("This is the child speaking (%d).\n", pid);
       }
 
-
     /* child (daemon) continues */
-
+    
     /* Set the umask to zero */
     umask(0);
-
+    
     pid_t sid;
     
     /* Try to create our own process group */
@@ -281,8 +280,10 @@ main(void)
     if (sid < 0) {
       syslog(LOG_ERR, "Could not create process group\n");
       exit(EXIT_FAILURE);
+    } else {
+      syslog(LOG_INFO, "Created new process group %d.\n",sid);
     }
-
+    
     // FVV Here we close all file descriptors. Note that when closing 0 and 1 that means closing standard output and error.
     {
       int i;
@@ -293,53 +294,51 @@ main(void)
 	//printf("closed\n",i);
       }
     }
-
+    
     // FVV Here below we re-open the standard input/output/error, but re-pipe it to null.
     ret=open("/dev/null",O_RDWR); /* open stdin */
     dup(ret); /* stdout */
     dup(ret); /* stderr */
-
+    
     // user tasks always get floating point.
     // enable floating point
     // pthread_attr_init(&attr);
     // pthread_attr_setfp_np(&attr, 1);
-
+    
     // TODO: rewrite macro to use rtdm_printk, should go to xterm
     dpr(4, "main: calling pthread_create start_routine\n");
-
+    
     mlockall(MCL_CURRENT|MCL_FUTURE);
-  
+    
     { // No one handles any signals for now, will be inherited by
       // child.
       sigset_t  signalSet;
-    
+      
       sigfillset(&signalSet);
       pthread_sigmask(SIG_BLOCK, &signalSet, NULL);
     }
-
-
+    
+    
     // TODO: delete ret = pthread_create(&thread, &attr, start_routine, 0);
     // TODO: delete pthread_wakeup_np(thread);
     ret = rt_task_spawn(&thread, ROBOT_LOOP_THREAD_NAME, STACK_SIZE, STD_PRIO, 0, &start_routine, NULL);
-
+    
     dpr(4, "main: rt_task_spawn completed.\n");
     
     { // Now that child is spawned, set signals so we will get them.
       sigset_t  signalSet;
-    
+      
       sigemptyset(&signalSet);
       sigaddset(&signalSet,SIGTERM); 
       sigaddset(&signalSet,SIGINT); 
       sigaddset(&signalSet,SIGHUP); 
       pthread_sigmask(SIG_UNBLOCK, &signalSet, NULL);
     }
-
+    
     syslog(LOG_INFO,"Pausing.\n", pid);
-
+    
     pause(); // stuff coming after this probably will not happen
-
-    // fflush(NULL);  // TODO: move to someplace where this executes
-
+    
     syslog(LOG_INFO,"main() returned.\n", pid);
     return 0;
 }
