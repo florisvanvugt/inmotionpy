@@ -14,9 +14,6 @@
 
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 
-# TODO: do we really want to keep loading/unloading the modules?
-# if our modules are already loaded, unload them first.
-
 if lsmod | grep -E -q 'pwrdaq'; then
     echo "PowerDAQ module already loaded."
 else
@@ -37,16 +34,6 @@ fi
 # flush disk buffers, could help in case something crashes.
 sync;sync
 
-# TODO: delete # echo inserting RTLinux modules...
-# TODO: delete insmod /usr/src/linux-2.4.18-rtl3.1/rtlinux-3.1/drivers/mbuff/mbuff.o
-# TODO: delete # echo inserting RTLinux modules...
-# TODO: delete (cd /usr/src/linux/rtlinux; scripts/insrtl)
-# TODO: delete ## echo inserting UEI powerDAQ module...
-# TODO: delete #insmod /lib/modules/2.4.18-w4l-rtl3.1/misc/pwrdaq.o
-# TODO: delete ## echo inserting IMT robot module...
-# TODO: delete #insmod ./robot.o
-
-
 # /proc/pwrdaq has been loaded, and should be present.
 
 I=0
@@ -62,17 +49,19 @@ done
 
 sudo ./robot &
 
-I=0
-while ! pkill -0 -x robot ; do
-    if [ $I -gt 20 ]; then
-	echo "go: could not start robot"
-	./stop
-	exit 1
-    fi
-    I=`expr $I + 1`
-    sleep 0.1
-done
-
 sleep 0.1
+
+#I=0
+#while ! pkill -0 -x robot ; do
+#    if [ $I -gt 20 ]; then#
+#	echo "go: could not start robot"
+#	./stop
+#	exit 1
+#    fi
+#    I=`expr $I + 1`
+#    sleep 0.1
+#done
+
+#sleep 0.1
 
 exit 0

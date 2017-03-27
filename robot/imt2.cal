@@ -73,10 +73,10 @@ s have_grasp 0
 
 # optional ISA counter card for other encoders
 # see isaenc below
-s have_pc7266 0
+#s have_pc7266 0
 
 # optional PCI counter card for other encoders
-s have_pci4e 0
+#s have_pci4e 0
 
 # optional multi-daq configuration
 # swap the two board positions
