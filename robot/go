@@ -17,12 +17,13 @@ PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 # TODO: do we really want to keep loading/unloading the modules?
 # if our modules are already loaded, unload them first.
 
-lsmod | grep -E -q 'xeno_|pwrdaq|pci4e' && {
-	echo "some modules already loaded, reloading."
-	./stop || { 
-		echo "couldn't unload, exiting."; exit 1
-	}
-}
+if lsmod | grep -E -q 'pwrdaq'; then
+    echo "PowerDAQ module already loaded."
+else
+    echo "Loading PowerDAQ module."
+    ./loadmodules.sh
+fi
+
 
 if pkill -0 -x robot; then
     echo "old robot still running, stopping."
@@ -30,6 +31,8 @@ if pkill -0 -x robot; then
 	echo "couldn't stop, exiting."; exit 1
     }
 fi
+
+
 
 # flush disk buffers, could help in case something crashes.
 sync;sync
@@ -43,7 +46,6 @@ sync;sync
 # TODO: delete ## echo inserting IMT robot module...
 # TODO: delete #insmod ./robot.o
 
-./loadmodules.sh
 
 # /proc/pwrdaq has been loaded, and should be present.
 

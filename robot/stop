@@ -71,8 +71,8 @@ fi
 
 # are there modules to unload?
 
-lsmod | grep -E -q 'xeno_|pwrdaq|pci4e' || {
-	echo "stop: no robot modules to unload."
+lsmod | grep -E -q 'pwrdaq' || {
+	echo "stop: no PowerDAQ modules to unload."
 	# lsmod
 	exit 0
 }
@@ -82,12 +82,12 @@ lsmod | grep -E -q 'xeno_|pwrdaq|pci4e' || {
 
 I=0
 while true ; do 
-    lsmod | grep -E -q 'xeno_|pwrdaq|pci4e'
+    lsmod | grep -E -q 'pwrdaq'
     if [ $? ] ; then 
 	break
     fi
     if [ $I -gt 20 ]; then
-	echo "stop: could not unload kernel modules."
+	echo "stop: could not unload PowerDAQ kernel module."
 	exit 1
     fi
     I=`expr $I + 1`
