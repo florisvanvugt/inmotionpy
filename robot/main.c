@@ -11,7 +11,8 @@
 
 /** \mainpage Porting the robot code
  * The aim of this project is to port the Inmotion-2 robot operating
- * code to a Linux 3.x kernel and Xenomai 2.6.
+ * code to a Linux 3.x kernel and Xenomai 2.6. 
+ * March 2017.
  */
 
 
@@ -52,7 +53,9 @@ RT_TASK_INFO thread_info;
 
 #define RECEIVE_INPUT 1    /* Whether we will listen to the input pipe for commands from the user */
 
-#define FORK 0             /* Whether to fork off a separate, child process. */
+#define FORK 1             /* Whether to fork off a separate, child process. */
+
+pid_t pid;                 /* the PID of the current process */
 
 // ob storage definition
 // the ob structure contains globals
@@ -242,7 +245,6 @@ main(void)
 
 
     if (FORK) {
-      pid_t pid;
       
       /* Clone ourselves to make a child */  
       pid = fork(); 
@@ -261,9 +263,9 @@ main(void)
 	{
 	  // PARENT PROCESS. Need to kill it.
 	  syslog(LOG_INFO,"Process id of child process %d \n", pid);
-	  printf("spawned child process %d \n", pid);
+	  printf("Forked child process %d, exiting the parent.\n", pid);
 	  // return success in exit status
-	  //exit(EXIT_SUCCESS); // FVV I notice that when we don't exit the parent, then rt_pipes remain open.
+	  exit(EXIT_SUCCESS); // FVV I notice that when we don't exit the parent, then rt_pipes remain open.
 	}
       
       if (pid==0)
@@ -272,7 +274,11 @@ main(void)
 	}
     }
 
+    
     /* child (daemon) continues */
+    init_fifos();
+    dpr_clear();
+
     
     /* Set the umask to zero */
     umask(0);
@@ -311,7 +317,7 @@ main(void)
     // pthread_attr_setfp_np(&attr, 1);
     
     // TODO: rewrite macro to use rtdm_printk, should go to xterm
-    dpr(4, "main: calling pthread_create start_routine\n");
+    //dpr(4, "main: calling pthread_create start_routine\n");
     
     mlockall(MCL_CURRENT|MCL_FUTURE);
     
@@ -328,7 +334,7 @@ main(void)
     // TODO: delete pthread_wakeup_np(thread);
     ret = rt_task_spawn(&thread, ROBOT_LOOP_THREAD_NAME, STACK_SIZE, STD_PRIO, 0, &start_routine, NULL);
     
-    dpr(4, "main: rt_task_spawn completed.\n");
+    //dpr(4, "main: rt_task_spawn completed.\n");
     
     { // Now that child is spawned, set signals so we will get them.
       sigset_t  signalSet;
@@ -581,10 +587,6 @@ main_init(void)
 
     ob->safety.velmag_kick = 5.0;
 
-    init_fifos();
-
-    dpr_clear();
-
     // TODO: delete t = gethrtime();
     t = rt_timer_tsc2ns(rt_timer_tsc());
     ob->times.time_before_last_sample = t;
@@ -799,7 +801,12 @@ one_sample(void) {
   // (even do_time_after_sample) are written.
   if(ob->ntickfifo && ((ob->i % ob->ntickfifo) == 0)) {
     // TODO: delete rtf_put(ob->tcfifo, "\n" , 1);
-    rt_pipe_write(&(ob->tcfifo), "\n", 1, P_NORMAL);      
+    int ret = rt_pipe_write(&(ob->tcfifo), "\n", 1, P_NORMAL);
+    if (ret<0) {
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write() writing tick\n", __FILE__, __LINE__, ret);
+    } else {
+      syslog(LOG_INFO,"%s:%d %d return from rt_pipe_write() writing tick\n", __FILE__, __LINE__, ret);
+    }
   }
 
   ob->busy = 0;
