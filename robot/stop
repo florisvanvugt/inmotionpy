@@ -13,10 +13,6 @@
 
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 
-# this can be handy:
-export CROB_HOME=`pwd`
-CROB=$CROB_HOME
-#cd $CROB
 
 # are there user mode procs to kill?
 # these should be killed by the progs that create them
@@ -82,10 +78,6 @@ lsmod | grep -E -q 'xeno_|pwrdaq|pci4e' || {
 }
 
 # echo stopping modules...
-# TODO: delete rmmod robot
-# TODO: delete rmmod pwrdaq
-# TODO: delete (cd /usr/src/linux/rtlinux; scripts/rmrtl)
-# TODO: delete rmmod mbuff
 ./unloadmodules.sh
 
 I=0

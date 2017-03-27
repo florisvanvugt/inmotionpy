@@ -14,15 +14,6 @@
 
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 
-CROB_HOME=.
-
-CROB=$CROB_HOME
-cd $CROB
-
-if ! $CROB/checkexist.sh; then
-	exit 1
-fi
-
 # TODO: do we really want to keep loading/unloading the modules?
 # if our modules are already loaded, unload them first.
 

@@ -3,7 +3,6 @@
 
 prefix := $(shell /usr/xenomai/bin/xeno-config --prefix)
 
-#CWD = $(CROB_HOME)
 CWD = $(shell pwd)
 UEI_INC = /usr/powerdaq/include
 
@@ -14,15 +13,7 @@ CFLAGS  = $(shell /usr/xenomai/bin/xeno-config --skin=$(SKIN) --cflags) -I$(UEI_
 #LDFLAGS = $(shell /usr/realtime/bin/xeno-config --skin=$(SKIN) --ldflags) -lnative -lpowerdaq32 -lrtdm
 LDFLAGS = $(shell /usr/xenomai/bin/xeno-config --skin=$(SKIN) --ldflags) -lpowerdaq32 -lrtdm
 
-# TODO: delete LINUX_DIR = /usr/src/linux
-# TODO: delete RTL_DIR = $(LINUX_DIR)/rtlinux
-# TODO: delete RTL_DIR = /usr/realtime
-# TODO: delete UEI_INC = /usr/local/include/ueidaq
-
-# TODO: delete INCLUDE= -I$(LINUX_DIR)/include -I$(RTL_DIR)/include -I$(RTL_DIR)/include/compat -I$(UEI_INC)
-# TODO: delete CFLAGS = -D__KERNEL__ -Wall -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -pipe -march=i686 -DMODULE -g -D__RTL__ -D_LOOSE_KERNEL_NAMES -O2 $(INCLUDE) -I$(RTL_DIR)/include/posix
 ARCH = x86
 # FVV changed ARCH from i386
 
 CC = gcc
-# TODO: delete CXXFLAGS = -D__KERNEL__ -Wall -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -pipe -march=i686 -DMODULE -g -D__RTL__ -D_LOOSE_KERNEL_NAMES $(INCLUDE) -I/$(RTL_DIR)/include/posix -fno-exceptions -fno-rtti

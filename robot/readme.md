@@ -361,6 +361,13 @@ It is this line in `main.c` that, when I comment it out, leaves the pipes open:
 
 
 
+## The actual solution
+
+**FOUND IT** The problem was that the parent process creates the pipes (in `main_init()`, calling `init_fifos()` calling `rt_pipe_create()`) but then the child process is the one that needs these pipes. So the solution was to move the creation of the pipes below the forking stuff, so that it is actually the child that creates the communication channels.
+
+
+
+
 
 
 See the syslog here below, where at 14:56:48 I stopped the main process with <ctrl+c>.
