@@ -20,7 +20,7 @@ That's it!
 
 Full documentation can be found in [robot.html](robot.html) and [shm.html](shm.html) (to generate it type `make doc`).
 
-The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt:
+The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt (from the parent directory to `robot/`):
 
 ```
 make
@@ -30,7 +30,7 @@ You can then write a script that controls the robot. A simple example is here:
 
 
 ```python
-import robot
+import robot.interface as robot
 
 robot.load()
 
@@ -50,9 +50,13 @@ Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n
 
 ## Files
 
-* `robot.py` -- the main robot module.
-* `shm.py` -- infrastructure for accessing the shared memory.
+I recommend keeping all the robot C and Python code in `robot/` and put experiment-specific stuff in the parent directory.
+
 * `robot/` -- the C code for the robot (as well as some Python scripts for shared memory access).
+* `robot/interface.py` -- the main robot module.
+* `robot/shm.py` -- infrastructure for accessing the shared memory.
+
+Example programs:
 
 * `example_simple.py` -- loads the robot and prints the position to the screen, repeatedly.
 * `example_proto.py` -- loads the robot and reads position and moves it to a different position.

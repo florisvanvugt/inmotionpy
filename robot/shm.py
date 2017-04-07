@@ -73,12 +73,6 @@ def add_aliases(fname):
     return
 
 
-# For now, we read aliases from alias_list.txt. However, they are quite erratic and weird because
-# they were added in the time when the robot was controlled using Tcl (and nobody knows why they
-# didn't stick to logical variable naming). 
-add_aliases('robot/alias_list.txt')
-
-
 
 
 # Read in a table that tells us where each variable is within each object.
@@ -281,8 +275,18 @@ def get_info(var,index=None):
 
 
 
-def init():
+def init(aliasfile="robot/alias_list.txt"):
+    """
+    Initialise the shared memory. This assumes that a robot process is already running
+    so that a block of shared memory is allocated for us to connect to.
+    """
 
+    # For now, we read aliases from alias_list.txt. However, they are quite erratic and weird because
+    # they were added in the time when the robot was controlled using Tcl (and nobody knows why they
+    # didn't stick to logical variable naming). 
+    add_aliases(aliasfile)
+
+    
     global locs
     global memobjects
     
@@ -301,7 +305,13 @@ def init():
 
 
 def stop_shm():
-    # When you are done...    
+    """
+    Detaches from the shared memory. Run this when you are unloading the robot.
+    You'll probably want to keep the shared memory open until the last moment though
+    so that you can tell the robot to shut itself down through the shared memory
+    (e.g. wshm('quit',1) )
+    """
+    # When you are done...
 
     global memobjects
     for ob in memobjects:

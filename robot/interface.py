@@ -492,17 +492,6 @@ def stay_fade(x,y):
 
 
 
-    
-
-# Check the executables
-for executable in [robot_start,robot_stop]:
-
-    if not os.path.isfile(executable):
-        print("ERROR: could not find executable %s (did you compile the robot code already?)"%executable)
-
-
-    
-
 
 
 
@@ -537,3 +526,22 @@ def tryenc(r):
 
     return r
 
+
+
+
+
+
+
+
+
+
+    
+
+# Check the executables
+for executable in [robot_start,robot_stop]:
+
+    if not os.path.isfile(executable):
+        print("ERROR: could not find executable %s (did you compile the robot code already?)"%executable)
+
+
+    

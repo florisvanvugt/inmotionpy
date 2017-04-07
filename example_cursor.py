@@ -11,7 +11,7 @@ import numpy as np
 import random
 import datetime
 
-import robot
+import robot.interface as robot
 import pickle
 
 

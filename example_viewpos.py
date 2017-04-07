@@ -1,7 +1,7 @@
 from tkinter import *
 
 import time
-import robot
+import robot.interface as robot
 
 
 
