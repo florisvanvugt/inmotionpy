@@ -9,7 +9,7 @@ from robot.shm import *
 start_shm()
 
 
-f = open('alias_list.txt','r')
+f = open('robot/alias_list.txt','r')
 cmds = f.readlines()
 f.close()
 
