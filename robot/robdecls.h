@@ -28,7 +28,7 @@
 #define f32 woops!
 typedef double f64;
 
-#define FIFOLEN 0x4000
+#define FIFOLEN 0x4000   // i.e. 16384
 
 // errors, see main.c and uei.c
 // if you change this, you MUST change tools/errpt
@@ -105,176 +105,6 @@ typedef struct pm_s {
     u32 five_d;             // planarwrist adaptive
 } PM;
 
-// wrist types
-
-// right/left dof
-typedef struct rl_s {
-    f64 r;
-    f64 l;
-} rl;
-
-// wrist motors
-typedef struct rlps_s {
-    f64 r;	// right
-    f64 l;	// left
-    f64 ps;	// pronation/supination
-} rlps;
-
-// wrist dofs
-typedef struct wrist_dof_s {
-        f64 fe;	// flexion/extension
-        f64 aa;	// abduction/adduction
-        f64 ps;	// pronation/supination
-} wrist_dof;
-
-// wrist motor attributes
-typedef struct wrist_mattr_s {
-    u32 enc_channel;	// encoder input channel
-    f64 disp;		// displacement
-    f64 vel;		// velocity
-    f64 fvel;		// filtered velocity
-    f64 devtrq;		// device torque
-    f64 xform;		// transform
-    f64 offset;		// offset
-    f64 volts;		// command voltage
-    f64 test_volts;	// test voltage
-    f64 torque;		// current sensor input torque
-    u32 ao_channel;	// analog output channel
-    u32 csen_channel;	// current sensor adc channel
-} wrist_MAttr;
-
-// wrist gear ratios
-typedef struct wrist_gears_s {
-    f64 diff;		// differential
-    f64 ps;		// pronation/supination
-} wrist_gears;
-
-// wrist attributes
-typedef struct wrist_s {
-    wrist_MAttr left;	// dof
-    wrist_MAttr right;	// dof
-    wrist_MAttr ps;	// dof
-    wrist_gears gears;	// gear ratios
-    u32 uei_ao_board_handle; // handle of the ao8 board
-} Wrist;
-
-typedef struct wrist_ob_s {    // world coordinate parameters
-    wrist_dof pos;	// position
-    wrist_dof vel;	// velocity
-    wrist_dof fvel;	// filtered velocity
-    wrist_dof torque;	// command torque
-    wrist_dof offset;   // offset from zero;
-    wrist_dof moment_csen;
-    wrist_dof moment_cmd;
-    wrist_dof back;	// back wall for adap
-    wrist_dof norm;	// normalized posn for adap
-    f64 diff_stiff;	// stiffness
-    f64 ps_stiff;	// stiffness
-    f64 diff_side_stiff;	// stiffness
-    f64 diff_damp;	// damping
-    f64 ps_damp;	// damping
-    f64 diff_gcomp;	// gravity compensation
-    f64 ps_gcomp;	// gravity compensation
-    u32 ps_adap_going_up; // adaptive going up
-    u32 nocenter3d;	// don't center the uncontrolled dof
-    f64 velmag;		// velocity magnitude
-    f64 rl_pfomax;	// preserve force orientation
-    f64 rl_pfotest;	// preserve force orientation
-    u32 ft_motor_force;	// use motor force instead of ft
-} wrist_ob;
-
-typedef struct wrist_prev_s {   // previous world coordinate parameters
-    wrist_dof pos;
-    wrist_dof vel;
-    wrist_dof fvel;
-    wrist_MAttr right;
-    wrist_MAttr left;
-    wrist_MAttr ps;
-} wrist_prev;
-
-// ankle types
-
-typedef struct ankle_dof_s {	// ankle degrees of freedom
-        f64 dp; // dorsiflexion/plantarflexion
-        f64 ie; // inversion/eversion
-} ankle_dof;
-
-typedef struct ankle_mattr_s {	// ankle motor attributes
-    u32 enc_channel;
-    f64 disp;
-    f64 devtrq;
-    f64 xform;
-    f64 volts;
-    f64 test_volts;
-    f64 force;
-    u32 ao_channel;
-    u32 csen_channel;
-    u32 rot_enc_channel;
-    f64 rot_disp;
-    f64 rot_lin_disp;
-    f64 rot_lin_vel;
-    f64 vel;
-} ankle_MAttr;
-
-typedef struct ankle_trans_s {	// ankle gear ratios from motor to world
-    f64 ratio;
-    f64 lead;
-    f64 ankle_ball_length;
-    f64 ball_ball_width;
-    f64 av_shin_length;
-    f64 av_actuator_length;
-    f64 enc_xform;
-    f64 slip_thresh;
-} ankle_trans;
-
-typedef struct ankle_knee_s {
-        u32 channel;
-        f64 raw;
-        // xform1 * potvoltage^2 + xform2 * potvoltage + bias
-        f64 xform1;
-        f64 xform2;
-        f64 bias;
-        f64 angle;
-} ankle_knee;
-
-typedef struct ankle_s {	// group the parameters of each motor and
-			// include an overall gear ratio for the differential
-    ankle_MAttr left;
-    ankle_MAttr right;
-    ankle_trans trans;
-    ankle_knee knee;
-    u32 uei_ao_board_handle;
-} Ankle;
-
-typedef struct ankle_ob_s {	// ankle world coordinates
-    ankle_dof pos;
-    ankle_dof vel;
-    ankle_dof fvel;
-    ankle_dof torque;
-    ankle_dof back;
-    ankle_dof norm;
-    ankle_dof offset;
-    ankle_dof ref_pos;
-    ankle_dof moment_csen;
-    ankle_dof moment_cmd;
-    ankle_dof accel;
-    f64 vel_mag;
-    f64 accel_mag;
-    f64 safety_vel;
-    f64 safety_accel;
-    f64 stiff;
-    f64 damp;
-    f64 rl_pfomax;
-    f64 rl_pfotest;
-} ankle_ob;
-
-typedef struct ankle_prev_s {	// previous ankle world coordinate parameters
-    ankle_dof pos;
-    ankle_dof vel;
-    ankle_dof fvel;
-    rl rot_lin_disp;
-    rl disp;
-} ankle_prev;
 
 // linear types
 
@@ -322,54 +152,6 @@ typedef struct linear_prev_s {   // previous linear world coordinate parameters
     f64 vel;
     f64 fvel;
 } linear_prev;
-
-// hand types
-
-typedef struct hand_mattr_s {    // hand motor attributes
-    u32 enc_channel;	// counter card encoder channel
-    f64 disp;		// displacement
-    f64 devfrc;		// output forces
-    f64 xform;		// xform from force to voltage
-    f64 volts;		// output voltage
-    f64 test_volts;	// test voltage
-    u32 ao_channel;	// ao board output voltage channel
-    u32 limit_channel;
-    f64 limit_volts;
-} hand_MAttr;
-
-typedef struct hand_gears_s {        // hand gear ratios from motor to world
-    f64 xform;
-    f64 offset;
-    f64 ratio;
-} hand_gears;
-
-typedef struct hand_s {   // hand
-    hand_MAttr motor;
-    hand_gears gears;
-    u32 uei_ao_board_handle;
-} Hand;
-
-typedef struct hand_ob_s {    // hand world coordinates
-    f64 pos;
-    f64 vel;
-    f64 fvel;
-    f64 force;
-    f64 grasp;
-    f64 offset;
-    f64 ref_pos;
-    f64 stiff;
-    f64 damp;
-    f64 force_bias;
-    f64 pfomax;		// pfo
-    f64 pfotest;	// pfo
-    u32 adap_going_up;
-} hand_ob;
-
-typedef struct hand_prev_s {   // previous hand world coordinate parameters
-    f64 pos;
-    f64 vel;
-    f64 fvel;
-} hand_prev;
 
 
 // globals
@@ -491,70 +273,32 @@ typedef struct csen_s {
 	f64 torque[8];		// output torque
 } CSen;
 
-// US Digital PC7266 ISA counter card for incremental encoders
-typedef struct pc7266_s {
-	s32 raw[4];	// raw 24 bit int values
-	f64 enc[4];	// scaled float values
-	f64 lenc[4];	// scaled float values
-	f64 scale;	// scale multiplier
-	u32 max;	// normalize from 0-max to -max/2 to max/2
-	u32 zero;	// set to 1 to zero counters
-	u32 docal;	// register index, see code
-	u32 have;
-} PC7266;
-
-// US Digital PCI4E PCI counter card for incremental encoders
-typedef struct pci4e_s {
-	struct pci_dev *dev;
-
-	u32 bar;
-	u32 len;
-	void *remap;
-
-	u32 raw[4];	// raw 24 bit int values
-	f64 enc[4];	// scaled float values rotary
-	f64 lenc[4];	// scaled float values linear
-	f64 scale;	// scale multiplier
-	u32 limit;	// modulus
-	u32 zero;	// set to 1 to zero counters
-	u32 have;
-} PCI4E;
-
 // robot
 typedef struct robot_s {
-    s8 tag[8];	// unused
-
+  s8 tag[8];	// unused
+  
   f64 ain_07;
   u32 ain_07_channel;
-   
-    Motor shoulder;
-    Motor elbow;
-
-    se link;
-
-    xy offset;
-
-    Ft ft;
-
-    ISAFt isaft;
-
-    Grasp grasp;
-
-    Accel accel;
-
-    CSen csen;
-
-    PC7266 pc7266;
-
-    PCI4E pci4e;
-
-    Wrist wrist;
-
-    Ankle ankle;
-
-    Linear linear;
-
-    Hand hand;
+  
+  Motor shoulder;
+  Motor elbow;
+  
+  se link;
+  
+  xy offset;
+  
+  Ft ft;
+  
+  ISAFt isaft;
+  
+  Grasp grasp;
+  
+  Accel accel;
+  
+  CSen csen;
+  
+  Linear linear;
+  
 } Robot;
 
 // time vars
@@ -649,13 +393,6 @@ typedef struct safety_s {
 	f64 damp_ret_secs;
 } Safety;
 
-typedef struct sim_s {
-    u32 sensors;		// boolean, yes, simulate
-    xy pos;			// position, read from user space
-    xy vel;			// vel
-    wrist_dof wr_pos;           // wrist position
-    wrist_dof wr_vel;           // wrist velocity
-} Sim;
 
 #define N_UEIDAQ_BOARDS 4
 #define UEI_SAMPLES 16
@@ -890,15 +627,12 @@ typedef struct ob_s {
   se thetadot;		// angular velocity
   se fthetadot;		// filtered thetadot
   
-  wrist_ob wrist;		// world coordinates
-  ankle_ob ankle;
   linear_ob linear;
-  hand_ob hand;
   
   u32 test_raw_torque;	// raw torque test mode;
   se raw_torque_volts;	// raw volts for testing
   
-  Sim sim;			// simulate sensors
+  //Sim sim;			// simulate sensors
   
   f64 sin_period;		// for the sinewave generator
   f64 sin_amplitude;		// amplitude
@@ -1036,21 +770,18 @@ typedef struct game {
 // these get filled after read_sensors is done.
 
 typedef struct prev_s {
-    s8 tag[8];	// unused
-    xy pos;
-    xy vel;
-
-    se theta;
-    se thetadot;
-    se fthetadot;
-
-    xy tach_vel;
-    xy ftach_vel;
-
-    wrist_prev wrist;
-    ankle_prev ankle;
-    linear_prev linear;
-    hand_prev hand;
+  s8 tag[8];	// unused
+  xy pos;
+  xy vel;
+  
+  se theta;
+  se thetadot;
+  se fthetadot;
+  
+  xy tach_vel;
+  xy ftach_vel;
+  
+  linear_prev linear;
 
 } Prev;
 
@@ -1245,41 +976,7 @@ void do_max(void);
 void planar_set_zero_torque(void);
 void planar_write_zero_torque(void);
 void planar_after_compute_controls(void);
-/*
-void wrist_set_zero_torque(void);
-void wrist_write_zero_torque(void);
-void wrist_init(void);
-void wrist_after_compute_controls(void);
-void wrist_sensor(void);
-void wrist_moment(void);
-void wrist_calc_vel(void);
-void dac_wrist_actuator(void);
 
-void ankle_set_zero_torque(void);
-void ankle_write_zero_torque(void);
-void ankle_init(void);
-void ankle_after_compute_controls(void);
-void ankle_sensor(void);
-void ankle_moment(void);
-void ankle_calc_vel(void);
-void dac_ankle_actuator(void);
-
-void linear_set_zero_force(void);
-void linear_write_zero_force(void);
-void linear_init(void);
-void linear_after_compute_controls(void);
-void linear_sensor(void);
-void linear_calc_vel(void);
-void dac_linear_actuator(void);
-
-void hand_set_zero_force(void);
-void hand_write_zero_force(void);
-void hand_init(void);
-void hand_after_compute_controls(void);
-void hand_sensor(void);
-void hand_calc_vel(void);
-void dac_hand_actuator(void);
-*/
 // pl_ulog.c
 void init_log_fns(void);
 void init_ref_fns(void);

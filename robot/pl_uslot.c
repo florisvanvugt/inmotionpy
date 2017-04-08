@@ -82,12 +82,6 @@ init_slot_fns(void)
 
 #define X ob->pos.x
 #define Y ob->pos.y
-//#define vX ob->fsoft_vel.x
-//#define vY ob->fsoft_vel.y
-//#define fX ob->ba_fx
-//#define fY ob->ba_fy
-//#define fX moh->fX
-//#define fY moh->fY
 #define cnt moh->counter
 #define dir moh->current_dir
 #define refX moh->last_pointX
@@ -387,24 +381,24 @@ void movetopt(u32 id)
     //mkt: accumulate partitioned FT world forces over movement
     switch (ob->ba_accumforce){
     case 0: //inactive (do nothing)
-     break;
+      break;
     case 1: //zero accumulators
-    ob->mkt_finline = ob->mkt_finline = 0.;
-    ob->plg_ftzerocount = 0;
-    ob->ba_accumforce = 2;
-     break;
+      ob->mkt_finline = ob->mkt_finline = 0.;
+      ob->plg_ftzerocount = 0;
+      ob->ba_accumforce = 2;
+      break;
     case 2: //accumulate
-    wx = rob->ft.world.x;
-    wy = rob->ft.world.y;
-    v = cos(ob->mkt_mvtangle)*wx + sin(ob->mkt_finline)*wy;
-    ob->mkt_finline += v*v;
-    v = sin(ob->mkt_mvtangle)*wx + cos(ob->mkt_finline)*wy;
-    ob->mkt_fortho += v*v;
-    ob->plg_ftzerocount++;
-     break;
+      wx = rob->ft.world.x;
+      wy = rob->ft.world.y;
+      v = cos(ob->mkt_mvtangle)*wx + sin(ob->mkt_finline)*wy;
+      ob->mkt_finline += v*v;
+      v = sin(ob->mkt_mvtangle)*wx + cos(ob->mkt_finline)*wy;
+      ob->mkt_fortho += v*v;
+      ob->plg_ftzerocount++;
+      break;
     }
   }
-
+  
   ob->plg_last_fX = fX;
   ob->plg_last_fY = fY;
 #ifdef dyn_comp 
@@ -419,17 +413,22 @@ void movetopt(u32 id)
 void 
 static_ctl(u32 id)
 {
-f64 pcurx = ob->plg_p1x;
-f64 pcury = ob->plg_p1y;
-f64 stiff = ob->plg_stiffness;
-f64 damp  = ob->plg_damping;
-fX= (-stiff*(X-pcurx) - damp*(vX));
-fY= (-stiff*(Y-pcury) - damp*(vY));
+  /*
+    Static controller that keeps the robot at a position
+    (ob->plg_p1x, ob->plg_p1y) with stiffness ob->plg_stiffness
+    and damping ob->plg_damping.
+   */
+  f64 pcurx = ob->plg_p1x;
+  f64 pcury = ob->plg_p1y;
+  f64 stiff = ob->plg_stiffness;
+  f64 damp  = ob->plg_damping;
+  fX= (-stiff*(X-pcurx) - damp*(vX));
+  fY= (-stiff*(Y-pcury) - damp*(vY));
 #ifdef dyn_comp 
- dynamics_compensation(fX,fY,3,1.0);
+  dynamics_compensation(fX,fY,3,1.0);
 # else
- ob->motor_force.x = fX;
- ob->motor_force.y = fY;
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY;
 #endif
 }
 

@@ -177,10 +177,10 @@ dio_encoder_sensor(void)
 
     if (!ob->have_planar) return;
 
-    if (ob->sim.sensors) {
-	ob->pos = ob->sim.pos;
-	return;
-    }
+    //if (ob->sim.sensors) {
+    //ob->pos = ob->sim.pos;
+    //return;
+    //}
 
     //if (ob->have_planar_incenc && rob->pci4e.have) {
     // new for planar pci4e
@@ -360,9 +360,9 @@ adc_tach_sensor(void)
     // else from encoder angles.
     ob->vel = V;
 
-    if (ob->sim.sensors) {
-	ob->vel = ob->sim.vel;
-    }
+    //if (ob->sim.sensors) {
+    //ob->vel = ob->sim.vel;
+    //}
 
     ob->velmag = hypot(ob->vel.x, ob->vel.y);
 

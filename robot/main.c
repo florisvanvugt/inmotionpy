@@ -470,10 +470,7 @@ main_init(void)
 	
 	moh->counter = 0.0;
 
-//    wrist_init();
-//    ankle_init();
 //    linear_init();
-//    hand_init();
 
     // force transducer params
     rob->ft.offset = 0.0;	// radians
@@ -861,10 +858,7 @@ void
 set_zero_torque(void)
 {
     if (ob->have_planar) planar_set_zero_torque();
-//    if (ob->have_wrist) wrist_set_zero_torque();
-//    if (ob->have_ankle) ankle_set_zero_torque();
 //    if (ob->have_linear) linear_set_zero_force();
-//    if (ob->have_hand) hand_set_zero_force();
 }
 
 // writes zeros to the a/d boards
@@ -873,20 +867,14 @@ void
 write_zero_torque(void)
 {
     if (ob->have_planar) planar_write_zero_torque();
-//    if (ob->have_wrist) wrist_write_zero_torque();
-//    if (ob->have_ankle) ankle_write_zero_torque();
 //    if (ob->have_linear) linear_write_zero_force();
-//    if (ob->have_hand) hand_write_zero_force();
 }
 
 void
 after_compute_controls(void)
 {
     if (ob->have_planar) planar_after_compute_controls();
-//    if (ob->have_wrist) wrist_after_compute_controls();
-//    if (ob->have_ankle) ankle_after_compute_controls();
 //    if (ob->have_linear) linear_after_compute_controls();
-//    if (ob->have_hand) hand_after_compute_controls();
 }
 
 /// read_sensors_fn - read the various sensors, a/d, dio, tachometer, etc.
@@ -896,14 +884,10 @@ read_sensors_fn(void)
 {
     dpr(3, "read_sensors\n");
 
-    if (ob->sim.sensors)
-	return;
-
     uei_ain_read();
     isa_ft_read();
     uei_dio_scan();
-    /*pc7266_encoder_read();*/
-    /* pci4e_encoder_read(); */
+
 }
 
 void
@@ -925,30 +909,13 @@ compute_controls_fn(void)
 	adc_accel_sensor();
     }
 
-//    if (ob->have_wrist) {
-//	wrist_sensor();
-//	wrist_calc_vel();
-//	wrist_moment();
-//    }
-
     if (ob->have_grasp) {
 	adc_grasp_sensor();
     }
 
-//    if (ob->have_ankle) {
-//	ankle_sensor();
-//	ankle_calc_vel();
-//	ankle_moment();
-//    }
-
 //    if (ob->have_linear) {
 //	linear_sensor();
 //	linear_calc_vel();
-//    }
-
-//    if (ob->have_hand) {
-//	hand_sensor();
-//	hand_calc_vel();
 //    }
 
     //
@@ -976,10 +943,7 @@ write_actuators_fn(void)
 	dac_torque_actuator();           // transforms forces from cartesian to motor torques.
     }
 
-//    if (ob->have_wrist) dac_wrist_actuator();
-//    if (ob->have_ankle) dac_ankle_actuator();
 //    if (ob->have_linear) dac_linear_actuator();
-//    if (ob->have_hand) dac_hand_actuator();
     return;
 }
 
@@ -988,7 +952,6 @@ check_safety_fn(void)
 {
     if (ob->safety.override) return;
     if (ob->have_planar) planar_check_safety_fn();
-//    if (ob->have_wrist) wrist_check_safety_fn();
 }
 
 void

@@ -28,52 +28,32 @@ typedef u64 hrtime_t;
 // function.
 
 void write_data_fifo_sample_fn(void);
-void write_motor_test_fifo_sample_fn(void);
-void write_grip_test_fifo_sample_fn(void);
 void write_adc_fifo_fn(void);
 void write_ovadc_fifo_fn(void);
 //void write_pc7266_fifo_fn(void);
 void write_ft_fifo_sample_fn(void);
 void write_accel_test_fifo_sample_fn(void);
-void write_wrist_fifo_fn(void);
-void write_ankle_fifo_fn(void);
-void write_vsensor_fifo_sample_fn(void);
-void write_enc_fifo_sample_fn(void);
 void write_linear_fifo_fn(void);
-void write_wrist_test_fifo_fn(void);
-void write_planarwrist_fifo_fn(void);
 
 void
 init_log_fns(void)
 {
 	ob->log_fns[0] =  write_data_fifo_sample_fn;
-	ob->log_fns[1] =  write_motor_test_fifo_sample_fn;
-	ob->log_fns[2] =  write_grip_test_fifo_sample_fn;
 	ob->log_fns[3] =  write_adc_fifo_fn;
 	ob->log_fns[4] =  write_ovadc_fifo_fn;
-	//ob->log_fns[5] =  write_pc7266_fifo_fn;
 	ob->log_fns[6] =  write_ft_fifo_sample_fn;
 	ob->log_fns[7] =  write_accel_test_fifo_sample_fn;
-//	ob->log_fns[8] =  write_wrist_fifo_fn;
-//	ob->log_fns[9] =  write_ankle_fifo_fn;
-	ob->log_fns[10] = write_vsensor_fifo_sample_fn;
-	ob->log_fns[11] = write_enc_fifo_sample_fn;
-//	ob->log_fns[12] = write_linear_fifo_fn;
-//	ob->log_fns[13] = write_wrist_test_fifo_fn;
-	ob->log_fns[14] = write_planarwrist_fifo_fn;
 }
 
 // handle ref fns similarly to log fns
 
 void read_data_fifo_sample_fn(void);
-void read_ankle_fifo_sample_fn(void);
 void read_planar_fifo_sample_fn(void);
 
 void
 init_ref_fns(void)
 {
 	ob->ref_fns[0] = read_data_fifo_sample_fn;
-//	ob->ref_fns[1] = read_ankle_fifo_sample_fn;
 	ob->ref_fns[2] = read_planar_fifo_sample_fn;
 }
 
@@ -150,30 +130,6 @@ write_data_fifo_sample_fn(void)
 // write counter, then nlog doubles from log array, into dofifo.
 // for motor_tests program
 
-void
-write_motor_test_fifo_sample_fn(void)
-{
-    s32 j;
-
-    dpr(3, "write motor log %d\n", ob->i);
-    if (ob->nlog < 1)
-	return;
-
-    j = 0;
-    ob->log[j++] = (f64) ob->i;
-    ob->log[j++] = rob->ft.moment.z;
-    ob->log[j++] = rob->shoulder.angle.rad;
-    ob->log[j++] = rob->elbow.angle.rad;
-    ob->log[j++] = ob->raw_torque_volts.s;
-    ob->log[j++] = ob->raw_torque_volts.e;
-    ob->log[j++] = rob->wrist.right.disp;
-    ob->log[j++] = rob->wrist.left.disp;
-    ob->log[j++] = rob->wrist.ps.disp;
-    ob->log[j++] = rob->linear.motor.disp;
-
-    // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
-    rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
-}
 
 //
 // test grip sensor
@@ -392,82 +348,6 @@ write_accel_test_fifo_sample_fn(void)
 // write counter, then nlog doubles from log array, into dofifo.
 
 
-/*
-void
-write_wrist_fifo_sample_fn(void)
-{
-    s32 j;
-
-    dpr(3, "write_log\n");
-    if (ob->nlog < 1)
-	return;
-
-    j = 0;
-    ob->log[j++] = (f64) ob->i;
-    ob->log[j++] = ob->pos.x;
-    ob->log[j++] = ob->pos.y;
-    ob->log[j++] = daq->adcvolts[8];
-    ob->log[j++] = daq->adcvolts[9];
-    ob->log[j++] = rob->pc7266.raw[0];
-    ob->log[j++] = rob->pc7266.raw[1];
-    ob->log[j++] = rob->pc7266.raw[2];
-
-    // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
-    rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
-}
-*/
-
-void
-write_vsensor_fifo_sample_fn(void)
-{
-    s32 j;
-
-    dpr(3, "write_log\n");
-    if (ob->nlog < 1)
-	return;
-
-    j = 0;
-    ob->log[j++] = (f64) ob->i;
-    // ft force
-    ob->log[j++] = rob->ft.world.x;
-    ob->log[j++] = rob->ft.world.y;
-    // current sensor
-    ob->log[j++] = daq->adcvolts[8];
-    ob->log[j++] = daq->adcvolts[9];
-    ob->log[j++] = daq->adcvolts[10];
-    ob->log[j++] = daq->adcvolts[11];
-
-    ob->log[j++] = ob->motor_torque.s;
-    ob->log[j++] = ob->motor_torque.e;
-
-    // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
-    rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
-}
-
-void
-write_enc_fifo_sample_fn(void)
-{
-    s32 j;
-
-    dpr(3, "write_log\n");
-    if (ob->nlog < 1)
-	return;
-
-    j = 0;
-    ob->log[j++] = (f64) ob->i;
-
-    // elbow 0 shoulder 1
-    ob->log[j++] = daq->dienc[0];
-    ob->log[j++] = daq->dienc[1];
-    ob->log[j++] = daq->dienc_vel[0];
-    ob->log[j++] = daq->dienc_vel[1];
-    ob->log[j++] = daq->dienc_accel[0];
-    ob->log[j++] = daq->dienc_accel[1];
-
-    // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
-    rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
-}
-
 
 // write display variables, about 30Hz
 
@@ -521,44 +401,3 @@ read_planar_fifo_sample_fn(void)
     ob->ref.pos.y = ob->refin[j++];
 }
 
-void
-write_planarwrist_fifo_fn(void)
-{
-    s32 j;
-
-    dpr(3, "write planarwrist log\n");
-    if (ob->nlog < 1)
-	return;
-
-    j = 0;
-
-    ob->log[j++] = (f64) ob->i;
-    ob->log[j++] = ob->pos.x;
-    ob->log[j++] = ob->pos.y;
-
-    ob->log[j++] = ob->vel.x;
-    ob->log[j++] = ob->vel.y;
-
-    ob->log[j++] = rob->ft.world.x;
-    ob->log[j++] = rob->ft.world.y;
-    ob->log[j++] = rob->ft.world.z;
-    ob->log[j++] = rob->grasp.force;
-
-    ob->log[j++] = ob->wrist.pos.fe;
-    ob->log[j++] = ob->wrist.pos.aa;
-    ob->log[j++] = ob->wrist.pos.ps;
-
-    ob->log[j++] = ob->wrist.fvel.fe;
-    ob->log[j++] = ob->wrist.fvel.aa;
-    ob->log[j++] = ob->wrist.fvel.ps;
-
-    ob->log[j++] = ob->wrist.moment_csen.fe;
-    ob->log[j++] = ob->wrist.moment_csen.aa;
-    ob->log[j++] = ob->wrist.moment_csen.ps;
-
-    ob->log[j++] = 0.0; // pitch potentiometer, placeholder
-    ob->log[j++] = 0.0; // yaw potentiometer, placeholder
-
-    // TODO: delete rtf_put(ob->dofifo, ob->log, (sizeof(ob->log[0]) * ob->nlog));
-    rt_pipe_write(       &(ob->dofifo), ob->log, (sizeof(ob->log[0]) * ob->nlog), P_NORMAL);
-}
