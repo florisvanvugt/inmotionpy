@@ -15,6 +15,8 @@ controller 16 : static_ctl (hold at specified location)
 
 """
 
+from __future__ import absolute_import
+
 
 import os
 import subprocess
@@ -22,9 +24,10 @@ import time
 import sys
 
 
+
 # Import code for interacting with the shared memory (this allows us to exchange information with the C script)
 #from shm_ext import *
-from shm import *
+from .shm import *
 
 
 
