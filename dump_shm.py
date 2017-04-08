@@ -5,7 +5,7 @@ This tries to connect to the shared memory and dumps all variables that we know 
 
 """
 
-from shm import *
+from robot.shm import *
 start_shm()
 
 
