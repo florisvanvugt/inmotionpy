@@ -30,6 +30,11 @@ typedef double f64;
 
 #define FIFOLEN 0x4000   // i.e. 16384
 
+
+// For trajectory replaying, this is the maximum length of the trajectory position array.
+#define TRAJECTORY_BUFFER_SIZE 3000  // should match the number of items in ob->trajx and ob->trajy
+
+
 // errors, see main.c and uei.c
 // if you change this, you MUST change tools/errpt
 
@@ -706,6 +711,16 @@ typedef struct ob_s {
   u32 fvv_vel_low_timer;         // times how long we are on low Y-velocity (below some percentage of the maximum velocity
 
   u32 fvv_workspace_enter;       // 0 when outside of workspace, 1 when entered the workspace
+
+
+  /* The variables below here are used for trajectory replaying */
+  u32 traj_n_samps;            // how many samples the trajectory we have loaded contains
+  u32 traj_count;               // how far we are currently in reproducing the trajectory
+  f64 trajx[3000]; // used to store trajectories (x position values)
+  f64 trajy[3000]; // used to store trajectories (y position values)
+  f64 traj_final_x;             // the final position of the replay, x
+  f64 traj_final_y;             // idem, y
+
   
   s32 debug_level;		// for dpr
   

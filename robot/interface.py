@@ -10,6 +10,7 @@ controller 0  : null field
 controller 2  : zero_ft
 controller 4  : movetopt (move to location)
 controller 5  : static_ctl_fade (hold and fade)
+controller 9  : trajectory_reproduce (replay a trajectory loaded into memory)
 controller 16 : static_ctl (hold at specified location)
 
 
@@ -494,6 +495,149 @@ def stay_fade(x,y):
 
 
 
+
+
+
+
+TRAJECTORY_BUFFER_SIZE = 3000  # the maximum size of a replay trajectory (should correspond to #DEFINE TRAJECTORY_BUFFER_SIZE in robdecls.h)
+
+# This defines the SQUARE of the allowable distance from the beginning of a trajectory.
+# As a safety precaution, we check that we are close enough to the starting point of a trajectory before we will replay it. This value controls how close to it we need to be.
+# NOTE: this is a squared number, and it will be compared to the SQUARED distance to the starting position.
+REPLAY_START_SAFETY_PROXIMITY = .01**2
+
+
+def capture_trajectory(duration=1.):
+    """ 
+    Captures a trajectory for the given duration (in sec)
+    and returns it as a list of x,y pairs.
+    """
+
+    start_capture()
+    t0=time.time()
+    while time.time()<t0+duration:
+        pass
+    controller(0) # null field controller; setting this will stop the capture
+
+    return retrieve_trajectory()
+    
+
+
+def start_capture():
+    """
+    Starts to capture the current movement trace 
+    and put it in shared memory.
+    """
+    wshm('traj_count',0) # define that we are starting from the starting point
+    controller(8)        # trajectory_capture
+    
+
+
+
+
+def retrieve_trajectory():
+    """
+    If you have called start_capture(),
+    this retrieves the trajectory that was captured.
+    """
+    xs,ys=rshm('trajx'),rshm('trajy')
+    n = rshm('traj_count')
+    return zip(xs[:n],ys[:n])
+    
+
+
+
+
+
+
+
+def prepare_replay(trajectory):
+    """
+    Prepares the robot to replay a trajectory.
+
+    Arguments
+    trajectory : a list of pairs (x,y) of positions to be replayed
+    """
+
+    # Tell the robot how many samples this trajectory will be
+    traj_n_samps = len(trajectory)
+    # Caution: make sure the trajectory is not longer than the array size of ob->trajx and trajy
+    if traj_n_samps>TRAJECTORY_BUFFER_SIZE:
+        raise ValueError("This trajectory is too long: %i position samples > %i buffer length."%(traj_n_samps,TRAJECTORY_BUFFER_SIZE))
+    wshm('traj_n_samps',traj_n_samps)
+    
+    # Extract the X and Y time course
+    trajx,trajy = zip(*trajectory)
+
+    # The final position of this trajectory
+    lastx,lasty = trajx[-1],trajy[-1]
+    
+    # Top up the trajectory replicating its last value until it is TRAJECTORY_BUFFER_SIZE items long.
+    # (These position samples should never be played, but it doesn't hurt to make sure the position
+    # array has good integrity).
+    topup = TRAJECTORY_BUFFER_SIZE-traj_n_samps
+    trajx = list(trajx) + [lastx]*topup
+    trajy = list(trajy) + [lasty]*topup
+
+    assert len(trajx)==TRAJECTORY_BUFFER_SIZE
+    assert len(trajy)==TRAJECTORY_BUFFER_SIZE
+
+    # Youpi, we can now write the whole list with one statement, nice!
+    wshm('trajx',trajx)
+    wshm('trajy',trajy)
+
+    wshm('traj_final_x',lastx)
+    wshm('traj_final_y',lasty)
+
+    return
+
+    
+
+
+
+
+
+def start_replay():
+    """
+    Starts replaying a trajectory.
+
+    IMPORTANT: you need to have run prepare_trajectory() before.
+
+    CAUTION: we really need the robot handle to already be at the starting point of the
+    trajectory, otherwise you get a big jerking movement.
+    """
+
+    # Probably I should check using rshm('x') that we are
+    # actually close enough to the starting position before I
+    # allow replay to start.
+    
+    # Get current x,y position
+    x,y = rshm('x'),rshm('y')
+
+    # Get the first position of the replay trajectory
+    firstx,firsty = rshm('trajx',0),rshm('trajy',0)
+
+    # Compute how far we are from the starting position
+    sqdist = (x-firstx)**2 + (y-firsty)**2
+    if sqdist> REPLAY_START_SAFETY_PROXIMITY:
+        print ("Refusing to replay trajectory because current starting position (%f,%f) is too far away from trajectory starting position (%f,%f) (distance^2=%f)"%(x,y,firstx,firsty,sqdist))
+        return
+    
+    wshm('traj_count',0) # define that we are starting from the starting point
+    controller(9)        # trajectory_reproduce
+
+
+
+    
+
+def replay_is_done():
+    """ Returns true when the replay is done."""
+    return rshm('fvv_trial_phase')==100
+    
+
+
+
+  
 
 
 
