@@ -14,10 +14,19 @@ target_size = 5
 
 robot_move_time = 3.
 
-targets = []
-moving = False # whether we are currently moving to a target
+done_targets = []   # targets that are "done" (we have already moved to them)
+targets = []        # targets we are to move to in the future
+moving = False      # whether we are currently moving to a target
 
 
+capturing = False   # whether we are capturing the trajectory currently
+capture_start = None # the time when we started capturing
+trajectory = []     # the trajectory we have captured (if any)
+CAPTURE_DURATION = 3. # how long to capture for (in sec)
+trajectory_display = None # the lines that we use to display on the screen
+
+
+replaying = False   # whether we are currently replaying something
 
 
 robot.load()
@@ -40,7 +49,10 @@ def screen_to_rob(x,y):
              (y-ch)/float(-robot_scale) )
 
 
-def callback(event):
+
+def mouseclick(event):
+    global capturing
+    
     # When the mouse is clicked, show where we are
     canvas = event.widget
     x = canvas.canvasx(event.x)
@@ -48,12 +60,14 @@ def callback(event):
     print("Clicked",x,y)
     #print(canvas.find_closest(x, y))
 
-    # Add a target
-    targ = win.create_rectangle(x-target_size,y-target_size,x+target_size,y+target_size, fill="red")
+    if not capturing and not replaying:
+    
+        # Add a target
+        targ = win.create_rectangle(x-target_size,y-target_size,x+target_size,y+target_size, fill="red")
 
-    rx,ry = screen_to_rob(x,y)
-    print("Add target %f,%f"%(rx,ry))
-    targets.append({"x":rx,"y":ry,"rect":targ})
+        rx,ry = screen_to_rob(x,y)
+        print("Add target %f,%f"%(rx,ry))
+        targets.append({"x":rx,"y":ry,"rect":targ})
 
 
     
@@ -77,12 +91,58 @@ def initiate_move():
         
 
 
+def draw_trajectory():
+    """ Draw the trajectory that we have captured. """
+    global trajectory
+    global trajectory_display
+    
+    if len(trajectory)==0:
+        print("No trajectory to display")
+        return
+    else:
+        print("Displaying trajectory with %i samples"%len(trajectory))
+
+    # Remove the old trajectory lines from the canvas (if any)
+    if trajectory_display!=None:
+        win.delete(trajectory_display)
+    
+    coords = [ rob_to_screen(x,y) for (x,y) in trajectory[::10] ] # downsample the list a little and convert to screen coordinates
+    
+    trajectory_display = win.create_line(*coords,fill="green")
+    
+
+    
+
 def routine_checks():
     """ Stuff we need to keep doing. """
     # Check if a move is completed, if so, have the robot stay put.
     global targets
     global moving
+    global done_targets
+    global capturing
+    global replaying
 
+    if replaying:
+        if robot.replay_is_done():
+            replaying = False
+            robot.stay()
+        return
+    
+    
+    if capturing:
+        # If we are currently capturing a movement
+        t = time.time()
+        if t-capture_start > CAPTURE_DURATION:
+            print("Capturing complete")
+            robot.controller(0)
+            global trajectory
+            trajectory = list(robot.retrieve_trajectory()) # retrieve the captured trajectory
+            robot.prepare_replay(trajectory) # push the trajectory back to robot memory for replaying (and set the final positions appropriately)
+
+            draw_trajectory()
+            capturing = False
+            
+    
     if moving: # If we are currently in the middle of moving to a target
 
         if robot.move_is_done(): # check if we are done
@@ -90,7 +150,9 @@ def routine_checks():
             # Remove the last target
             if len(targets)>0: # this should always be true actually
                 oldtarg = targets[0]
-                win.itemconfig(oldtarg["rect"],fill="gray")
+                if oldtarg["rect"]!=None:
+                    win.itemconfig(oldtarg["rect"],fill="gray")
+                    done_targets.append(oldtarg)
                 #win.delete(oldtarg["rect"]) # remove rect from the interface
                 targets = targets[1:] # remove this target from our stack
 
@@ -100,7 +162,7 @@ def routine_checks():
             if len(targets)==0:
                 robot.stay()
 
-    if not moving:
+    if not moving and not capturing:
         if len(targets)>0:
             initiate_move()
 
@@ -118,16 +180,117 @@ def on_closing():
 
 
 
+    
+    
+def release():
+    """ Release the robot (null field)."""
+
+    global done_targets
+    global targets
+    global moving
+    moving = False
+    oldtargets = targets[:]
+    targets = []
+    
+    # In case the robot might be actively moving, it will be good
+    # to first hold it at the current position for a moment and then
+    # release it, to make sure that it is still when released.
+    robot.stay()
+    t0 = time.time()
+    while time.time()-t0 < 1.: # wait one second
+        pass
+    robot.controller(0) # null field
+
+    # Remove the targets from the interface
+    for targ in oldtargets+done_targets:
+        win.delete(targ["rect"])
+        
+    targets = []
+    
 
 
+
+
+def capture():
+    """ This will capture the robot position """
+    global capturing
+    global trajectory
+    global capture_start
+
+    if not capturing and not replaying:
+
+        if moving:
+            release() # we have to be in a null field to be capturing
+
+        # Capture the trajectory
+        trajectory = robot.start_capture()
+        capture_start = time.time()
+        capturing = True
+        print("Initiated capturing")
+        
+    else:
+        print("Already capturing or replaying!")
+    
+
+
+
+def to_start():
+    """ Go to the starting point of the trajectory. """
+
+    global targets
+    
+    if len(trajectory)==0:
+        print("No trajectory to replay!")
+        return
+
+    release()
+
+    global targets
+    rx,ry = trajectory[0] # the starting point of the trajectory
+    targets = [{"x":rx,"y":ry,"rect":None}]
+    initiate_move()
+
+
+
+def replay():
+    """ Replay the captured trajectory """
+
+    global replaying
+    global trajectory
+    
+    if replaying:
+        print("Already replaying.")
+        return
+
+    if len(trajectory)==0:
+        print("No trajectory to replay!")
+        return
+
+    print("Starting replay now.")
+    robot.start_replay()
+    replaying = True
+
+
+
+    
+        
+# Set up the main interface scree
     
 master = Tk()
 master.geometry('%dx%d+%d+%d' % (w, h, 500, 200))
 
 
+
+buttonframe = Frame(master) #, padding="3 3 12 12")
+buttonframe.grid(column=0, row=0)
+releaseb = Button(buttonframe,text="null field",    command=release) .grid(column=0, row=0, sticky=W)
+captureb = Button(buttonframe,text="capture (3sec)",command=capture) .grid(column=1, row=0, sticky=W)
+startb   = Button(buttonframe,text="to start"      ,command=to_start).grid(column=2, row=0, sticky=W)
+replayb  = Button(buttonframe,text="replay",        command=replay)  .grid(column=3, row=0, sticky=W)
+
 win = Canvas(master, width=w, height=h)
-win.bind("<Button-1>", callback) # click callback
-win.pack()
+win.bind("<Button-1>", mouseclick) # click callback
+win.grid(column=0,row=1,stick=(N,W,E,S))
 
 
 # Draw the background against which everything else is going to happen
@@ -139,6 +302,8 @@ win.create_rectangle(minx,miny,maxx,maxy, outline="blue")
 robot_pos = win.create_oval(cw,ch,cw,ch,fill="blue")
 
 master.protocol("WM_DELETE_WINDOW", on_closing)
+
+
 
 
 def draw_robot():
