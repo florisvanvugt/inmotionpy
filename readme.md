@@ -62,11 +62,10 @@ Example programs:
 * `example_proto.py` -- loads the robot and reads position and moves it to a different position.
 * `example_viewpos.py` -- example of a GUI interface in which you see the robot handle position and can click to move it to new locations.
 * `example_log.py` -- writes an example log file.
-
+* `example_replay.py` -- captures a trajectory and then plays it back.
 * `dump_shm.py` -- this reads all variables it knows about from the shared memory together with their value (great for taking a "snapshot" of the current config).
-* `shm_ext.py` -- old-style shm module (can be loaded instead of the preferred `shm`) which mimicks previous Tcl code by communicating with the C program `shm`.
-
 * `readlog/readlog.py` -- this is an example script that can read a robot log.
+* `shm_sandbox/shm_ext.py` -- old-style shm module (can be loaded instead of the preferred `shm`) which mimicks previous Tcl code by communicating with the C program `shm`.
 
 Note that you also need a build environment where robot code can be built. In other words, this won't simply work at your home computer, because you will need libraries that are installed, for example in `/opt` on the robot computer.
 
