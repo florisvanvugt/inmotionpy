@@ -720,8 +720,10 @@ typedef struct ob_s {
   f64 trajy[3000]; // used to store trajectories (y position values)
   f64 traj_final_x;             // the final position of the replay, x
   f64 traj_final_y;             // idem, y
+  u32 replay_done;              // whether replaying is done
+  f64 replay_damping;           // damping to use during replaying
+  f64 replay_stiffness;         // stiffness to use during replaying
 
-  
   s32 debug_level;		// for dpr
   
   u32 last_shm_val;		// sanity check

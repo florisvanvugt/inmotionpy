@@ -120,7 +120,8 @@ init_slot_fns(void)
 #define traj_final_y       ob->traj_final_y
 #define trajx              ob->trajx
 #define trajy              ob->trajy
-
+#define replay_damping     ob->replay_damping
+#define replay_stiffness   ob->replay_stiffness
 
 
 
@@ -194,10 +195,10 @@ point_ctl(u32 id)
 
 
 
-static f64
-pl_i_ref_fn(u32 i, u32 term, f64 phase, f64 amplitude) {
-	return (amplitude * cos((2.0 * M_PI * i / term) + phase));
-}
+//static f64
+//pl_i_ref_fn(u32 i, u32 term, f64 phase, f64 amplitude) {
+//	return (amplitude * cos((2.0 * M_PI * i / term) + phase));
+//}
 
 // constant force contrller
 
@@ -517,8 +518,8 @@ trajectory_capture(u32 id)
 
 //const double damp      = 40.0;
 //const double stiffness = 4000.0;
-const double damp      = 4.0;
-const double stiffness = 400.0;
+//const double damp      = 4.0;
+//const double stiffness = 400.0;
 
 
 void 
@@ -543,16 +544,16 @@ trajectory_reproduce(u32 id)
     // If we are still active replaying the trajectory (haven't finished yet)
     f64 attractx   = trajx[traj_cnt];
     f64 estimatevx = (trajx[traj_cnt+1]-trajx[traj_cnt])*400.0; // estimate vX (400 Hz is sampling rate)
-    fX = stiffness*(attractx-X)+damp*(estimatevx-vX);
+    fX = replay_stiffness*(attractx-X)+replay_damping*(estimatevx-vX);
     f64 attracty   = trajy[traj_cnt];
     f64 estimatevy = (trajy[traj_cnt+1]-trajy[traj_cnt])*400.0;
-    fY = stiffness*(attracty-Y)+damp*(estimatevy-vY);
+    fY = replay_stiffness*(attracty-Y)+replay_damping*(estimatevy-vY);
     ++traj_count;
   } else {
     // If we are no longer actively replaying the trajectory, we become
     // a point controller holding us at the end position
     // i.e. we mimick static_ctl
-    fvv_trial_phase = 100;
+    ob->replay_done = 1;
     // signal to Tcl that we have ended, in case it's not obvious
     // once this is signaled we will actually go on to a different controller
     f64 stiff = ob->plg_stiffness;

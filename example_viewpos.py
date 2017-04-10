@@ -19,10 +19,10 @@ targets = []        # targets we are to move to in the future
 moving = False      # whether we are currently moving to a target
 
 
-capturing = False   # whether we are capturing the trajectory currently
-capture_start = None # the time when we started capturing
-trajectory = []     # the trajectory we have captured (if any)
-CAPTURE_DURATION = 3. # how long to capture for (in sec)
+capturing = False         # whether we are capturing the trajectory currently
+capture_start = None      # the time when we started capturing
+trajectory = []           # the trajectory we have captured (if any)
+CAPTURE_DURATION = 3.     # how long to capture for (in sec)
 trajectory_display = None # the lines that we use to display on the screen
 
 
@@ -108,7 +108,7 @@ def draw_trajectory():
     
     coords = [ rob_to_screen(x,y) for (x,y) in trajectory[::10] ] # downsample the list a little and convert to screen coordinates
     
-    trajectory_display = win.create_line(*coords,fill="green")
+    trajectory_display = win.create_line(*coords,fill="green",width=2)
     
 
     
@@ -124,6 +124,7 @@ def routine_checks():
 
     if replaying:
         if robot.replay_is_done():
+            print("Detected end of replay.")
             replaying = False
             robot.stay()
         return

@@ -589,6 +589,14 @@ def prepare_replay(trajectory):
     wshm('traj_final_x',lastx)
     wshm('traj_final_y',lasty)
 
+    # For real power
+    #wshm('replay_damping',  40.0)
+    #wshm('replay_stiffness',4000.0)
+
+    # For debug
+    wshm('replay_damping',  4.0)
+    wshm('replay_stiffness',400.0)
+
     return
 
     
@@ -622,7 +630,8 @@ def start_replay():
     if sqdist> REPLAY_START_SAFETY_PROXIMITY:
         print ("Refusing to replay trajectory because current starting position (%f,%f) is too far away from trajectory starting position (%f,%f) (distance^2=%f)"%(x,y,firstx,firsty,sqdist))
         return
-    
+
+    wshm('replay_done',0)
     wshm('traj_count',0) # define that we are starting from the starting point
     controller(9)        # trajectory_reproduce
 
@@ -632,7 +641,7 @@ def start_replay():
 
 def replay_is_done():
     """ Returns true when the replay is done."""
-    return rshm('fvv_trial_phase')==100
+    return rshm('replay_done')==1
     
 
 
