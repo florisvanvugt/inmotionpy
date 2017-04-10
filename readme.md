@@ -18,7 +18,7 @@ That's it!
 
 ## Usage
 
-Full documentation can be found in [robot.html](robot.html) and [shm.html](shm.html) (to generate it type `make doc`).
+Full documentation can be found through Doxygen (to generate it type `make doxygen` in the root folder).
 
 The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt (from the parent directory to `robot/`):
 

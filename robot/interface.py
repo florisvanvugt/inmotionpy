@@ -1,6 +1,4 @@
-
-
-"""
+""" \mainpage InMotion2-Python
 
 This is for interacting with the InMotion2 robot using Python.
 
