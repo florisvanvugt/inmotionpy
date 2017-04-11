@@ -594,8 +594,8 @@ def prepare_replay(trajectory):
     #wshm('replay_stiffness',4000.0)
 
     # For debug
-    wshm('replay_damping',  4.0)
-    wshm('replay_stiffness',400.0)
+    wshm('replay_damping',  40.0)
+    wshm('replay_stiffness',4000.0)
 
     return
 

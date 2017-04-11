@@ -3,6 +3,8 @@ from tkinter import *
 import time
 import robot.interface as robot
 
+from scipy import signal
+
 
 
 # Some parameters that specify how we draw things onto our window
@@ -111,6 +113,38 @@ def draw_trajectory():
     trajectory_display = win.create_line(*coords,fill="green",width=2)
     
 
+
+
+
+
+
+
+
+
+
+# Now some basic filtering properties
+SAMPLING_RATE      = 400.
+FILTER_ORDER       = 2
+FILTER_FREQ_CUTOFF = 20
+
+
+
+def butter_lowpass(cutoff, fs, order):
+    # Find the Butterworth filter given a cutoff and a sampling frequency (fs).
+    # Source: http://stackoverflow.com/questions/25191620/creating-lowpass-filter-in-scipy-understanding-methods-and-units
+    nyq = 0.5 * fs # calculate the Nyquist frequency
+    normal_cutoff = cutoff / nyq
+    b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
+    return b, a
+
+
+
+def smooth_using_filter(x,freq_cutoff,samplingfreq,order):
+    b, a = butter_lowpass(freq_cutoff,samplingfreq,order)
+    y = signal.filtfilt(b, a, x, padlen=150)
+    return y
+
+    
     
 
 def routine_checks():
@@ -136,8 +170,16 @@ def routine_checks():
         if t-capture_start > CAPTURE_DURATION:
             print("Capturing complete")
             robot.controller(0)
+            raw_traj = list(robot.retrieve_trajectory()) # retrieve the captured trajectory from the robot memory
+
+            # Filter it (basic low-pass filter)
+            x,y = zip(*raw_traj)
+            xfilt = smooth_using_filter(x,FILTER_FREQ_CUTOFF,SAMPLING_RATE,FILTER_ORDER)
+            yfilt = smooth_using_filter(y,FILTER_FREQ_CUTOFF,SAMPLING_RATE,FILTER_ORDER)
+
             global trajectory
-            trajectory = list(robot.retrieve_trajectory()) # retrieve the captured trajectory
+            trajectory = list(zip(xfilt,yfilt))
+            # Re-insert the filtered trajectory into the robot
             robot.prepare_replay(trajectory) # push the trajectory back to robot memory for replaying (and set the final positions appropriately)
 
             draw_trajectory()
