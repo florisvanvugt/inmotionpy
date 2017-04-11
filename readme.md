@@ -48,6 +48,13 @@ Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n
 
 
 
+## Dummy robot
+
+In case you want to test your code at a computer that is not hooked up to the robot, you can simulate a dummy robot that behaves much like the actual robot interface by replacing the `import robot.interface` above with `import robot.dummy`.
+
+
+
+
 ## Files
 
 I recommend keeping all the robot C and Python code in `robot/` and put experiment-specific stuff in the parent directory.
