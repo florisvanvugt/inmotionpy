@@ -3,6 +3,10 @@
 This is an attempt to make a simple interface for the InMotion2 Robot at the Motor Control Lab at McGill. It uses Python instead of Tcl, but keeps C for the code that actually controls the robot directly. All of this is built for **Python 3**.
 
 
+This branch is intended to work with Xenomai 2.6 under Linux 3.18.20.
+
+
+
 ## Requirements
 
 Python 3 with the following modules:
@@ -18,9 +22,9 @@ That's it!
 
 ## Usage
 
-Full documentation can be found in [robot.html](robot.html) and [shm.html](shm.html) (to generate it type `make doc`).
+Full documentation can be found through Doxygen (to generate it type `make doxygen` in the root folder).
 
-The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt:
+The robot C scripts are included in the subdirectory `robot/` and these need to be compiled. This, as well as some smaller administrative tasks, can be done by invoking the following command from the prompt (from the parent directory to `robot/`):
 
 ```
 make
@@ -30,7 +34,7 @@ You can then write a script that controls the robot. A simple example is here:
 
 
 ```python
-import robot
+import robot.interface as robot
 
 robot.load()
 
@@ -50,19 +54,22 @@ Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n
 
 ## Files
 
-* `robot.py` -- the main robot module.
-* `shm.py` -- infrastructure for accessing the shared memory.
+I recommend keeping all the robot C and Python code in `robot/` and put experiment-specific stuff in the parent directory.
+
 * `robot/` -- the C code for the robot (as well as some Python scripts for shared memory access).
+* `robot/interface.py` -- the main robot module.
+* `robot/shm.py` -- infrastructure for accessing the shared memory.
+
+Example programs:
 
 * `example_simple.py` -- loads the robot and prints the position to the screen, repeatedly.
 * `example_proto.py` -- loads the robot and reads position and moves it to a different position.
 * `example_viewpos.py` -- example of a GUI interface in which you see the robot handle position and can click to move it to new locations.
 * `example_log.py` -- writes an example log file.
-
+* `example_replay.py` -- captures a trajectory and then plays it back.
 * `dump_shm.py` -- this reads all variables it knows about from the shared memory together with their value (great for taking a "snapshot" of the current config).
-* `shm_ext.py` -- old-style shm module (can be loaded instead of the preferred `shm`) which mimicks previous Tcl code by communicating with the C program `shm`.
-
 * `readlog/readlog.py` -- this is an example script that can read a robot log.
+* `shm_sandbox/shm_ext.py` -- old-style shm module (can be loaded instead of the preferred `shm`) which mimicks previous Tcl code by communicating with the C program `shm`.
 
 Note that you also need a build environment where robot code can be built. In other words, this won't simply work at your home computer, because you will need libraries that are installed, for example in `/opt` on the robot computer.
 

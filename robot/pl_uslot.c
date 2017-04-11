@@ -55,6 +55,8 @@ void zero_ft_nodyncomp(u32);
 void movetopt(u32);
 void static_ctl(u32);
 void static_ctl_fade(u32);
+void trajectory_capture(u32);
+void trajectory_reproduce(u32);
 
 
 
@@ -70,8 +72,8 @@ init_slot_fns(void)
   ob->slot_fns[5] =  static_ctl_fade;   // hold subject at a point and then gradually fade out
   ob->slot_fns[6] =  move_phase_ctl;    // used during the experiment for free moving (and updating whether the subject has left the center)
   ob->slot_fns[7] =  null_ctl;
-  ob->slot_fns[8] =  null_ctl;
-  ob->slot_fns[9] =  null_ctl;
+  ob->slot_fns[8] =  trajectory_capture;
+  ob->slot_fns[9] =  trajectory_reproduce;
   ob->slot_fns[10] = null_ctl;
   ob->slot_fns[11] = null_ctl;
   ob->slot_fns[12] = null_ctl;
@@ -82,12 +84,6 @@ init_slot_fns(void)
 
 #define X ob->pos.x
 #define Y ob->pos.y
-//#define vX ob->fsoft_vel.x
-//#define vY ob->fsoft_vel.y
-//#define fX ob->ba_fx
-//#define fY ob->ba_fy
-//#define fX moh->fX
-//#define fY moh->fY
 #define cnt moh->counter
 #define dir moh->current_dir
 #define refX moh->last_pointX
@@ -117,6 +113,17 @@ init_slot_fns(void)
 #define fvv_max_vel        ob->fvv_max_vel
 #define fvv_trial_timer    ob->fvv_trial_timer
 #define fvv_vel_low_timer  ob->fvv_vel_low_timer
+
+#define traj_count         ob->traj_count
+#define traj_n_samps       ob->traj_n_samps
+#define traj_final_x       ob->traj_final_x
+#define traj_final_y       ob->traj_final_y
+#define trajx              ob->trajx
+#define trajy              ob->trajy
+#define replay_damping     ob->replay_damping
+#define replay_stiffness   ob->replay_stiffness
+
+
 
 
 const double distance_cutoff=.05; // in meters; the distance from the center that counts as "started moving"
@@ -188,10 +195,10 @@ point_ctl(u32 id)
 
 
 
-static f64
-pl_i_ref_fn(u32 i, u32 term, f64 phase, f64 amplitude) {
-	return (amplitude * cos((2.0 * M_PI * i / term) + phase));
-}
+//static f64
+//pl_i_ref_fn(u32 i, u32 term, f64 phase, f64 amplitude) {
+//	return (amplitude * cos((2.0 * M_PI * i / term) + phase));
+//}
 
 // constant force contrller
 
@@ -387,24 +394,24 @@ void movetopt(u32 id)
     //mkt: accumulate partitioned FT world forces over movement
     switch (ob->ba_accumforce){
     case 0: //inactive (do nothing)
-     break;
+      break;
     case 1: //zero accumulators
-    ob->mkt_finline = ob->mkt_finline = 0.;
-    ob->plg_ftzerocount = 0;
-    ob->ba_accumforce = 2;
-     break;
+      ob->mkt_finline = ob->mkt_finline = 0.;
+      ob->plg_ftzerocount = 0;
+      ob->ba_accumforce = 2;
+      break;
     case 2: //accumulate
-    wx = rob->ft.world.x;
-    wy = rob->ft.world.y;
-    v = cos(ob->mkt_mvtangle)*wx + sin(ob->mkt_finline)*wy;
-    ob->mkt_finline += v*v;
-    v = sin(ob->mkt_mvtangle)*wx + cos(ob->mkt_finline)*wy;
-    ob->mkt_fortho += v*v;
-    ob->plg_ftzerocount++;
-     break;
+      wx = rob->ft.world.x;
+      wy = rob->ft.world.y;
+      v = cos(ob->mkt_mvtangle)*wx + sin(ob->mkt_finline)*wy;
+      ob->mkt_finline += v*v;
+      v = sin(ob->mkt_mvtangle)*wx + cos(ob->mkt_finline)*wy;
+      ob->mkt_fortho += v*v;
+      ob->plg_ftzerocount++;
+      break;
     }
   }
-
+  
   ob->plg_last_fX = fX;
   ob->plg_last_fY = fY;
 #ifdef dyn_comp 
@@ -419,17 +426,22 @@ void movetopt(u32 id)
 void 
 static_ctl(u32 id)
 {
-f64 pcurx = ob->plg_p1x;
-f64 pcury = ob->plg_p1y;
-f64 stiff = ob->plg_stiffness;
-f64 damp  = ob->plg_damping;
-fX= (-stiff*(X-pcurx) - damp*(vX));
-fY= (-stiff*(Y-pcury) - damp*(vY));
+  /*
+    Static controller that keeps the robot at a position
+    (ob->plg_p1x, ob->plg_p1y) with stiffness ob->plg_stiffness
+    and damping ob->plg_damping.
+   */
+  f64 pcurx = ob->plg_p1x;
+  f64 pcury = ob->plg_p1y;
+  f64 stiff = ob->plg_stiffness;
+  f64 damp  = ob->plg_damping;
+  fX= (-stiff*(X-pcurx) - damp*(vX));
+  fY= (-stiff*(Y-pcury) - damp*(vY));
 #ifdef dyn_comp 
- dynamics_compensation(fX,fY,3,1.0);
+  dynamics_compensation(fX,fY,3,1.0);
 # else
- ob->motor_force.x = fX;
- ob->motor_force.y = fY;
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY;
 #endif
 }
 
@@ -467,3 +479,93 @@ static_ctl_fade(u32 id)
   ob->motor_force.y = fY;
 #endif
 }
+
+
+
+
+
+
+void 
+trajectory_capture(u32 id)
+{
+  /*
+    This controller captures the positions of the robot while
+    letting the subject move freely.
+  */
+  int traj_cnt = traj_count;// cast to unsigned just to be sure
+  if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
+
+    // Capture the current position
+    trajx[traj_cnt] = X;
+    trajy[traj_cnt] = Y;
+      
+    ++traj_count;
+  }
+  fX = 0.0;
+  fY = 0.0;
+  
+#ifdef dyn_comp 
+  dynamics_compensation(fX,fY,3,1.0);
+# else
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY;
+#endif
+}
+
+
+
+
+
+//const double damp      = 40.0;
+//const double stiffness = 4000.0;
+//const double damp      = 4.0;
+//const double stiffness = 400.0;
+
+
+void 
+trajectory_reproduce(u32 id)
+{
+  /*
+    This controller reproduces a trajectory that has been loaded into memory.
+    Essentially, it's a PD controller.
+
+    Here is roughly what it does.
+    - This controller expects that you have loaded a series of (x,y) points into the trajx,trajy arrays. 
+    - The trajectory is supposed to have traj_n_samps number of samples.
+    - We set a counter traj_cnt that starts at zero and runs for the length of the trajectory (in samples).
+    - At each iteration, we find the (x,y) where we are supposed to be, and computes an estimate of the 
+    velocity (vx,vy) that we are supposed to be moving at, and uses this to drive the motors.
+    - When we are done, we set fvv_trial_phase to 100 and switch to holding the handle
+    at the final position (traj_final_x,traj_final_y) so that other processes can pick up that
+    our replay has ended.
+  */
+  int traj_cnt = traj_count;// cast to unsigned just to be sure
+  if (traj_count<=traj_n_samps) {
+    // If we are still active replaying the trajectory (haven't finished yet)
+    f64 attractx   = trajx[traj_cnt];
+    f64 estimatevx = (trajx[traj_cnt+1]-trajx[traj_cnt])*400.0; // estimate vX (400 Hz is sampling rate)
+    fX = replay_stiffness*(attractx-X)+replay_damping*(estimatevx-vX);
+    f64 attracty   = trajy[traj_cnt];
+    f64 estimatevy = (trajy[traj_cnt+1]-trajy[traj_cnt])*400.0;
+    fY = replay_stiffness*(attracty-Y)+replay_damping*(estimatevy-vY);
+    ++traj_count;
+  } else {
+    // If we are no longer actively replaying the trajectory, we become
+    // a point controller holding us at the end position
+    // i.e. we mimick static_ctl
+    ob->replay_done = 1;
+    // signal to Tcl that we have ended, in case it's not obvious
+    // once this is signaled we will actually go on to a different controller
+    f64 stiff = ob->plg_stiffness;
+    f64 damp  = ob->plg_damping;
+    fX= (-stiff*(X-traj_final_x) - damp*(vX));
+    fY= (-stiff*(Y-traj_final_y) - damp*(vY));
+  }
+#ifdef dyn_comp 
+  dynamics_compensation(fX,fY,3,1.0);
+# else
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY;
+#endif
+}
+

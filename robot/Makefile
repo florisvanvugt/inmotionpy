@@ -62,6 +62,12 @@ clean:
 tags: $(INCS) $(SRCS)
 	ctags $(INCS) $(SRCS)
 
+doxygen: html/index.html
+	xdg-open html/index.html
+
+html/index.html: interface.py shm.py
+	doxygen doxygen.conf
+
 LINCS=-I/usr/xenomai/include\
 	-I/usr/i386-glibc21-linux/include
 

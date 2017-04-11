@@ -5,11 +5,11 @@ This tries to connect to the shared memory and dumps all variables that we know 
 
 """
 
-from shm import *
+from robot.shm import *
 start_shm()
 
 
-f = open('alias_list.txt','r')
+f = open('robot/alias_list.txt','r')
 cmds = f.readlines()
 f.close()
 

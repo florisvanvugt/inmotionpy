@@ -12,11 +12,10 @@ compiling_setting_robot_environment.html: compiling_setting_robot_environment.md
 compiling: compiling_setting_robot_environment.html
 	xdg-open compiling_setting_robot_environment.html
 
-robot.html:
-	pydoc3 -w robot
+dox: doxygen
 
-shm.html:
-	pydoc3 -w shm
+doxygen:
+	make -C robot doxygen
 
 readme.html: readme.md
 	pandoc -f markdown -t html readme.md -c misc/github-pandoc.css -s -o readme.html

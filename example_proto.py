@@ -1,6 +1,6 @@
 
 
-import robot
+import robot.interface as robot
 
 
 robot.load()
