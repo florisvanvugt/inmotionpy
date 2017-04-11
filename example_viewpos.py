@@ -3,7 +3,7 @@ from tkinter import *
 import time
 import robot.interface as robot
 
-from scipy import signal
+import numpy as np
 
 
 
@@ -151,7 +151,7 @@ def smooth_window(x,window):
     if wl<3: return x
 
     # Pad the window at the beginning and end of the signal
-    s=numpy.r_[x[wl-1:0:-1],x,x[-2:-(wl+1):-1]]
+    s=np.r_[x[wl-1:0:-1],x,x[-2:-(wl+1):-1]]
     # Length of s is len(x)+wl-1+wl-1 = len(x)+2*(wl-1)
  
     ## Convolution in "valid" mode gives a vector of length len(s)-len(w)+1 assuming that len(s)>len(w) 
@@ -167,7 +167,7 @@ def smooth_window(x,window):
 
 def smooth(x):
     """ Smooth the signal x using the specified smoothing window. """
-    return smooth_window(x,SMOOTHING_WINDOW)
+    return smooth_window(np.array(x),SMOOTHING_WINDOW)
 
     
     

@@ -1,7 +1,7 @@
 default: rob
 
 kill: rob # Kill the robot, reasonably gently
-	python3 -c "import robot; robot.start_shm(); robot.unload();"
+	python3 -c "import robot.interface as robot; robot.start_shm(); robot.unload();"
 
 doc: readme.html robot.html shm.html
 	xdg-open readme.html
