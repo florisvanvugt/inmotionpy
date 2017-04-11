@@ -27,6 +27,9 @@ trajectory = []           # the trajectory we have captured (if any)
 CAPTURE_DURATION = 3.     # how long to capture for (in sec)
 trajectory_display = None # the lines that we use to display on the screen
 
+SMOOTHING_WINDOW_SIZE = 9 # how big a window to use for smoothing (see tools/smoothing for details about the effects)
+SMOOTHING_WINDOW = np.hamming(SMOOTHING_WINDOW_SIZE)
+
 
 replaying = False   # whether we are currently replaying something
 
@@ -122,27 +125,49 @@ def draw_trajectory():
 
 
 
-# Now some basic filtering properties
-SAMPLING_RATE      = 400.
-FILTER_ORDER       = 2
-FILTER_FREQ_CUTOFF = 20
+def smooth_window(x,window):
+    """Smooth the data using a window with requested size.
+    
+    This method is based on the convolution of a scaled window with the signal.
+    The signal is prepared by introducing reflected copies of the signal 
+    (with the window size) in both ends so that transient parts are minimized
+    in the begining and end part of the output signal.
+
+    Arguments
+        x: the input signal 
+        window: the window function (for example take numpy.hamming(21) ) 
+
+    output:
+        the smoothed signal
+        
+    original source:  http://scipy-cookbook.readthedocs.io/items/SignalSmooth.html 
+    adjusted by FVV to make Python3-compatible and ensure that the length of the output is the same
+    as the input.
+    """
+
+    wl = len(window)
+    if x.ndim != 1: raise ValueError( "smooth only accepts 1 dimension arrays.")
+    if x.size < wl: raise ValueError("Input vector needs to be bigger than window size.")
+    if wl<3: return x
+
+    # Pad the window at the beginning and end of the signal
+    s=numpy.r_[x[wl-1:0:-1],x,x[-2:-(wl+1):-1]]
+    # Length of s is len(x)+wl-1+wl-1 = len(x)+2*(wl-1)
+ 
+    ## Convolution in "valid" mode gives a vector of length len(s)-len(w)+1 assuming that len(s)>len(w) 
+    y=np.convolve(window/window.sum(),s,mode='valid')
+    
+    ## So now len(y) is len(s)-len(w)+1  = len(x)+2*(wl-1) - len(w)+1
+    ## i.e. len(y) = len(x)+len(w)-1
+    ## So we want to chop off len(w)-1 as symmetrically as possible
+    frontw = int((wl-1)/2)   # how much we want to chop off on the front
+    backw  = (wl-1)-frontw   # how much we want to chop off on the back
+    return y[frontw:-backw]
 
 
-
-def butter_lowpass(cutoff, fs, order):
-    # Find the Butterworth filter given a cutoff and a sampling frequency (fs).
-    # Source: http://stackoverflow.com/questions/25191620/creating-lowpass-filter-in-scipy-understanding-methods-and-units
-    nyq = 0.5 * fs # calculate the Nyquist frequency
-    normal_cutoff = cutoff / nyq
-    b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
-    return b, a
-
-
-
-def smooth_using_filter(x,freq_cutoff,samplingfreq,order):
-    b, a = butter_lowpass(freq_cutoff,samplingfreq,order)
-    y = signal.filtfilt(b, a, x, padlen=150)
-    return y
+def smooth(x):
+    """ Smooth the signal x using the specified smoothing window. """
+    return smooth_window(x,SMOOTHING_WINDOW)
 
     
     
@@ -172,10 +197,9 @@ def routine_checks():
             robot.controller(0)
             raw_traj = list(robot.retrieve_trajectory()) # retrieve the captured trajectory from the robot memory
 
-            # Filter it (basic low-pass filter)
+            # Smooth it
             x,y = zip(*raw_traj)
-            xfilt = smooth_using_filter(x,FILTER_FREQ_CUTOFF,SAMPLING_RATE,FILTER_ORDER)
-            yfilt = smooth_using_filter(y,FILTER_FREQ_CUTOFF,SAMPLING_RATE,FILTER_ORDER)
+            xfilt,yfilt = smooth(x),smooth(y)
 
             global trajectory
             trajectory = list(zip(xfilt,yfilt))
