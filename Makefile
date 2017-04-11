@@ -3,7 +3,7 @@ default: rob
 kill: rob # Kill the robot, reasonably gently
 	python3 -c "import robot.interface as robot; robot.start_shm(); robot.unload();"
 
-doc: readme.html robot.html shm.html
+doc: readme.html
 	xdg-open readme.html
 
 compiling_setting_robot_environment.html: compiling_setting_robot_environment.md
@@ -12,11 +12,17 @@ compiling_setting_robot_environment.html: compiling_setting_robot_environment.md
 compiling: compiling_setting_robot_environment.html
 	xdg-open compiling_setting_robot_environment.html
 
-robot.html:
-	pydoc3 -w robot
+#robot.html:
+#	pydoc3 -w robot
+#
+#shm.html:
+#	pydoc3 -w shm
 
-shm.html:
-	pydoc3 -w shm
+dox: doxygen
+
+
+doxygen:
+	make -C robot doxygen
 
 readme.html: readme.md
 	pandoc -f markdown -t html readme.md -c misc/github-pandoc.css -s -o readme.html

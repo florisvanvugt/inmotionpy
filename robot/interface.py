@@ -1,17 +1,22 @@
-
-
-"""
-
-This is for interacting with the InMotion2 robot using Python.
-
-We assume that the following controllers are set (controlled in pl_uslot.c)
-
-controller 0  : null field
-controller 2  : zero_ft
-controller 4  : movetopt (move to location)
-controller 5  : static_ctl_fade (hold and fade)
-controller 9  : trajectory_reproduce (replay a trajectory loaded into memory)
-controller 16 : static_ctl (hold at specified location)
+## \mainpage InMotion2-Python
+#
+# This is for interacting with the InMotion2 robot using Python.
+#
+# We assume that the following controllers are set (controlled in `pl_uslot.c`)
+#
+# - controller 0  : null field
+# - controller 2  : zero_ft
+# - controller 4  : movetopt (move to location)
+# - controller 5  : static_ctl_fade (hold and fade)
+# - controller 9  : trajectory_reproduce (replay a trajectory loaded into memory)
+# - controller 16 : static_ctl (hold at specified location)
+#
+#
+#
+# The main files here are:
+# - `interface.py` - controls the interface with the robot C code, launching, etc.
+# - `shm.py` - controls reading/writing to shared memory, which the robot C code will read
+#
 
 
 """

@@ -51,10 +51,16 @@ robot: $(OBJS) $(INCS)
 	$(CC) $(LDFLAGS) $(OBJS) -o robot $(MATHLIBS)
 
 clean:
-	rm -f robot pwrdaq*.o *\~ *\# $(OBJS) probe_addresses.c probe_addresses field_addresses.txt
+	rm -rf robot pwrdaq*.o *\~ *\# $(OBJS) probe_addresses.c probe_addresses field_addresses.txt html
 
 tags: $(INCS) $(SRCS)
 	ctags $(INCS) $(SRCS)
+
+doxygen: html/index.html
+	xdg-open html/index.html
+
+html/index.html: interface.py shm.py
+	doxygen doxygen.conf
 
 LINCS=-I/usr/realtime/include\
 	-I/usr/i386-glibc21-linux/include
