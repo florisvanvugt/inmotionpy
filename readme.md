@@ -31,6 +31,7 @@ You can then write a script that controls the robot. A simple example is here:
 
 ```python
 import robot.interface as robot
+import time
 
 robot.load()
 
