@@ -36,7 +36,7 @@ import time
 robot.load()
 
 robot.move_to(.2,.1,5.) # move to point (x=.2,y=.1) in t=5 seconds.
-time.wait(6) # wait roughly until the movement completes
+time.sleep(6) # wait roughly until the movement completes
 
 robot.unload()
 ```
