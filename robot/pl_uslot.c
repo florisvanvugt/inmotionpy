@@ -55,6 +55,9 @@ void zero_ft_nodyncomp(u32);
 void movetopt(u32);
 void static_ctl(u32);
 void static_ctl_fade(u32);
+void curl_ctl(u32);
+void force_channel(u32);
+
 void trajectory_capture(u32);
 void trajectory_reproduce(u32);
 
@@ -79,7 +82,9 @@ init_slot_fns(void)
   ob->slot_fns[12] = null_ctl;
   ob->slot_fns[13] = null_ctl;
   ob->slot_fns[14] = movetopt;
+  ob->slot_fns[15] = force_channel;   // this is to handle force-channel function! [Ananda, 20sep]  
   ob->slot_fns[16] = static_ctl;   // stay at p1x p1y under active control
+  ob->slot_fns[17] = curl_ctl; 
 }
 
 #define X ob->pos.x
@@ -479,6 +484,94 @@ static_ctl_fade(u32 id)
   ob->motor_force.y = fY;
 #endif
 }
+
+
+
+
+
+// curl controller
+// with x=vy y=-vx, and +curl if it rotates cw. and -curl rotates ccw.
+
+void
+curl_ctl(u32 id)
+{
+
+    f64 curl;
+    f64 damp;
+
+    curl = ob->curl;
+    damp = ob->damp;
+
+    fX =  ( curl * (vY) );
+    fY = -( curl * (vX) );
+    
+    #ifdef dyn_comp 
+    	dynamics_compensation(fX,fY,3,1.0);
+	# else
+    	ob->motor_force.x = fX;
+    	ob->motor_force.y = fY;
+	#endif
+}
+
+
+
+
+// Adding force channel; added by Ananda (Sept 20) following old Gribble's utils.tcl
+
+void force_channel(u32 id)
+{
+  f64 x1 = ob->plg_p1x;
+  f64 y1 = ob->plg_p1y;
+  f64 x2 = ob->plg_p2x;
+  f64 y2 = ob->plg_p2y;
+  f64 stiff = ob->plg_stiffness;
+  f64 w = ob->plg_channel_width;
+  // code from Jeremy Wong for force channel forces
+  // step 1: slope & intercept of channel
+  
+  if (x1 == x2) {
+    
+    // then we only want x forces
+    double f_norm = 0.0;
+    f_norm = (fabs(X-x1)>w) * (X-x1-w) * stiff;
+    fX = f_norm;
+    fY = 0.0;
+    
+  } else if (y1 == y2) {
+    
+    double f_norm = 0.0;
+    // then we only want y forces
+    f_norm = (fabs(Y-y1)>w) * (Y-y1-w) * stiff;
+    fX = 0.0;
+    fY = f_norm;
+    
+  } else {
+    
+    f64 m_c = (y2-y1) / (x2-x1);
+    f64 b_c = y2 - (m_c * x2);
+    // step 2: slope & intercept of perpendicular line to channel
+    f64 m_perp = -1 / m_c;
+    f64 b_perp = Y - (m_perp * X);
+    // step 3:
+    f64 x_i = (b_perp - b_c) / (m_c - m_perp);
+    f64 y_i = (x_i * m_perp) + b_perp;
+    f64 l_perp = sqrt(((X-x_i) * (X-x_i)) + ((Y-y_i) * (Y-y_i)));
+    f64 f_norm = ((l_perp-w)>0) * (l_perp - w)*stiff;
+    f64 phi = atan2((Y - y_i),(X - x_i)); // need atan2 for direction.
+    fX = f_norm * cos(phi);
+    fY = f_norm * sin(phi);
+  }
+  #ifdef dyn_comp 
+    	dynamics_compensation(fX,fY,3,1.0);
+	# else
+    	ob->motor_force.x = fX;
+    	ob->motor_force.y = fY;
+	#endif
+  //dynamics_compensation(fX,fY,3,1.0);
+}
+
+
+
 
 
 
