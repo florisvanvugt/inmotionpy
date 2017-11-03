@@ -7,9 +7,12 @@
 # - controller 0  : null field
 # - controller 2  : zero_ft
 # - controller 4  : movetopt (move to location)
-# - controller 5  : static_ctl_fade (hold and fade)
+# - controller 5  : static_ctl_fade (hold and fade
+# - controller 8  : trajectory_capture (in null field)
 # - controller 9  : trajectory_reproduce (replay a trajectory loaded into memory)
+# - controller 15 : this handles force channel
 # - controller 16 : static_ctl (hold at specified location)
+# - controller 17 : curl field (according to old Tcl code)
 #
 #
 #
@@ -497,8 +500,36 @@ def stay_fade(x,y):
     
 
 
+def start_curl(ffval):
+    """ Initiate either CCW or CW curl-field. CCW has a negative ffval,                                                           while CW has a positive ffval. Don't input ffval > 18!                                                                    [~ananda, May2017]                                                                                                    """
+    if ffval > 18: ffval = 18
+    print("Activating curl controller, curl=%d"%ffval)
+    wshm("curl", ffval)
+    # start curl field robot controller declared inside {pl_uslot.c}
+    controller(17)
 
 
+                            
+#### PLG_CHANNEL  - initiate force channel controller towards a target coordinate (px, py)
+def plg_channel (px, py):
+    print ("Executing plg_channel towards (%.3f,%.3f)"%(px,py))
+    # force channel parameters
+    wshm("plg_channel_width", 0.0)
+    wshm("plg_stiffness", 0.0)
+    px0, py0 = rshm('x'),rshm('y')
+    wshm("plg_p1x", px0)
+    wshm("plg_p1y", py0)
+    wshm("plg_p2x", px)
+    wshm("plg_p2y", py)
+    # How much stiffness you need for a channel??
+    wshm("plg_stiffness", -4000.0)
+    wshm("plg_damping", 30.0)
+    # Once variables are set, let's activate the channel controller!
+    controller(15)
+
+
+    
+    
 
 
 

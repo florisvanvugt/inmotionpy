@@ -41,6 +41,21 @@ robot.unload()
 ```
 
 
+## Using various controllers
+
+There are some standard controllers that we are using all the time. They can be called directly from Python using the code listed here below. This assumes that you have imported the robot as `robot` (see above) and loaded it.
+
+* To move the robot to a particular location use `robot.move_to(x,y,t)`. This function will return when the move is starting. To check whether the move is completed use `robot.move_is_done()` which will return `False` as long as the movement is onoing and `True` when it is finished.
+* To hold the robot handle fixed at the current location (point attractor), use `robot.stay()`.
+* To stay at a specified location, use `robot.stay_at(x,y)`.
+* To hold the handle but gradually fade out the force, until it is completely free, use `robot.stay_fade(x,y)`.
+* For a curl force field, use `robot.start_curl(curl)`
+* For a channel trial, use `robot.plg_channel(x,y)`.
+* Capturing trajectories works using a dedicated controller (hopefully we can change this in the future). You can call `robot.start_capture(t)` any time. The handle locations in between those two calls can then be retrieved using `robot.retrieve_trajectory()`.
+* Replaying trajectories works in two steps: first call `robot.prepare_replay(traj)` (where `traj` is a list of pairs of coordinates) and then call `robot.start_replay()`. To find out whether the replay is done you can use `robot.replay_is_done()`.
+
+
+
 
 ## Logging
 
