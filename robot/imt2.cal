@@ -145,9 +145,13 @@ s elbow_angle_xform   -.00009587379924285257
 # s shoulder_angle_offset 0.704893  
 # s elbow_angle_offset 1.583964
 
-# New robot calibration
- s shoulder_angle_offset 0.616085
- s elbow_angle_offset 1.480579
+# New "old" robot calibration
+# s shoulder_angle_offset 0.616085
+# s elbow_angle_offset 1.480579
+
+# 20180415 re-calibration after banging into the wall
+s shoulder_angle_offset 0.7307735
+s elbow_angle_offset 1.5704523
 
 # new Copley servos
 # s shoulder_torque_xform 2.80
