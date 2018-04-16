@@ -8,9 +8,9 @@ import numpy as np
 
 
 # Some parameters that specify how we draw things onto our window
-w,h = 800,600
+w,h = 900,600
 cw,ch = w/2,h/2
-robot_scale = 700
+robot_scale = 600
 cursor_size = 10
 target_size = 5
 
@@ -344,7 +344,7 @@ def replay():
 # Set up the main interface scree
     
 master = Tk()
-master.geometry('%dx%d+%d+%d' % (w, h, 500, 200))
+master.geometry('%dx%d+%d+%d' % (w, h, 600, 200))
 
 
 
@@ -375,7 +375,7 @@ win.create_line(x,y-cross_size,x,y+cross_size,fill='green')
 
 
 robot_pos = win.create_oval(cw,ch,cw,ch,fill="blue")
-coord_txt = win.create_text(cw,ch,text='NA,NA',fill='blue',anchor='w')
+coord_txt = win.create_text(cw,ch,text='NA,NA',fill='white',anchor='w')
 
 master.protocol("WM_DELETE_WINDOW", on_closing)
 
