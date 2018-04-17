@@ -56,11 +56,22 @@ clean:
 tags: $(INCS) $(SRCS)
 	ctags $(INCS) $(SRCS)
 
+
+# Make the  documentation for the Python code
 doxygen: html/index.html
 	xdg-open html/index.html
 
+# Make the documentation for the robot c code
+doxygenc: html_c/index.html
+	xdg-open html_c/index.html
+
+
 html/index.html: interface.py shm.py
 	doxygen doxygen.conf
+
+html_c/index.html:
+	doxygen doxygen_robotc.conf
+
 
 LINCS=-I/usr/realtime/include\
 	-I/usr/i386-glibc21-linux/include
