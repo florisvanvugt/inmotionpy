@@ -13,7 +13,7 @@ root = Tk()
 root.title("Variable display")
 root.geometry('%dx%d+%d+%d' % (400, 600, 600, 200))
 font = nametofont("TkDefaultFont")
-font.configure(size=30)
+font.configure(size=16)
 
 Grid.rowconfigure(root, 1, weight=1)
 Grid.columnconfigure(root, 0, weight=1)
@@ -24,7 +24,8 @@ variables = []
 v = StringVar()
 varbox = Listbox(root)
 valbox = Listbox(root)
-
+varbox.configure(font=font)
+valbox.configure(font=font)
 
 
 def show_msg(msg):
@@ -116,9 +117,12 @@ def update_display_values():
             valbox.itemconfig(i, foreground="green")
 
         
-    
-b = Entry(root,textvariable=v)
-b.grid(row=0,column=0)
+
+def add(e): addvariable()
+            
+root.bind('<Return>',add)
+e = Entry(root,textvariable=v)
+e.grid(row=0,column=0)
 
 b = Button(root, text="add", command=addvariable)
 b.grid(row=0,column=1)
@@ -139,6 +143,7 @@ def on_closing():
 root.option_add("*Font",font)
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
+e.focus_set()
 
 
 keep_going = True

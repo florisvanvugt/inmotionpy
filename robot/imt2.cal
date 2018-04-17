@@ -183,12 +183,12 @@ s offset_x 0.0
 s offset_y -0.60
 
 # safety zone (meters)
-s safety_pos 0.2
+s safety_pos 0.4
 s safety_vel 1.5
 s safety_ramp .02
 # s safety_damping_nms 35.0
 # McGill's was 25.0 here.
-s safety_damping_nms 25.0
+s safety_damping_nms 40.0
 
 # if you raise pfomax above 5.0, you risk burning out the motors.
 # volts
