@@ -84,6 +84,8 @@ planar_check_safety_fn(void)
     // is sometimes necessary for debugging.
     if (ob->safety.override) return;
 
+    //if (ob->samplenum<5) return;
+    
     if (   ob->pos.x <= -ob->safety.pos
 	|| ob->pos.x >= ob->safety.pos
 	|| ob->pos.y <= -ob->safety.pos
@@ -101,6 +103,7 @@ planar_check_safety_fn(void)
        ) {
 	planar_apply_safety_damping();
 	ob->safety.was_planar_damping = 1;
+	ob->safety.has_applied += 1;
     } else {
 	if (ob->safety.was_planar_damping) {
 	    ob->safety.planar_just_crossed_back = 1;
@@ -108,6 +111,7 @@ planar_check_safety_fn(void)
 	}
     }
 
+    //return;
     // if the velocity is impossibly fast,
     // it's probably a bad encoder, send no force.
     if (   ob->vel.x <= -5.0

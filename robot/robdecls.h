@@ -394,6 +394,7 @@ typedef struct safety_s {
 
 	u32 planar_just_crossed_back;
 	u32 was_planar_damping;
+  u32 has_applied;
 	u32 damp_ret_ticks;
 	f64 damp_ret_secs;
 } Safety;

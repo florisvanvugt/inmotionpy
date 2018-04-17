@@ -183,6 +183,8 @@ s offset_x 0.0
 s offset_y -0.60
 
 # safety zone (meters)
+# disable safety checking for the first little while (FVV 20180417)
+s no_safety_check 1 
 s safety_pos 0.4
 s safety_vel 1.5
 s safety_ramp .02
