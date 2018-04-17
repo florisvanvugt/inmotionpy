@@ -65,14 +65,14 @@ planar_apply_safety_damping(void)
     // don't divide by zero.
     sramp = ob->safety.ramp;
     if (sramp > .000001) {
-	    if (dx < sramp)
-		    xramp = dx / sramp;
-	    if (dy < sramp)
-		    yramp = dy / sramp;
+      if (dx < sramp)
+	xramp = dx / sramp;
+      if (dy < sramp)
+	yramp = dy / sramp;
     }
 
-    ob->motor_force.x = -ob->safety.damping_nms * ob->vel.x * xramp;
-    ob->motor_force.y = -ob->safety.damping_nms * ob->vel.y * yramp;
+    ob->motor_force.x = -ob->safety.damping_nms * ob->vel.x; // * xramp; // FVV switched off the ramping for now (more complex)
+    ob->motor_force.y = -ob->safety.damping_nms * ob->vel.y; // * yramp;
 }
 
 void
@@ -84,17 +84,15 @@ planar_check_safety_fn(void)
     // is sometimes necessary for debugging.
     if (ob->safety.override) return;
 
-    //if (ob->samplenum<5) return;
-    
-    if (   ob->pos.x <= -ob->safety.pos
-	|| ob->pos.x >= ob->safety.pos
-	|| ob->pos.y <= -ob->safety.pos
-	|| ob->pos.y >= ob->safety.pos
+    if (   ob->pos.x <=  ob->safety.minx
+	|| ob->pos.x >=  ob->safety.maxx
+	|| ob->pos.y <=  ob->safety.miny
+	|| ob->pos.y >=  ob->safety.maxy
 
 	|| ob->vel.x <= -ob->safety.vel
-	|| ob->vel.x >= ob->safety.vel
+	|| ob->vel.x >=  ob->safety.vel
 	|| ob->vel.y <= -ob->safety.vel
-	|| ob->vel.y >= ob->safety.vel
+	|| ob->vel.y >=  ob->safety.vel
 
 	// || ob->motor_volts.s <= -ob->safety.volts
 	// || ob->motor_volts.s >= ob->safety.volts

@@ -183,14 +183,28 @@ s offset_x 0.0
 s offset_y -0.60
 
 # safety zone (meters)
+
 # disable safety checking for the first little while (FVV 20180417)
-s no_safety_check 1 
+# this is because initially the sensor values are not reliable.
+# later, say after 100ms or so, the sensor values become reliable and that's when we should
+# switch on the safety check again.
+# this is the responsibility of everybody's script!
+s no_safety_check 1
 s safety_pos 0.4
+# the above is kind of deprecated now (FVV 20180417)
+
+# These values here below determine the rectangular boundaries
+# within which the robot is allowed to operate. Once it reaches
+# outside this, the safety mode is activated.
+s safety_minx -.4
+s safety_maxx  .4
+s safety_miny -.15
+s safety_maxy .25
 s safety_vel 1.5
 s safety_ramp .02
 # s safety_damping_nms 35.0
 # McGill's was 25.0 here.
-s safety_damping_nms 40.0
+s safety_damping_nms 50.0
 
 # if you raise pfomax above 5.0, you risk burning out the motors.
 # volts
