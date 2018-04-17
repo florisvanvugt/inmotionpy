@@ -64,6 +64,32 @@ Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n
 
 
 
+
+## Safety box
+
+A safe region is defined in the workspace and when the robot leaves this safe zone, a viscous force field comes into effect that overrides any forces the controllers may try to produce. This is to avoid the robot handle banging into the wall or hurting the subject. This safety mode also comes into effect if the velocity exceeds a certain criterion.
+
+This is controlled through the following configuration parameters:
+```
+safety_minx
+safety_maxx
+safety_miny
+safety_maxy
+safety_vel
+```
+
+(All in `imt2.cal`). 
+You can disable this by setting `no_safety_check` to 1, in which case this safety boundary is no longer enforced.
+
+By default, the robot starts *without* the safety mode. This is because when you first start the robot the sensor values seem to fluctuate or have unrealistic values, which immediately starts the safety mode and causes a big jolt of forces to be applied. So instead we let the robot start gently and then we apply the safety mode (from the Python script).
+
+Your scripts should check whether the safety mode has become active, because this is a sign that the subject made a weird movement or let go of the handle. For every clock tick where the safety mode was applied, the variable `ob->safety.has_applied` is increased by one. So you can keep track of this variable and adjust your experiment flow accordingly. You can read it following the usual convention, i.e. through `robot.rshm('safety_has_applied')`.
+
+
+
+
+
+
 ## Dummy robot
 
 In case you want to test your code at a computer that is not hooked up to the robot, you can simulate a dummy robot that behaves much like the actual robot interface by replacing the `import robot.interface` above with `import robot.dummy`.
