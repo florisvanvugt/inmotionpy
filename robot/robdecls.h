@@ -384,18 +384,27 @@ typedef struct slot_s {
 
 // safety envelope
 typedef struct safety_s {
-	f64 pos;
-	f64 vel;
-	f64 torque;
-	f64 ramp;
-	f64 damping_nms;
-	f64 velmag_kick;
-	u32 override;
+  f64 pos;
 
-	u32 planar_just_crossed_back;
-	u32 was_planar_damping;
-	u32 damp_ret_ticks;
-	f64 damp_ret_secs;
+  // The positions below specify the minimum and maximum
+  // "safe" values for x and y. Once the robot gets outside
+  // these, the safety features activate.
+  f64 minx;
+  f64 maxx;
+  f64 miny;
+  f64 maxy;
+  
+  f64 vel;
+  f64 torque;
+  f64 ramp;
+  f64 damping_nms;
+  f64 velmag_kick;
+  u32 override;
+  
+  u32 planar_just_crossed_back;
+  u32 was_planar_damping;
+  u32 damp_ret_ticks;
+  f64 damp_ret_secs;
 } Safety;
 
 
