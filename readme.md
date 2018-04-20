@@ -85,7 +85,7 @@ By default, the robot starts *without* the safety mode. This is because when you
 
 Your scripts should check whether the safety mode has become active, because this is a sign that the subject made a weird movement or let go of the handle. For every clock tick where the safety mode was applied, the variable `ob->safety.has_applied` is increased by one. So you can keep track of this variable and adjust your experiment flow accordingly. You can read it following the usual convention, i.e. through `robot.rshm('safety_has_applied')`.
 
-
+Note that there is also a setting `safety_vel`. Once the resultant velocity (vector defined by X and Y velocities) crosses this value, the safety feature is also activated, i.e. a viscous force field starts applying the brakes. Again, your script should test whether this has happened because you'll want to discard those trials. You can tell when it has occurred because `ob->safety.has_applied` is increased.
 
 
 
