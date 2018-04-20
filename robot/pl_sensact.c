@@ -112,16 +112,19 @@ planar_check_safety_fn(void)
   // it's for turning off the safety damping zone, which
   // is sometimes necessary for debugging.
   if (ob->safety.override) return;
+
+  f64 vel_tot = sqrt( pow(ob->vel.x,2) + pow(ob->vel.y,2) );
   
   if (   ob->pos.x <=  ob->safety.minx
 	 || ob->pos.x >=  ob->safety.maxx
 	 || ob->pos.y <=  ob->safety.miny
 	 || ob->pos.y >=  ob->safety.maxy
-	 
-	 || ob->vel.x <= -ob->safety.vel
-	 || ob->vel.x >=  ob->safety.vel
-	 || ob->vel.y <= -ob->safety.vel
-	 || ob->vel.y >=  ob->safety.vel
+
+	 || vel_tot >= ob->safety.vel
+	 //|| ob->vel.x <= -ob->safety.vel
+	 //|| ob->vel.x >=  ob->safety.vel
+	 //|| ob->vel.y <= -ob->safety.vel
+	 //|| ob->vel.y >=  ob->safety.vel
 	 
 	 // || ob->motor_volts.s <= -ob->safety.volts
 	 // || ob->motor_volts.s >= ob->safety.volts

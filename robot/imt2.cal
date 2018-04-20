@@ -200,7 +200,10 @@ s safety_minx -.4
 s safety_maxx  .4
 s safety_miny -.15
 s safety_maxy .25
-s safety_vel 1.5
+
+# FVV 20180420; previously this was: safety_vel 1.5
+s safety_vel 2.0
+
 s safety_ramp .02
 # s safety_damping_nms 35.0
 # McGill's was 25.0 here.
