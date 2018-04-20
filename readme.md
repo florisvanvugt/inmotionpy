@@ -274,3 +274,12 @@ For further information, see the html documentation at:
 ```
 /opt/imt/robot/crob/notes/index.html
 ```
+
+
+## Further technicalities
+
+### Writing forces
+
+In `main.c`, the function `write_actuators_fn()` is what causes forces to be written to the actuators.
+It calls either `dac_direct_torque_actuator()` which is for the case torques are already computed (e.g. by dynamics compensation). Otherwise it calls `dac_torque_actuator()` which will compute the torques based on the `ob->motor_force` and then write that to voltages.
+

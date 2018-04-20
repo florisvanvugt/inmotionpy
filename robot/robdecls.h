@@ -400,9 +400,12 @@ typedef struct safety_s {
   f64 damping_nms;
   f64 velmag_kick;
   u32 override;
+
+  xy motor_force; // if the safety motor force has applied, this is what its values are
   
   u32 planar_just_crossed_back;
   u32 was_planar_damping;
+  u32 active; // whether safety damping is currently active
   u32 has_applied; // This counts the number of frames where the safety boundary was enforced
   u32 damp_ret_ticks;
   f64 damp_ret_secs;
@@ -721,6 +724,7 @@ typedef struct ob_s {
   u32 fvv_vel_low_timer;         // times how long we are on low Y-velocity (below some percentage of the maximum velocity
 
   u32 fvv_workspace_enter;       // 0 when outside of workspace, 1 when entered the workspace
+  xy fvv_curl_force;	// world forces sent from the curl field controller (for debug)
 
 
   /* The variables below here are used for trajectory replaying */

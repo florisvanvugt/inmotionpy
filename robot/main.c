@@ -895,6 +895,7 @@ compute_controls_fn(void)
 {
     vibrate();
 
+    // Read inputs
     if (ob->have_ft) {
 	adc_ft_sensor();
     }
@@ -913,15 +914,9 @@ compute_controls_fn(void)
 	adc_grasp_sensor();
     }
 
-//    if (ob->have_linear) {
-//	linear_sensor();
-//	linear_calc_vel();
-//    }
 
-    //
-    // later
-    // simple_ctl used by dac_torque_ctl.
-
+    // Executes the controller that is currently active
+    // to compute desired motor forces
     do_slot();
 
     after_compute_controls();
@@ -930,21 +925,19 @@ compute_controls_fn(void)
 void
 write_actuators_fn(void)
 {
-    if (ob->no_motors) {
-	write_zero_torque();
-	return;
-    }
-
-    //    if (ob->have_planar) dac_torque_actuator();
-    if (ob->have_planar) {
-      if (dyncmp_var->usedirectcontrol==1)
-	dac_direct_torque_actuator();    // no force transform by Jacobian        
-      else        
-	dac_torque_actuator();           // transforms forces from cartesian to motor torques.
-    }
-
-//    if (ob->have_linear) dac_linear_actuator();
+  if (ob->no_motors) {
+    write_zero_torque();
     return;
+  }
+  
+  //    if (ob->have_planar) dac_torque_actuator();
+  if (!(ob->have_planar)) return;
+
+  if (dyncmp_var->usedirectcontrol==1 && !(ob->safety.active)) // FVV note 201804 this is generally our case at McGill
+    dac_direct_torque_actuator();    // no force transform by Jacobian (i.e. "directly" writes torques to the physical motor because we assume that the torques are computed properly by dynamics compensation).
+  else        
+    dac_torque_actuator();           // transforms forces from cartesian to motor torques (when no dynamics compensation has been applied)
+  
 }
 
 void

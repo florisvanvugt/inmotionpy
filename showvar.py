@@ -8,16 +8,16 @@ from tkinter.font import *
 
 robot.load()
 
+robot.bias_force_transducers()
+
+
+capturing = True
 
 root = Tk()
 root.title("Variable display")
 root.geometry('%dx%d+%d+%d' % (400, 600, 600, 200))
 font = nametofont("TkDefaultFont")
 font.configure(size=16)
-
-Grid.rowconfigure(root, 1, weight=1)
-Grid.columnconfigure(root, 0, weight=1)
-Grid.columnconfigure(root, 1, weight=1)
 
 # These are the variables that we will check
 variables = []
@@ -65,8 +65,9 @@ def addvariable():
         if len(sugg)>0:
             v.set("") # empty the original inbox
             for s in sugg:
-                variables.append(s)
-                varbox.insert(END,s)
+                if not s in variables: # if not already there
+                    variables.append(s)
+                    varbox.insert(END,s)
         return
     
     # Get info about this variable
@@ -96,27 +97,41 @@ def addvariable():
 
 
 def update_display_values():
-    # For each variable, show its value
-    
-    valbox.delete(0,END) # remove everything
-    i = 0
-    for i,v in enumerate(variables):
-        val = robot.rshm(v)
-        if val==None:
-            valbox.insert(END,"N/A")
-            continue
-        if type(val)is list:
-            valbox.insert(END,"(array)")
-            continue
-            
-        #val = random.random()
-        valbox.insert(END,str(val))
-        if val<0:
-            valbox.itemconfig(i, foreground="red")
-        else:
-            valbox.itemconfig(i, foreground="green")
+    if capturing:
 
+        # First, capture all the variables
+        vals = [ robot.rshm(v) for v in variables ]
         
+        # For each variable, show its value
+        valbox.delete(0,END) # remove everything
+        i = 0
+        for i,val in enumerate(vals):
+            #val = robot.rshm(v)
+            if val==None:
+                valbox.insert(END,"N/A")
+                continue
+            if type(val)is list:
+                valbox.insert(END,"(array)")
+                continue
+
+            #val = random.random()
+            valbox.insert(END,str(val))
+            if val<0:
+                valbox.itemconfig(i, foreground="red")
+            else:
+                valbox.itemconfig(i, foreground="green")
+
+
+
+def toggle_capture():
+    # Capture the state of variables
+    global capturing
+    capturing = not capturing;
+
+
+
+
+            
 
 def add(e): addvariable()
             
@@ -127,8 +142,16 @@ e.grid(row=0,column=0)
 b = Button(root, text="add", command=addvariable)
 b.grid(row=0,column=1)
 
-varbox.grid(row=1,column=0,sticky=N+E+S+W)
-valbox.grid(row=1,column=1,sticky=N+E+S+W)
+b = Button(root, text="start/stop", command=toggle_capture)
+b.grid(row=1,column=1)
+
+
+varbox.grid(row=2,column=0,sticky=N+E+S+W)
+valbox.grid(row=2,column=1,sticky=N+E+S+W)
+
+Grid.rowconfigure(root, 2, weight=1)
+Grid.columnconfigure(root, 0, weight=1)
+Grid.columnconfigure(root, 1, weight=1)
 
 
 
@@ -145,6 +168,9 @@ root.protocol("WM_DELETE_WINDOW", on_closing)
 
 e.focus_set()
 
+#robot.controller(0) # null field, no dyn comp
+#robot.controller(1) # null field, with dyn comp
+robot.start_curl(-15) # curl field, with dyn comp
 
 keep_going = True
 #robot.wshm('plg_moveto_done',1)

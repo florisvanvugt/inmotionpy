@@ -218,6 +218,7 @@ planar_const_ctl(u32 id)
 void
 null_ctl(u32 id)
 {
+  // Null controller with no dynamics compensation
   fX = 0.0;
   fY = 0.0;
   //#ifdef dyn_comp 
@@ -496,21 +497,25 @@ void
 curl_ctl(u32 id)
 {
 
-    f64 curl;
-    f64 damp;
+  f64 curl;
+  f64 damp;
+  
+  curl = ob->curl;
+  damp = ob->damp;
+  
+  fX =  ( curl * (vY) );
+  fY = -( curl * (vX) );
 
-    curl = ob->curl;
-    damp = ob->damp;
+  #ifdef dyn_comp 
+  dynamics_compensation(fX,fY,3,1.0);
+# else
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY;
+#endif
 
-    fX =  ( curl * (vY) );
-    fY = -( curl * (vX) );
-    
-    #ifdef dyn_comp 
-    	dynamics_compensation(fX,fY,3,1.0);
-	# else
-    	ob->motor_force.x = fX;
-    	ob->motor_force.y = fY;
-	#endif
+  ob->fvv_curl_force.x = ob->motor_force.x;
+  ob->fvv_curl_force.y = ob->motor_force.y;
+  
 }
 
 
