@@ -139,7 +139,7 @@ const double distance_cutoff=.05; // in meters; the distance from the center tha
 // trial, which means we initiate the clamp to stop the participant where they are.
 // proportion of the maximum velocity
 const double vel_prop=.05;       // proportion of maximum velocity
-const int vel_low_duration = 20; // in # of frames
+const int vel_low_duration = 15; // in # of frames
 
 double max_vel_prop; // used to cache the calculation of vel_prop*fvv_max_vel
 
@@ -259,32 +259,12 @@ null_ctl_dyncomp(u32 id)
 void
 move_phase_ctl(u32 id)
 {
-  /* Determine whether the subject is in the workspace or not */
+  /* 
+     This is a controller that is basically a null field,
+     except for when the velocity falls below a certain 
+     amount and then it sets fvv_trial_phase to 6.
+  */
 
-  // Calculate the distance from the center
-  double dist = sqrt(pow(X-fvv_robot_center_x,2)+pow(Y-fvv_robot_center_y,2));
-
-  if (fvv_trial_phase==4) {
-    // PHASE = wait.move
-    // First, check if the subject has left the center (and is on the move)
-
-    // Check whether the participant has entered the workspace,
-    // as defined by the vertical coordinate.
-    ob->fvv_workspace_enter = (dist>distance_cutoff);
-
-    // If we are in the workspace...
-    if (ob->fvv_workspace_enter) {
-
-      // Declare move phase 5 (moving within the workspace)
-      fvv_trial_phase = 5;
-      fvv_trial_timer = 0; // start the timer: timer=0 is when workspace is entered
-      fvv_max_vel     = 0.0; // set the maximum recorded velocity to zero
-      fvv_vmax_x      = 0.0;
-      fvv_vmax_y      = 0.0;
-
-    }
-
-  };
 
   if (fvv_trial_phase==5) {
     // PHASE = moving
@@ -313,7 +293,7 @@ move_phase_ctl(u32 id)
     if (fvv_vel_low_timer>vel_low_duration) {
       // If we have been below the threshold-low speed long enough,
       // declare it the end of the trial.
-      fvv_trial_phase = 6;
+      fvv_trial_phase = 6; // this marks that the trial has come to an end!
       fvv_final_x = X;
       fvv_final_y = Y;
     }
@@ -326,6 +306,20 @@ move_phase_ctl(u32 id)
   fX = 0.0;
   fY = 0.0;
 
+  
+  // Infrastructure for capturing (if we are doing that -- but why not?)
+  if (fvv_trial_phase>4) {
+    int traj_cnt = traj_count;// cast to unsigned just to be sure
+    if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
+      
+      // Capture the current position
+      trajx[traj_cnt] = X;
+      trajy[traj_cnt] = Y;
+      
+      ++traj_count;
+    }
+  }
+  
   // And dynamics compensation please
 #ifdef dyn_comp 
   dynamics_compensation(fX,fY,3,1.0);

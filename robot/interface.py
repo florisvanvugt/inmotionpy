@@ -7,7 +7,8 @@
 # - controller 0  : null field
 # - controller 2  : zero_ft
 # - controller 4  : movetopt (move to location)
-# - controller 5  : static_ctl_fade (hold and fade
+# - controller 5  : static_ctl_fade (hold and fade)
+# - controller 6  : move phase controller (allow free movement until velocity falls below criterion)
 # - controller 8  : trajectory_capture (in null field)
 # - controller 9  : trajectory_reproduce (replay a trajectory loaded into memory)
 # - controller 15 : this handles force channel
@@ -500,6 +501,53 @@ def stay_fade(x,y):
 
     
 
+
+
+def move_phase():
+    """
+    A controller that is basically a null field,
+    but that monitors maximum velocity.
+    Then, once you set fvv_trial_phase to 5
+    then once the total velocity falls below some
+    percentage of the maximum velocity on that trial,
+    and then it sets fvv_trial_phase to 6.
+    So basically your script should monitor when fvv_trial_phase becomes
+    6 and then continue by for example clamping the subject in place.
+    """
+    wshm('fvv_max_vel',0.0)     # maximum velocity on this trial
+    wshm('fvv_vel_low_timer',0) # counting how long we have been below the velocity cutoff
+    wshm('fvv_trial_phase',0)   # not yet active
+    
+    controller(6) # move_phase_ctl
+    return
+
+
+
+
+def move_phase_and_capture():
+    """
+    A controller that is basically a null field,
+    but that monitors maximum velocity.
+    Then, once you set fvv_trial_phase to 5
+    then once the total velocity falls below some
+    percentage of the maximum velocity on that trial,
+    and then it sets fvv_trial_phase to 6.
+    So basically your script should monitor when fvv_trial_phase becomes
+    6 and then continue by for example clamping the subject in place.
+    """
+    wshm('fvv_max_vel',0.0)     # maximum velocity on this trial
+    wshm('fvv_vel_low_timer',0) # counting how long we have been below the velocity cutoff
+    wshm('fvv_trial_phase',0)   # not yet active
+
+    wshm('traj_count',0) # define that we are starting capturing from the beginning of the buffer
+    
+    controller(6) # move_phase_ctl
+    return
+
+
+
+
+    
 
 def start_curl(ffval):
     """ Initiate either CCW or CW curl-field. CCW has a negative ffval,                                                           while CW has a positive ffval. Don't input ffval > 18!                                                                    [~ananda, May2017]                                                                                                    """
