@@ -384,19 +384,34 @@ typedef struct slot_s {
 
 // safety envelope
 typedef struct safety_s {
-	f64 pos;
-	f64 vel;
-	f64 torque;
-	f64 ramp;
-	f64 damping_nms;
-	f64 velmag_kick;
-	u32 override;
+  f64 pos;
 
-	u32 planar_just_crossed_back;
-	u32 was_planar_damping;
-	u32 damp_ret_ticks;
-	f64 damp_ret_secs;
+  // The positions below specify the minimum and maximum
+  // "safe" values for x and y. Once the robot gets outside
+  // these, the safety features activate.
+  f64 minx;
+  f64 maxx;
+  f64 miny;
+  f64 maxy;
+  
+  f64 vel;
+  f64 torque;
+  f64 ramp;
+  f64 damping_nms;
+  f64 velmag_kick;
+  u32 override;
+
+  xy motor_force; // if the safety motor force has applied, this is what its values are
+  
+  u32 planar_just_crossed_back;
+  u32 was_planar_damping;
+  u32 active; // whether safety damping is currently active
+  u32 has_applied; // This counts the number of frames where the safety boundary was enforced
+  u32 damp_ret_ticks;
+  f64 damp_ret_secs;
 } Safety;
+
+
 
 
 #define N_UEIDAQ_BOARDS 4

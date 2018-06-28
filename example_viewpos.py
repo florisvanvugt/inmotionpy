@@ -8,9 +8,9 @@ import numpy as np
 
 
 # Some parameters that specify how we draw things onto our window
-w,h = 800,600
+w,h = 900,600
 cw,ch = w/2,h/2
-robot_scale = 700
+robot_scale = 600
 cursor_size = 10
 target_size = 5
 
@@ -344,7 +344,7 @@ def replay():
 # Set up the main interface scree
     
 master = Tk()
-master.geometry('%dx%d+%d+%d' % (w, h, 500, 200))
+master.geometry('%dx%d+%d+%d' % (w, h, 600, 200))
 
 
 
@@ -366,7 +366,16 @@ minx,miny = rob_to_screen(-.4,-.2)
 maxx,maxy = rob_to_screen( .4,.3)
 win.create_rectangle(minx,miny,maxx,maxy, outline="blue")
 
+# Draw a little center point
+x,y = rob_to_screen(0,0)
+
+cross_size=10
+win.create_line(x-cross_size,y,x+cross_size,y,fill='green')
+win.create_line(x,y-cross_size,x,y+cross_size,fill='green')
+
+
 robot_pos = win.create_oval(cw,ch,cw,ch,fill="blue")
+coord_txt = win.create_text(cw,ch,text='NA,NA',fill='white',anchor='w')
 
 master.protocol("WM_DELETE_WINDOW", on_closing)
 
@@ -379,6 +388,8 @@ def draw_robot():
     #print(rx,ry)
     x,y = rob_to_screen(rx,ry)
     win.coords(robot_pos,(x-cursor_size,y-cursor_size,x+cursor_size,y+cursor_size))
+    win.itemconfig(coord_txt,text="  %.3f,%.3f"%(rx,ry))
+    win.coords(coord_txt,(x,y))
     global moving
     robcol = "green" if moving else "blue"
     win.itemconfig(robot_pos,fill=robcol)

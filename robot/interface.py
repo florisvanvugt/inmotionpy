@@ -131,8 +131,8 @@ def load():
     wshm("plg_last_fX",0.0)
     wshm("plg_last_fY",0.0)
 
-    # Remove the safety zone so that the robot arm can move everywhere - careful!
-    wshm("no_safety_check",1)
+    time.sleep(.1)
+    wshm("no_safety_check",0)    # Enable the safety zone
 
     print("done")
     return

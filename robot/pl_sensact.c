@@ -50,74 +50,112 @@ sensact_init(void) {
 static void
 planar_apply_safety_damping(void)
 {
-    f64 dx, dy;
-    f64 xramp, yramp;
-    f64 sramp;
+  //f64 dx, dy;
+  //f64 xramp, yramp;
+  //f64 sramp;
 
-    if (!ob->have_planar) return;
-    dx = fabs(ob->pos.x - ob->safety.pos);
-    dy = fabs(ob->pos.y - ob->safety.pos);
+  f64 fX = 0.0;
+  f64 fY = 0.0;
+  
+  if (!ob->have_planar) return;
 
-    // set up a ramp at the damping edge
-    xramp = yramp = 1.0;
-    // feather the edge of the safety zone.
-    // safety.ramp is the width of the feathered edge.
-    // don't divide by zero.
-    sramp = ob->safety.ramp;
-    if (sramp > .000001) {
-	    if (dx < sramp)
-		    xramp = dx / sramp;
-	    if (dy < sramp)
-		    yramp = dy / sramp;
-    }
+  ob->safety.active = 1; // Mark that the safety is activated now
+  
+  //dx = fabs(ob->pos.x - ob->safety.pos);
+  //dy = fabs(ob->pos.y - ob->safety.pos);
+  
+  // set up a ramp at the damping edge
+  //xramp = yramp = 1.0;
+  // feather the edge of the safety zone.
+  // safety.ramp is the width of the feathered edge.
+  // don't divide by zero.
+  //sramp = ob->safety.ramp;
+  //if (sramp > .000001) {
+  //if (dx < sramp)
+  //xramp = dx / sramp;
+  //if (dy < sramp)
+  //yramp = dy / sramp;
+  //}
+  
+  fX = -ob->safety.damping_nms * ob->vel.x; // * xramp; // FVV switched off the ramping for now (more complex)
+  fY = -ob->safety.damping_nms * ob->vel.y; // * yramp;
+  
+  // Also keep a record of the safety motor forces we have applied
+  ob->safety.motor_force.x = fX;
+  ob->safety.motor_force.y = fY;
 
-    ob->motor_force.x = -ob->safety.damping_nms * ob->vel.x * xramp;
-    ob->motor_force.y = -ob->safety.damping_nms * ob->vel.y * yramp;
+  // FVV 20180420 I considered applying dynamics compensation here,
+  // however it seems to not be such a great idea, because who knows
+  // exactly what it will do at the edges of the workspace? It's not designed
+  // for that. And when safety damping applies then we just want to get
+  // those forces, nothing else. We don't care about isotropy at that point anymore.
+  
+  //#ifdef dyn_comp 
+  //dynamics_compensation(fX,fY,3,1.0);
+  //# else
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY; // have to make sure these are transformed into torques later!
+  //#endif
+  
 }
 
 void
 planar_check_safety_fn(void)
 {
-    if (!ob->have_planar) return;
-    // this isn't really for overriding safety.
-    // it's for turning off the safety damping zone, which
-    // is sometimes necessary for debugging.
-    if (ob->safety.override) return;
+  // If no safety motor forces were applied...
+  ob->safety.motor_force.x = 0;
+  ob->safety.motor_force.y = 0;
+  ob->safety.active        = 0;
+  
+  if (!ob->have_planar) return;
+  // this isn't really for overriding safety.
+  // it's for turning off the safety damping zone, which
+  // is sometimes necessary for debugging.
+  if (ob->safety.override) return;
 
-    if (   ob->pos.x <= -ob->safety.pos
-	|| ob->pos.x >= ob->safety.pos
-	|| ob->pos.y <= -ob->safety.pos
-	|| ob->pos.y >= ob->safety.pos
+  f64 vel_tot = sqrt( pow(ob->vel.x,2) + pow(ob->vel.y,2) );
+  
+  if (   ob->pos.x <=  ob->safety.minx
+	 || ob->pos.x >=  ob->safety.maxx
+	 || ob->pos.y <=  ob->safety.miny
+	 || ob->pos.y >=  ob->safety.maxy
 
-	|| ob->vel.x <= -ob->safety.vel
-	|| ob->vel.x >= ob->safety.vel
-	|| ob->vel.y <= -ob->safety.vel
-	|| ob->vel.y >= ob->safety.vel
-
-	// || ob->motor_volts.s <= -ob->safety.volts
-	// || ob->motor_volts.s >= ob->safety.volts
-	// || ob->motor_volts.e <= -ob->safety.volts
-	// || ob->motor_volts.e >= ob->safety.volts
-       ) {
-	planar_apply_safety_damping();
-	ob->safety.was_planar_damping = 1;
-    } else {
-	if (ob->safety.was_planar_damping) {
-	    ob->safety.planar_just_crossed_back = 1;
-	    ob->safety.was_planar_damping = 0;
-	}
+	 || vel_tot >= ob->safety.vel
+	 //|| ob->vel.x <= -ob->safety.vel
+	 //|| ob->vel.x >=  ob->safety.vel
+	 //|| ob->vel.y <= -ob->safety.vel
+	 //|| ob->vel.y >=  ob->safety.vel
+	 
+	 // || ob->motor_volts.s <= -ob->safety.volts
+	 // || ob->motor_volts.s >= ob->safety.volts
+	 // || ob->motor_volts.e <= -ob->safety.volts
+	 // || ob->motor_volts.e >= ob->safety.volts
+	 ) {
+    planar_apply_safety_damping();
+    ob->safety.was_planar_damping = 1;
+    ob->safety.has_applied += 1;
+  } else {
+    
+    if (ob->safety.was_planar_damping) {
+      ob->safety.planar_just_crossed_back = 1;
+      ob->safety.was_planar_damping = 0;
     }
-
+    
+    
+    //return;
     // if the velocity is impossibly fast,
     // it's probably a bad encoder, send no force.
     if (   ob->vel.x <= -5.0
-	|| ob->vel.x >= 5.0
-	|| ob->vel.y <= -5.0
-	|| ob->vel.y >= 5.0
-    ) {
-	ob->motor_force.x = 0.0;
-	ob->motor_force.y = 0.0;
+	   || ob->vel.x >= 5.0
+	   || ob->vel.y <= -5.0
+	   || ob->vel.y >= 5.0
+	   ) {
+      ob->motor_force.x = 0.0;
+      ob->motor_force.y = 0.0;
     }
+    
+  }
+  
 }
 
 // when you come out of the damping field, have the voltage ramp up from
@@ -176,6 +214,11 @@ dio_encoder_sensor(void)
     xy pos;
 
     if (!ob->have_planar) return;
+
+    //if (ob->sim.sensors) {
+    //ob->pos = ob->sim.pos;
+    //return;
+    //}
 
     //if (ob->have_planar_incenc && rob->pci4e.have) {
     // new for planar pci4e
@@ -355,6 +398,10 @@ adc_tach_sensor(void)
     // else from encoder angles.
     ob->vel = V;
 
+    //if (ob->sim.sensors) {
+    //ob->vel = ob->sim.vel;
+    //}
+
     ob->velmag = hypot(ob->vel.x, ob->vel.y);
 
     if (ob->velmag > ob->safety.velmag_kick) {
@@ -472,7 +519,8 @@ dac_torque_actuator(void)
 	torque.e = volts.e * Te.xform + Te.offset;
     }
 
-    volts = planar_back_from_safety_damping(volts);
+    // FVV 20180420 commented out wondering if it causes too slow coming on of force.
+    //volts = planar_back_from_safety_damping(volts);
 
     // bracket voltages, preserving force orientation
 
@@ -502,53 +550,57 @@ dac_torque_actuator(void)
 void
 dac_direct_torque_actuator(void)
 {
-    se torque;
-    se volts;
-
-    torque.s = ob->motor_torque.s;
-    torque.e = ob->motor_torque.e;
-
-    volts.s = (torque.s - Ts.offset) / Ts.xform;
-    volts.e = (torque.e - Te.offset) / Te.xform;
-
-    volts = preserve_orientation(volts, ob->pfomax);
-
-    // if you're testing, you can set this to something gentle
-
-    volts = preserve_orientation(volts, ob->pfotest);
-
-    ob->motor_volts.s = volts.s;
-    ob->motor_volts.e = volts.e;
-
-    uei_aout_write(ob->motor_volts.s, ob->motor_volts.e);
+  // Writes ob->motor_torque to the actuators.
+  // This no longer uses ob->motor_force because it assumes
+  // that has already been transformed into torques.
+  
+  se torque;
+  se volts;
+  
+  torque.s = ob->motor_torque.s;
+  torque.e = ob->motor_torque.e;
+  
+  volts.s = (torque.s - Ts.offset) / Ts.xform;
+  volts.e = (torque.e - Te.offset) / Te.xform;
+  
+  volts = preserve_orientation(volts, ob->pfomax);
+  
+  // if you're testing, you can set this to something gentle
+  
+  volts = preserve_orientation(volts, ob->pfotest);
+  
+  ob->motor_volts.s = volts.s;
+  ob->motor_volts.e = volts.e;
+  
+  uei_aout_write(ob->motor_volts.s, ob->motor_volts.e);
 }
 
 
 void
 planar_set_zero_torque(void)
 {
-    if (!ob->have_planar) return;
-    ob->motor_force.x = 0.0;
-    ob->motor_force.y = 0.0;
-    ob->motor_torque.s = 0.0;
-    ob->motor_torque.e = 0.0;
-    ob->motor_volts.s = 0.0;
-    ob->motor_volts.e = 0.0;
+  if (!ob->have_planar) return;
+  ob->motor_force.x = 0.0;
+  ob->motor_force.y = 0.0;
+  ob->motor_torque.s = 0.0;
+  ob->motor_torque.e = 0.0;
+  ob->motor_volts.s = 0.0;
+  ob->motor_volts.e = 0.0;
 }
 
 void
 planar_write_zero_torque(void)
 {
-    if (!ob->have_planar) return;
-    planar_set_zero_torque();
-    if (ob->have_planar_ao8) {
-	// new for planar ao8
-	uei_aout32_write(0, 0, 0.0);
-	uei_aout32_write(0, 1, 0.0);
-    } else {
-	// old for planar mf
-	uei_aout_write(0.0, 0.0);
-    }
+  if (!ob->have_planar) return;
+  planar_set_zero_torque();
+  if (ob->have_planar_ao8) {
+    // new for planar ao8
+    uei_aout32_write(0, 0, 0.0);
+    uei_aout32_write(0, 1, 0.0);
+  } else {
+    // old for planar mf
+    uei_aout_write(0.0, 0.0);
+  }
 }
 
 void

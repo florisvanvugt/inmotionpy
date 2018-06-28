@@ -573,6 +573,7 @@ main_init(void)
     rob->link.e = 0.51435;	// meters ~= .5 m
 
     // safety envelope
+    ob->safety.override = 1; // disable the safety override for the first bit, while we are setting up; also the encoders will be noisy for the first little while which can cause the safety mode to become active too soon
     ob->safety.pos = 0.2;
     ob->safety.vel = 2.0;
     ob->safety.torque = 80.0;
@@ -1040,20 +1041,20 @@ compute_controls_fn(void)
 void
 write_actuators_fn(void)
 {
-    if (ob->no_motors) {
-	write_zero_torque();
-	return;
-    }
-
-    //    if (ob->have_planar) dac_torque_actuator();
-    if (ob->have_planar) {
-      if (dyncmp_var->usedirectcontrol==1)
-	dac_direct_torque_actuator();    // no force transform by Jacobian        
-      else        
-	dac_torque_actuator();           // transforms forces from cartesian to motor torques.
-    }
-
+  if (ob->no_motors) {
+    write_zero_torque();
     return;
+  }
+  
+  //    if (ob->have_planar) dac_torque_actuator();
+  if (!(ob->have_planar)) return;
+  
+  if (dyncmp_var->usedirectcontrol==1 && !(ob->safety.active)) // FVV note 201804 this is generally our case at McGill
+    dac_direct_torque_actuator();    // no force transform by Jacobian (i.e. "directly" writes torques to the physical motor because we assume that the torques are computed properly by dynamics compensation).
+  else        
+    dac_torque_actuator();           // transforms forces from cartesian to motor torques (when no dynamics compensation has been applied)
+  
+  return;
 }
 
 void

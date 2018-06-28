@@ -145,9 +145,13 @@ s elbow_angle_xform   -.00009587379924285257
 # s shoulder_angle_offset 0.704893  
 # s elbow_angle_offset 1.583964
 
-# New robot calibration
- s shoulder_angle_offset 0.616085
- s elbow_angle_offset 1.480579
+# New "old" robot calibration
+# s shoulder_angle_offset 0.616085
+# s elbow_angle_offset 1.480579
+
+# 20180415 re-calibration after banging into the wall
+s shoulder_angle_offset 0.7307735
+s elbow_angle_offset 1.5704523
 
 # new Copley servos
 # s shoulder_torque_xform 2.80
@@ -179,12 +183,31 @@ s offset_x 0.0
 s offset_y -0.60
 
 # safety zone (meters)
-s safety_pos 0.2
-s safety_vel 1.5
+
+# disable safety checking for the first little while (FVV 20180417)
+# this is because initially the sensor values are not reliable.
+# later, say after 100ms or so, the sensor values become reliable and that's when we should
+# switch on the safety check again.
+# this is the responsibility of everybody's script!
+s no_safety_check 1
+s safety_pos 0.4
+# the above is kind of deprecated now (FVV 20180417)
+
+# These values here below determine the rectangular boundaries
+# within which the robot is allowed to operate. Once it reaches
+# outside this, the safety mode is activated.
+s safety_minx -.4
+s safety_maxx  .4
+s safety_miny -.15
+s safety_maxy .25
+
+# FVV 20180420; previously this was: safety_vel 1.5
+s safety_vel 2.0
+
 s safety_ramp .02
 # s safety_damping_nms 35.0
 # McGill's was 25.0 here.
-s safety_damping_nms 25.0
+s safety_damping_nms 50.0
 
 # if you raise pfomax above 5.0, you risk burning out the motors.
 # volts
