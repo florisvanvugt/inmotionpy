@@ -726,6 +726,7 @@ typedef struct ob_s {
   u32 fvv_vel_low_timer;         // times how long we are on low Y-velocity (below some percentage of the maximum velocity
 
   u32 fvv_workspace_enter;       // 0 when outside of workspace, 1 when entered the workspace
+  xy fvv_curl_force;	// world forces sent from the curl field controller (for debug)
 
 
   /* The variables below here are used for trajectory replaying */
@@ -832,26 +833,26 @@ typedef struct func_s {
 
 
 typedef struct Moh_s {
-	f64 pointer; 	
-
-	u32 pixelx[36];
-	u32 pixely[36];
-	f64 realx[36];
-	f64 realy[36];
-	f64 xcenter;
-	f64 ycenter;
-	f64 ffs;
-	f64 hand_place;
-	f64 stiffness;
-	f64 move_flag;
-	f64 servo_flag;
-	f64 counter;
-	f64 current_dir;
-	f64 last_pointX;
-	f64 last_pointY;
-	f64 fX;
-	f64 fY;
-
+  f64 pointer; 	
+  
+  u32 pixelx[36];
+  u32 pixely[36];
+  f64 realx[36];
+  f64 realy[36];
+  f64 xcenter;
+  f64 ycenter;
+  f64 ffs;
+  f64 hand_place;
+  f64 stiffness;
+  f64 move_flag;
+  f64 servo_flag;
+  f64 counter;
+  f64 current_dir;
+  f64 last_pointX;
+  f64 last_pointY;
+  f64 fX;
+  f64 fY;
+  
 } Moh;
 
 
