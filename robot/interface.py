@@ -549,9 +549,12 @@ def move_phase_and_capture():
     
 
 def start_curl(ffval):
-    """ Initiate either CCW or CW curl-field. CCW has a negative ffval,                                                           while CW has a positive ffval. Don't input ffval > 18!                                                                    [~ananda, May2017]                                                                                                    """
+    """ Initiate either CCW or CW curl-field. CCW has a negative ffval,                                                           
+    while CW has a positive ffval. Don't input ffval > 18!
+    [~ananda, May2017]                                                                                                 
+    """
     if ffval > 18: ffval = 18
-    print("Activating curl controller, curl=%d"%ffval)
+    print("Activating curl controller, curl=%.3f"%ffval)
     wshm("curl", ffval)
     # start curl field robot controller declared inside {pl_uslot.c}
     controller(17)
