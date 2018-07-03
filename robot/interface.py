@@ -45,6 +45,9 @@ robot_start = "%s/go"%robot_dir
 robot_stop  = "%s/stop"%robot_dir
 
 
+# Determine whether we are using Python 3 (or else, assuming we are using Python 2)
+global PYTHON3
+PYTHON3 = (sys.version_info > (3, 0))
 
 
 # This is an object where we set various data for quick access.
@@ -364,19 +367,21 @@ def bias_force_transducers():
     This function asks the user not to hold the handle and then reads
     the force transducer output.
     """
+    global PYTHON3
     print("")
     print("*** biasing force transducers: please let go of the handle")
     print("*** and hit ENTER when ready to start zeroing procedure")
-    input()
+    if PYTHON3: input()
+    else: raw_input()
 
     zeroft()
    
     print(" ")
     print("*** zeroing the force transducers is done, please hold the handle now")
     print("*** and hit ENTER when ready to continue")
-    input()
+    if PYTHON3: input()
+    else: raw_input()
 
-    
 
 
 def bias_report():

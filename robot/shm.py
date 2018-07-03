@@ -104,7 +104,7 @@ def read_address_probe():
         elts = ln.strip().split(" ")
         if len(elts)==5:
             ob,tp,var,arrn,addr=elts
-            if var in fields:
+            if var in fields and var!="tag": # tag is allowed to co-occur
                 print("WARNING: %s already exist in object."%var)
             else:
                 if not addr.isdigit():

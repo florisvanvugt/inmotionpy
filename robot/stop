@@ -24,7 +24,7 @@ PATH=/usr/local/bin:/bin:/usr/bin:/usr/X11R6/bin:/sbin:/usr/sbin
 # TODO: what is correct substitution here? lsof  /dev/mbuff /dev/rtf*
 
 # kill the usual suspects if they're there.
-pkill -0 -x iofifo && pkill -x iofifo
+sudo pkill -0 -x iofifo && sudo pkill -x iofifo
 
 # TODO: delete pgrep -x robot && pkill -x robot
 
@@ -36,7 +36,7 @@ pkill -0 -x iofifo && pkill -x iofifo
 # wait for 2 seconds for control loop to clean up and exit
 
 I=0
-while pkill -0 -x robot; do
+while sudo pkill -0 -x robot; do
       sleep 0.1
       if [ $I -gt 20 ]; then
 	  break
@@ -47,7 +47,7 @@ done
 # if setting quit didn't work, try pkill.
 # pkill (with the default SIGTERM) should work as well as sending quit above.
 
-if pkill -0 -x robot; then
+if sudo pkill -0 -x robot; then
     sudo pkill -x robot
     echo "stop: sent pkill to robot process."
     sleep 2
@@ -55,13 +55,13 @@ fi
 
 # last resort, try SIGKILL.
 
-if pkill -0 -x robot; then
-      pkill -9 -x robot
+if sudo pkill -0 -x robot; then
+      sudo pkill -9 -x robot
       echo "stop: sent pkill 9 to robot process."
       sleep 2
 fi
 
-if pkill -0 -x robot; then
+if sudo pkill -0 -x robot; then
       echo "stop: could not kill robot process."
       exit 1
 fi
