@@ -120,6 +120,14 @@ get_info('plg_stiffness')
 
 
 
+## TODO
+
+- [ ] Clean up the code that kills the robot if it already exists during launch.
+
+
+
+
+
 
 
 ## InMotion2 programmer's notes
