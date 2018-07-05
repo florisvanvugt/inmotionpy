@@ -1,7 +1,7 @@
 default: rob
 
 kill: rob # Kill the robot, reasonably gently
-	python3 -c "import robot.interface as robot; robot.start_shm(); robot.unload();"
+	@if pgrep -x "robot" > /dev/null ; then eho "\n\n-- Killing with Python --\n\n" ;python3 -c "import robot.interface as robot; robot.start_shm(); robot.unload();" ; else echo "\n\n-- No robot process running --\n\n"; fi
 
 doc: readme.html robot.html shm.html
 	xdg-open readme.html

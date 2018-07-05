@@ -189,8 +189,8 @@ root.protocol("WM_DELETE_WINDOW", on_closing)
 
 e.focus_set()
 
-#robot.controller(0) # null field, no dyn comp
-robot.controller(1) # null field, with dyn comp
+robot.controller(0) # null field, no dyn comp
+#robot.controller(1) # null field, with dyn comp
 #robot.start_curl(-15) # curl field, with dyn comp
 
 
