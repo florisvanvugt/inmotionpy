@@ -50,6 +50,7 @@ def on_closing():
     timestamp = datetime.datetime.now().strftime("%Y%d%m_%Hh%Mm%S")
     json.dump({"time":time.time(),
                "timestamp":timestamp,
+               "shm_dump":robot.dump_shm(),
                "captured":captured},open("captured_%s.json"%timestamp,'w'))
     
 

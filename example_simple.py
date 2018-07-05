@@ -8,6 +8,9 @@ robot.load()
 
 print("Loaded")
 
+v = robot.dump_shm()
+print(v)
+
 print(robot.rshm('fvv_trial_phase'))
 
 print(robot.status())

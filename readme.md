@@ -255,3 +255,17 @@ For further information, see the html documentation at:
 ```
 /opt/imt/robot/crob/notes/index.html
 ```
+
+
+
+## Encoders offset
+There are two encoder offset values, `{shoulder,elbow}_offset` and these are set in `imt2.cal`. They are supposed to correspond to the 90 degree angles (3 o'clock for someone facing the robot) of the two arm segments. You have to take the robot arm apart slightly to be able to move the arm segments to these positions, and then capture the 
+
+`shoulder_angle_raw`
+`shoulder_angle_offset`
+
+And same for elbow.
+
+20180605 Resetting encoder values
+
+../simple.robot/captured_20180307_17h16m23.json

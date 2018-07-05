@@ -134,6 +134,10 @@ planar_check_safety_fn(void)
     planar_apply_safety_damping();
     ob->safety.was_planar_damping = 1;
     ob->safety.has_applied += 1;
+
+    // New: disable whatever controller is active -- because otherwise unexpected things may happen
+    //ob->copy_slot.fnid = 0; // should be null field
+    
   } else {
     
     if (ob->safety.was_planar_damping) {

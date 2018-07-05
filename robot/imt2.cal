@@ -150,8 +150,17 @@ s elbow_angle_xform   -.00009587379924285257
 # s elbow_angle_offset 1.480579
 
 # 20180415 re-calibration after banging into the wall
-s shoulder_angle_offset 0.7307735
-s elbow_angle_offset 1.5704523
+#s shoulder_angle_offset 0.7307735
+#s elbow_angle_offset 1.5704523
+
+# 20180705 re-calibration after apparent further slip
+s shoulder_angle_offset 0.711283
+s elbow_angle_offset 1.561588
+
+# Neeraj's weird settings
+#s shoulder_angle_offset 0.9
+#s elbow_angle_offset 1.9
+
 
 # new Copley servos
 # s shoulder_torque_xform 2.80

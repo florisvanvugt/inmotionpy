@@ -5,6 +5,8 @@ import random
 
 from tkinter.font import *
 
+import tkinter.simpledialog as tkSimpleDialog # python 3
+
 
 robot.load()
 
@@ -131,6 +133,25 @@ def toggle_capture():
 
 
 
+
+def set_var(e):
+    """ Attempt to set a variable (careful!) """
+    idx, = varbox.curselection()
+    varname = variables[ idx ]
+
+    ## Get info about this variable
+    varinfo = robot.get_info(varname)
+    
+    val = tkSimpleDialog.askstring("Set request", "Set %s to (CAREFUL!)"%varname)
+    if val:
+        print("Setting %s to %s"%(varname,val))
+        val = robot.tryenc(val) ## trying to set encoding to something logical
+        print("Converted to:")
+        print("---")
+        print(val)
+        print("---")
+        robot.wshm(varname,val)
+              
             
 
 def add(e): addvariable()
@@ -145,7 +166,7 @@ b.grid(row=0,column=1)
 b = Button(root, text="start/stop", command=toggle_capture)
 b.grid(row=1,column=1)
 
-
+varbox.bind('<Double-Button-1>', set_var)
 varbox.grid(row=2,column=0,sticky=N+E+S+W)
 valbox.grid(row=2,column=1,sticky=N+E+S+W)
 
@@ -171,6 +192,7 @@ e.focus_set()
 #robot.controller(0) # null field, no dyn comp
 robot.controller(1) # null field, with dyn comp
 #robot.start_curl(-15) # curl field, with dyn comp
+
 
 keep_going = True
 #robot.wshm('plg_moveto_done',1)

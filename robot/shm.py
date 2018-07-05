@@ -94,7 +94,7 @@ def read_address_probe():
     try:
         f = open('robot/field_addresses.txt','r')
     except:
-        print("Can't open robot/field_addresses.txt. This usually means you haven't run 'make robot'.")
+        print("Can't open robot/field_addresses.txt. This usually means you haven't run 'make robot' or 'make rob'.")
         sys.exit(-1)
     lns = f.readlines()
     f.close()
@@ -355,7 +355,28 @@ def shm_connected():
 
 
 
+def dump_shm():
+    """ This aims to read all variables from the shared memory,
+    as a kind of snapshot, and return them as a set of tuples. """
 
+    global locs
+    varnames = list(locs.keys())
+    
+    var_values = []
+    for c in varnames:
+        c = c.strip()
+        var = c.split(' ')[0].strip()
+
+        try:
+            res = rshm(var)
+            #print(var,str(res))
+            var_values.append((var,res)) #[var]=str(res)
+
+        except:
+            continue
+    
+    return dict(var_values)
+    
 
 
 
