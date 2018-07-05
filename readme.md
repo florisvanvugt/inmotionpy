@@ -52,6 +52,34 @@ Start writing a binary log to file using `robot.start_log('log.txt',n)` where `n
 
 
 
+
+
+## Safety box
+
+A safe region is defined in the workspace and when the robot leaves this safe zone, a viscous force field comes into effect that overrides any forces the controllers may try to produce. This is to avoid the robot handle banging into the wall or hurting the subject. This safety mode also comes into effect if the velocity exceeds a certain criterion.
+
+This is controlled through the following configuration parameters:
+```
+safety_minx
+safety_maxx
+safety_miny
+safety_maxy
+safety_vel
+```
+
+(All in `imt2.cal`). 
+You can disable this by setting `no_safety_check` to 1, in which case this safety boundary is no longer enforced.
+
+By default, the robot starts *without* the safety mode. This is because when you first start the robot the sensor values seem to fluctuate or have unrealistic values, which immediately starts the safety mode and causes a big jolt of forces to be applied. So instead we let the robot start gently and then we apply the safety mode (from the Python script).
+
+Your scripts should check whether the safety mode has become active, because this is a sign that the subject made a weird movement or let go of the handle. For every clock tick where the safety mode was applied, the variable `ob->safety.has_applied` is increased by one. So you can keep track of this variable and adjust your experiment flow accordingly. You can read it following the usual convention, i.e. through `robot.rshm('safety_has_applied')`.
+
+Note that there is also a setting `safety_vel`. Once the resultant velocity (vector defined by X and Y velocities) crosses this value, the safety feature is also activated, i.e. a viscous force field starts applying the brakes. Again, your script should test whether this has happened because you'll want to discard those trials. You can tell when it has occurred because `ob->safety.has_applied` is increased.
+
+**CAUTION** If the subject is in the safety zone, there will be no forces applied. Once you get out of the safety zone, the forces come into action again. So make sure that if the subject hits the safety zone, your code does not switch on a hold or move controller.
+
+
+
 ## Files
 
 I recommend keeping all the robot C and Python code in `robot/` and put experiment-specific stuff in the parent directory.
