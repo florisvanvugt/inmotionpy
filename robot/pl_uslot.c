@@ -56,6 +56,7 @@ void movetopt(u32);
 void static_ctl(u32);
 void static_ctl_fade(u32);
 void curl_ctl(u32);
+void viscous_force_field(u32);
 void force_channel(u32);
 
 void trajectory_capture(u32);
@@ -80,7 +81,7 @@ init_slot_fns(void)
   ob->slot_fns[10] = null_ctl;
   ob->slot_fns[11] = null_ctl;
   ob->slot_fns[12] = null_ctl;
-  ob->slot_fns[13] = null_ctl;
+  ob->slot_fns[13] = viscous_force_field;
   ob->slot_fns[14] = movetopt;
   ob->slot_fns[15] = force_channel;   // this is to handle force-channel function! [Ananda, 20sep]  
   ob->slot_fns[16] = static_ctl;   // stay at p1x p1y under active control
@@ -150,7 +151,6 @@ double max_vel_prop; // used to cache the calculation of vel_prop*fvv_max_vel
 void
 damp_ctl(u32 id)
 {
-  
   
   f64 damp;
   
@@ -511,6 +511,38 @@ curl_ctl(u32 id)
   ob->fvv_curl_force.y = ob->motor_force.y;
   
 }
+
+
+
+
+
+
+void
+viscous_force_field(u32 id)
+{
+
+  f64 viscosity = ob->damp;
+  
+  fX = -viscosity * vX;
+  fY = -viscosity * vY;
+
+#ifdef dyn_comp 
+  dynamics_compensation(fX,fY,3,1.0);
+# else
+  ob->motor_force.x = fX;
+  ob->motor_force.y = fY;
+#endif
+  
+  ob->fvv_curl_force.x = ob->motor_force.x;
+  ob->fvv_curl_force.y = ob->motor_force.y;
+  
+}
+
+
+
+
+
+
 
 
 

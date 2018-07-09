@@ -728,7 +728,7 @@ typedef struct ob_s {
   u32 fvv_workspace_enter;       // 0 when outside of workspace, 1 when entered the workspace
   xy fvv_curl_force;	// world forces sent from the curl field controller (for debug)
 
-
+  
   /* The variables below here are used for trajectory replaying */
   u32 traj_n_samps;            // how many samples the trajectory we have loaded contains
   u32 traj_count;               // how far we are currently in reproducing the trajectory

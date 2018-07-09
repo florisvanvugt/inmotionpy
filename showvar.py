@@ -1,9 +1,22 @@
-from tkinter import * # python3
+
+import sys
+
+PYTHON3 = (sys.version_info > (3, 0))
+if PYTHON3:
+    from tkinter import *
+    from tkinter import messagebox as tkMessageBox
+    from tkinter.font import *
+
+else: # python2
+    from Tkinter import * # use for python2
+    from Tkinter.font import *
+    import tkMessageBox
+
+
 import robot.interface as robot
 import time
 import random
 
-from tkinter.font import *
 
 import tkinter.simpledialog as tkSimpleDialog # python 3
 
@@ -189,9 +202,14 @@ root.protocol("WM_DELETE_WINDOW", on_closing)
 
 e.focus_set()
 
-robot.controller(0) # null field, no dyn comp
+#robot.controller(0) # null field, no dyn comp
 #robot.controller(1) # null field, with dyn comp
 #robot.start_curl(-15) # curl field, with dyn comp
+
+
+#time.sleep(1)
+robot.start_damp(15) # viscosity field
+
 
 
 keep_going = True

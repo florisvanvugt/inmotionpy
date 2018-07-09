@@ -11,6 +11,7 @@
 # - controller 6  : move phase controller (allow free movement until velocity falls below criterion)
 # - controller 8  : trajectory_capture (in null field)
 # - controller 9  : trajectory_reproduce (replay a trajectory loaded into memory)
+# - controller 13 : damping controller (viscous force field) with dynamics comp
 # - controller 15 : this handles force channel
 # - controller 16 : static_ctl (hold at specified location)
 # - controller 17 : curl field (according to old Tcl code)
@@ -372,14 +373,14 @@ def bias_force_transducers():
     print("")
     print("*** biasing force transducers: please let go of the handle")
     print("*** and hit ENTER when ready to start zeroing procedure")
-    wait_for_input()
+    wait_for_enter()
 
     zeroft()
    
     print(" ")
     print("*** zeroing the force transducers is done, please hold the handle now")
     print("*** and hit ENTER when ready to continue")
-    wait_for_input()
+    wait_for_enter()
 
     
 
@@ -413,7 +414,7 @@ def zeroft():
     controller(2)
 
     # run it for a little while
-    time.sleep(1.)
+    time.sleep(2.)
     
     # select the null field controller
     controller(0)
@@ -592,6 +593,23 @@ def start_curl(ffval):
     controller(17)
 
 
+
+
+def start_damp(damp):
+    """ 
+    Start a viscous force field with the given viscosity (damping)
+    coefficient.
+    """
+    if damp > 18: damp = 18 # don't over-do it...
+    print("Activating viscous field, damping=%.2f"%damp)
+    wshm("damp", damp)
+    # start the viscous controller
+    controller(13)
+
+
+
+
+    
                             
 #### PLG_CHANNEL  - initiate force channel controller towards a target coordinate (px, py)
 def plg_channel (px, py):
