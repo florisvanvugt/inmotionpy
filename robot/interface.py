@@ -309,7 +309,7 @@ def start_log(fname,n):
         print("Log already running! Not starting another log process.")
         return
         
-    savedatpid = subprocess.Popen(['cat','/proc/xenomai/registry/pipes/crob_out'],stdout=open(fname,'wb'))
+    savedatpid = subprocess.Popen(['cat','/proc/xenomai/registry/native/pipes/crob_out'],stdout=open(fname,'wb'))
 
     wshm('nlog',n) # starts the log writing
     
