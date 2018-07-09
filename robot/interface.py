@@ -45,9 +45,6 @@ robot_start = "%s/go"%robot_dir
 robot_stop  = "%s/stop"%robot_dir
 
 
-# Determine whether we are using Python 3 (or else, assuming we are using Python 2)
-global PYTHON3
-PYTHON3 = (sys.version_info > (3, 0))
 
 
 # This is an object where we set various data for quick access.
@@ -312,7 +309,7 @@ def start_log(fname,n):
         print("Log already running! Not starting another log process.")
         return
         
-    savedatpid = subprocess.Popen(['cat','/proc/xenomai/registry/native/pipes/crob_out'],stdout=open(fname,'wb'))
+    savedatpid = subprocess.Popen(['cat','/proc/xenomai/registry/pipes/crob_out'],stdout=open(fname,'wb'))
 
     wshm('nlog',n) # starts the log writing
     
@@ -367,21 +364,19 @@ def bias_force_transducers():
     This function asks the user not to hold the handle and then reads
     the force transducer output.
     """
-    global PYTHON3
     print("")
     print("*** biasing force transducers: please let go of the handle")
     print("*** and hit ENTER when ready to start zeroing procedure")
-    if PYTHON3: input()
-    else: raw_input()
+    input()
 
     zeroft()
    
     print(" ")
     print("*** zeroing the force transducers is done, please hold the handle now")
     print("*** and hit ENTER when ready to continue")
-    if PYTHON3: input()
-    else: raw_input()
+    input()
 
+    
 
 
 def bias_report():
@@ -439,11 +434,25 @@ def stay():
 
 
 
+def safety_active():
+    """ Tells us whether the safety mode is currently active
+    (i.e. if the subject is in the padding box around the edges
+    of the screen).
+    """
+    return rshm('safety_active')==1
+
+    
+
 def stay_at(x,y):
     """
     Fix the robot handle at location x,y.
     CAUTION: we should be at x,y already otherwise we will snap to it!
     """
+
+    if safety_active():
+        print("*** ERROR Refusing to stay because safety is active. ***")
+        return
+    
     wshm('plg_p1x',x)
     wshm('plg_p1y',y)
     wshm('plg_stiffness',stiffness)
@@ -458,6 +467,10 @@ def move_to(x,y,t):
     The function returns when the controller is started,
     and hence generally before the robot reaches the end location.
     """
+    if safety_active():
+        print("*** ERROR Refusing to move because safety is active. ***")
+        return
+    
     wshm('plg_movetime',0.0)
     wshm('plg_p2x',x)
     wshm('plg_p2y',y)
@@ -483,6 +496,10 @@ def move_stay(x,y,t):
     Moves the robot handle to location (x,y) in t seconds and then holds it there.
     This function returns when the robot handle reaches the target location.
     """
+    if safety_active():
+        print("*** ERROR Refusing to move because safety is active. ***")
+        return
+    
     move_to(x,y,t)
     while not move_is_done():
         pass
@@ -496,6 +513,10 @@ def stay_fade(x,y):
     gradually fades out the forces. This is supposed to not give subjects
     a sudden jolt when they gain back control of the robot.
     """
+    if safety_active():
+        print("*** ERROR Refusing to stay because safety is active. ***")
+        return
+    
     wshm("fvv_force_fade",1.0) # This starts at 1.0 but exponentially decays to infinitely small
     wshm("plg_p1x",x)
     wshm("plg_p1y",y)
@@ -554,12 +575,13 @@ def move_phase_and_capture():
     
 
 def start_curl(ffval):
-    """ Initiate either CCW or CW curl-field. CCW has a negative ffval,                                                           
+    """ 
+    Initiate either CCW or CW curl-field. CCW has a negative ffval,
     while CW has a positive ffval. Don't input ffval > 18!
-    [~ananda, May2017]                                                                                                 
+    [~ananda, May2017]
     """
     if ffval > 18: ffval = 18
-    print("Activating curl controller, curl=%.3f"%ffval)
+    print("Activating curl controller, curl=%d"%ffval)
     wshm("curl", ffval)
     # start curl field robot controller declared inside {pl_uslot.c}
     controller(17)
@@ -568,6 +590,10 @@ def start_curl(ffval):
                             
 #### PLG_CHANNEL  - initiate force channel controller towards a target coordinate (px, py)
 def plg_channel (px, py):
+    if safety_active():
+        print("*** ERROR Refusing to do channel because safety is active. ***")
+        return
+    
     print ("Executing plg_channel towards (%.3f,%.3f)"%(px,py))
     # force channel parameters
     wshm("plg_channel_width", 0.0)
@@ -704,6 +730,10 @@ def start_replay():
     CAUTION: we really need the robot handle to already be at the starting point of the
     trajectory, otherwise you get a big jerking movement.
     """
+    
+    if safety_active():
+        print("*** ERROR Refusing to do channel because safety is active. ***")
+        return
 
     # Probably I should check using rshm('x') that we are
     # actually close enough to the starting position before I
@@ -720,6 +750,9 @@ def start_replay():
     if sqdist> REPLAY_START_SAFETY_PROXIMITY:
         print ("Refusing to replay trajectory because current starting position (%f,%f) is too far away from trajectory starting position (%f,%f) (distance^2=%f)"%(x,y,firstx,firsty,sqdist))
         return
+
+
+    
 
     wshm('replay_done',0)
     wshm('traj_count',0) # define that we are starting from the starting point
