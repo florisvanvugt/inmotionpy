@@ -46,6 +46,11 @@ robot_stop  = "%s/stop"%robot_dir
 
 
 
+# Determine whether we are using Python 3 (or else, assuming we are using Python 2)
+global PYTHON3
+PYTHON3 = (sys.version_info > (3, 0))
+wait_for_enter = input if PYTHON3 else raw_input
+
 
 # This is an object where we set various data for quick access.
 ob = {}
@@ -367,14 +372,14 @@ def bias_force_transducers():
     print("")
     print("*** biasing force transducers: please let go of the handle")
     print("*** and hit ENTER when ready to start zeroing procedure")
-    input()
+    wait_for_input()
 
     zeroft()
    
     print(" ")
     print("*** zeroing the force transducers is done, please hold the handle now")
     print("*** and hit ENTER when ready to continue")
-    input()
+    wait_for_input()
 
     
 
@@ -581,7 +586,7 @@ def start_curl(ffval):
     [~ananda, May2017]
     """
     if ffval > 18: ffval = 18
-    print("Activating curl controller, curl=%d"%ffval)
+    print("Activating curl controller, curl=%.2f"%ffval)
     wshm("curl", ffval)
     # start curl field robot controller declared inside {pl_uslot.c}
     controller(17)
