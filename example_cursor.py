@@ -12,7 +12,8 @@ import random
 import datetime
 
 import robot.interface as robot
-import pickle
+
+import json
 
 
 
@@ -34,16 +35,16 @@ VERTIC_PAD = 300
 
 
 # The target circle radius
-TARGET_RADIUS = 20
+TARGET_RADIUS = 5
 
 # When we draw a cursor following the robot handle position, this controls its radius
-CURSOR_RADIUS = 10
+CURSOR_RADIUS = 5
 
 
 
 
 # The little control window
-CONTROL_WIDTH,CONTROL_HEIGHT= 650,600 # control window dimensions
+CONTROL_WIDTH,CONTROL_HEIGHT= 750,700 # control window dimensions
 CONTROL_X,CONTROL_Y = 800,400 # controls where on the screen the control window appears
 
 
@@ -190,8 +191,8 @@ def wrap_calibration():
 
     timestamp = datetime.datetime.now().strftime("%Y%d%m_%Hh%Mm%S")
     
-    fname = "calib_%s_%s.pickle27"%(subjid,timestamp)
-    pickle.dump((captured,regrs),open(fname,'wb'))
+    fname = "calib_%s_%s.json"%(subjid,timestamp)
+    json.dump((captured,regrs),open(fname,'w'))
 
     print("Robot -> Screen regression: ",regrs)
     
@@ -275,11 +276,11 @@ def capture(e):
 
 def load_calib(e):
 
-    fname = tkFileDialog.askopenfilename(filetypes=[('pickles','.pickle27')])
+    fname = tkFileDialog.askopenfilename(filetypes=[('JSON files','.json')])
     if fname!=None:
         print("Opening",fname)
 
-        (captured,regrs) = pickle.load(open(fname,'rb'))
+        (captured,regrs) = json.load(open(fname,'r'))
         global calib
         calib = regrs
         follow_robot()
@@ -365,7 +366,7 @@ def init_tk():
     gui["subject.id"] = StringVar()
     posl   = Label(f, textvariable=gui["position"],  fg="white", bg="black")
     l      = Label(f, text="subject ID",             fg="white", bg="black")
-    subjid = Entry(f, textvariable=gui["subject.id"],fg="white", bg="black")
+    subjid = Entry(f, textvariable=gui["subject.id"],fg="white", bg="black",insertbackground='yellow')
     targl  = Label(f, textvariable=gui["target"],    fg="white", bg="black")
 
     sb = Scrollbar(f)
