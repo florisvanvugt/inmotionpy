@@ -153,6 +153,12 @@ def unload():
     controller(0)
     print("Unloading robot...")
 
+    # Okay, potentially we have a log still running.
+    # If we leave it open, that can cause issues later when
+    # re-launching the robot.
+    if logging():
+        stop_log()
+    
     # b_pause_proc $w
     # pause pauses actuator output, stop stops all main loop i/o.
     stop_loop()
@@ -322,10 +328,17 @@ def start_log(fname,n):
     # Original: [exec cat < /proc/xenomai/registry/pipes/crob_out >> $logfile &]
 
 
+
+
+def logging():
+    """ Tell us whether we are currently writing to a binary log."""
+    global savedatpid
+    return savedatpid!=None
+    
+    
 def stop_log():
     """ Stops the log. """
-    global savedatpid
-    if savedatpid!=None:
+    if logging():
         wshm('nlog',0)
         savedatpid.kill()
         savedatpid=None
