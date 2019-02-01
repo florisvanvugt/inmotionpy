@@ -11,7 +11,18 @@ import sys
 import time
 
 
+from threading import Thread
+
+def loop():
+    while rshm('quit')!=1:
+        time.sleep(.001)
+        update_prediction()
+
+
 info = {'x':0.0,'y':0.0}
+
+stiffness = 0
+damping = 0
 
 
 def status():
@@ -20,6 +31,7 @@ def status():
 
 def load():
     print("Loading robot...")
+    Thread(target=loop).start()
 
 
 def unload():
@@ -28,6 +40,7 @@ def unload():
 
 def launch():
     print("Launching robot...")
+    load()
     
 
 def controller(n):
@@ -90,14 +103,16 @@ def update_prediction():
     if 'moving' in info and not move_is_done():
         # Currently moving! Let's predict our position
 
+        t = time.time()
         for dm in ['x','y']:
                 
-            # Proportion of move completed
-            prop = (time.time()-info['movestart'])/info['movedur']
+            # Proportion of move completed (between 0 and 1)
+            tau = float(t-info['movestart'])/info['movedur']
 
-            # Don't bother with minjerk trajectory, just linear!
+            # Minimum jerk trajectory
+            posprop = -( 15*pow(tau,4)-6*pow(tau,5) -10*pow(tau,3))
             p1,p2 = rshm('plg_p1%s'%dm),rshm('plg_p2%s'%dm)
-            info[dm]= p1+ (p2-p1)*prop
+            info[dm]= p1+(p2-p1)*posprop
             
     
 
@@ -108,11 +123,5 @@ def rshm(v):
 
 
 
-from threading import Thread
 
-def loop():
-    while rshm('quit')!=1:
-        time.sleep(.001)
-        update_prediction()
-
-Thread(target=loop).start()
+print("#\n#\n#\n#\n#\n# YOU ARE USING THE DUMMY ROBOT. THIS WON'T DO ANY ACTUAL MOVEMENT.\n#\n#\n#\n#\n#\n\n\n")
