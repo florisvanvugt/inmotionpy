@@ -51,6 +51,15 @@ def bias_report():
 
 
 
+def stay():
+    return
+
+def stay_at(x,y):
+    wshm('x',x)
+    wshm('y',y)
+    return
+
+
 def wshm(var,v):
     # Write a value to the shared memory
     info[var]=v
@@ -91,7 +100,6 @@ def update_prediction():
             info[dm]= p1+ (p2-p1)*prop
             
     
-
 
 def rshm(v):
     # Read shared memory (pretend to...)
