@@ -705,6 +705,7 @@ typedef struct ob_s {
 
   u32 fvv_trial_phase;           // the current phase in the trial
   u32 fvv_trial_no;              // the current trial number
+  u32 fvv_move_done;             // whether the subject has completed their movement
 
   f64 fvv_robot_center_x;        // the robot center (x coordinate)
   f64 fvv_robot_center_y;        // the robot center (y coordinate)

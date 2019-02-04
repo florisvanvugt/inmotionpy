@@ -266,7 +266,8 @@ move_phase_ctl(u32 id)
   */
 
 
-  if (fvv_trial_phase==5) {
+  if (! (ob->fvv_move_done)) {
+    //if (fvv_trial_phase==5) {
     // PHASE = moving
 
     fvv_vel = sqrt(pow(vX,2)+pow(vY,2));
@@ -293,7 +294,9 @@ move_phase_ctl(u32 id)
     if (fvv_vel_low_timer>vel_low_duration) {
       // If we have been below the threshold-low speed long enough,
       // declare it the end of the trial.
-      fvv_trial_phase = 6; // this marks that the trial has come to an end!
+      //fvv_trial_phase = 6; // DEPRECATED this marks that the trial has come to an end!
+      ob->fvv_move_done = 1;  // a better way to mark that the movement is completed
+      //plg_move_done = 1;
       fvv_final_x = X;
       fvv_final_y = Y;
     }
