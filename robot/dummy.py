@@ -34,14 +34,21 @@ future = []
 from threading import Thread
 
 def loop():
+    global future
     while rshm('quit')!=1:
-        time.sleep(PERIOD) # wait a little
-        
+        #time.sleep(PERIOD) # wait a little
+        if time.time()<info.get('next.tick.t',0):
+            continue
+
+        info['next.tick.t']=time.time()+PERIOD
+
         if len(future)>0:
             changes = future.pop(0)
             for k in changes: # Make the corresponding changes
                 wshm(k,changes[k])
                 #print(k,changes[k])
+            if len(future)==0:
+                print("Exhausted future program.")
 
         # If we are supposed to be capturing, capture!
         if rshm('fvv_capture'):
@@ -122,6 +129,7 @@ def move_to(x,y,t):
     info['movestart'] = time.time()
     info["movedur"]   = t
 
+    print("Moving to %f,%f"%(x,y))
     future = preprogram_move_to(x,y,t)
     
 
@@ -155,8 +163,10 @@ def preprogram_move_to(x,y,t):
     
     
 def move_is_done():
-    movedone = info['movestart']+info['movedur']
-    return time.time()>movedone
+    return rshm('plg_moveto_done')==1
+
+# movedone = info['movestart']+info['movedur']
+#return time.time()>movedone
 
 
 
