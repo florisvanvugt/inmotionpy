@@ -126,6 +126,11 @@ init_slot_fns(void)
 #define traj_final_y       ob->traj_final_y
 #define trajx              ob->trajx
 #define trajy              ob->trajy
+
+#define recordfx              ob->recordfx
+#define recordfy              ob->recordfy
+#define recordfz              ob->recordfz
+
 #define replay_damping     ob->replay_damping
 #define replay_stiffness   ob->replay_stiffness
 
@@ -252,6 +257,27 @@ null_ctl_dyncomp(u32 id)
 }
 
 
+void
+do_capture()
+/* Capture the current position and add it to the capture array. */
+{
+  if (ob->fvv_capture) {
+    int traj_cnt = traj_count;// cast to unsigned just to be sure
+    if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
+      
+      // Capture the current position
+      trajx[traj_cnt] = X;
+      trajy[traj_cnt] = Y;
+
+      recordfx[traj_cnt]=sX;
+      recordfy[traj_cnt]=sY;
+      recordfz[traj_cnt]=sZ;
+      
+      ++traj_count;
+    }
+  }
+}
+
 
 
 
@@ -286,9 +312,9 @@ move_phase_ctl(u32 id)
 
     /* Now, if we have traveled enough distance, then we can
        start checking whether the subject has traveled enough distance.*/
-    float dist = sqrt(pow(x-fvv_robot_center_x,2)+
-		      pow(y-fvv_robot_center_y,2));
-    if (dist>fvv_min_dist) {
+    float dist = sqrt(pow(X-fvv_robot_center_x,2)+
+		      pow(Y-fvv_robot_center_y,2));
+    if (dist>(ob->fvv_min_dist)) {
     
       // Furthermore, if we are below a particular percentage of the maximum velocity, count time
       if (fvv_vel<max_vel_prop) {
@@ -333,27 +359,6 @@ move_phase_ctl(u32 id)
 
 
 
-
-void
-do_capture()
-/* Capture the current position and add it to the capture array. */
-{
-  if (ob->fvv_capture) {
-    int traj_cnt = traj_count;// cast to unsigned just to be sure
-    if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
-      
-      // Capture the current position
-      trajx[traj_cnt] = X;
-      trajy[traj_cnt] = Y;
-
-      recordfx[traj_cnt]=ob->ft.world.x;
-      recordfy[traj_cnt]=ob->ft.world.y;
-      recordfz[traj_cnt]=ob->ft.world.z;
-      
-      ++traj_count;
-    }
-  }
-}
 
 
 
