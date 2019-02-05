@@ -338,6 +338,7 @@ def logging():
     
 def stop_log():
     """ Stops the log. """
+    global savedatpid
     if logging():
         wshm('nlog',0)
         savedatpid.kill()
