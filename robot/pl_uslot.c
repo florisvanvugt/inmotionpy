@@ -311,9 +311,7 @@ move_phase_ctl(u32 id)
 
   
   // Infrastructure for capturing (if we are doing that -- but why not?)
-  if (fvv_capture) {
-    do_capture()
-  }
+  do_capture();
   
   // And dynamics compensation please
 #ifdef dyn_comp 
@@ -332,14 +330,16 @@ void
 do_capture()
 /* Capture the current position and add it to the capture array. */
 {
-  int traj_cnt = traj_count;// cast to unsigned just to be sure
-  if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
-    
-    // Capture the current position
-    trajx[traj_cnt] = X;
-    trajy[traj_cnt] = Y;
-    
-    ++traj_count;
+  if (ob->fvv_capture) {
+    int traj_cnt = traj_count;// cast to unsigned just to be sure
+    if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
+      
+      // Capture the current position
+      trajx[traj_cnt] = X;
+      trajy[traj_cnt] = Y;
+      
+      ++traj_count;
+    }
   }
 }
 
@@ -468,10 +468,6 @@ static_ctl_fade(u32 id)
      except that this fades the force gently,
      using the multiplier fvv_force_fade that goes to
      zero. */
-
-  if (fvv_capture) {
-    do_capture()
-  }
   
   ob->fvv_force_fade *= 0.99; 
   f64 fade  = ob->fvv_force_fade; // between 1 (full force) and 0 (no force)
@@ -489,6 +485,9 @@ static_ctl_fade(u32 id)
 
   fX= fade* ((-stiff*(X-pcurx) - damp*(vX)));
   fY= fade* ((-stiff*(Y-pcury) - damp*(vY)));
+
+  do_capture();
+  
 #ifdef dyn_comp 
   dynamics_compensation(fX,fY,3,1.0);
 # else
@@ -633,9 +632,7 @@ trajectory_capture(u32 id)
     This controller captures the positions of the robot while
     letting the subject move freely.
   */
-  if (fvv_capture) {
-    do_capture()
-  }
+  do_capture();
 
   fX = 0.0;
   fY = 0.0;
