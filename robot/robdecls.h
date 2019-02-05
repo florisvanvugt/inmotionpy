@@ -713,6 +713,7 @@ typedef struct ob_s {
   f64 fvv_force_fade;            // a multiplier for the force, used to fade the force
 
   f64 fvv_robot_min_y;           // the lower Y edge of the workspace
+  f64 fvv_min_dist;              // the minimum distance that a subject must travel before we start determining the movement end based on the peak velocity
   f64 fvv_vel;                   // the maximum Y speed recorded so far
   f64 fvv_max_vel;               // the maximum Y speed recorded so far
 
@@ -737,6 +738,9 @@ typedef struct ob_s {
   u32 traj_count;               // how far we are currently in reproducing the trajectory
   f64 trajx[3000]; // used to store trajectories (x position values)
   f64 trajy[3000]; // used to store trajectories (y position values)
+  f64 recordfx[3000];           // used to store force traces (x values)
+  f64 recordfy[3000];           // used to store force traces (y values)
+  f64 recordfz[3000];           // used to store force traces (z values)
   f64 traj_final_x;             // the final position of the replay, x
   f64 traj_final_y;             // idem, y
   u32 replay_done;              // whether replaying is done

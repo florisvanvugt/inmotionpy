@@ -283,24 +283,32 @@ move_phase_ctl(u32 id)
       
     }
 
-    // Furthermore, if we are below a particular percentage of the maximum velocity, count time
-    if (fvv_vel<max_vel_prop) {
-      fvv_vel_low_timer++; // tick
-    } else {
-      // If we're not below the threshold, reset the counter.
-      fvv_vel_low_timer = 0; // reset
+
+    /* Now, if we have traveled enough distance, then we can
+       start checking whether the subject has traveled enough distance.*/
+    float dist = sqrt(pow(x-fvv_robot_center_x,2)+
+		      pow(y-fvv_robot_center_y,2));
+    if (dist>fvv_min_dist) {
+    
+      // Furthermore, if we are below a particular percentage of the maximum velocity, count time
+      if (fvv_vel<max_vel_prop) {
+	fvv_vel_low_timer++; // tick
+      } else {
+	// If we're not below the threshold, reset the counter.
+	fvv_vel_low_timer = 0; // reset
+      }
+      
+      if (fvv_vel_low_timer>vel_low_duration) {
+	// If we have been below the threshold-low speed long enough,
+	// declare it the end of the trial.
+	//fvv_trial_phase = 6; // DEPRECATED this marks that the trial has come to an end!
+	ob->fvv_move_done = 1;  // a better way to mark that the movement is completed
+	//plg_move_done = 1;
+	fvv_final_x = X;
+	fvv_final_y = Y;
+      }
     }
     
-    if (fvv_vel_low_timer>vel_low_duration) {
-      // If we have been below the threshold-low speed long enough,
-      // declare it the end of the trial.
-      //fvv_trial_phase = 6; // DEPRECATED this marks that the trial has come to an end!
-      ob->fvv_move_done = 1;  // a better way to mark that the movement is completed
-      //plg_move_done = 1;
-      fvv_final_x = X;
-      fvv_final_y = Y;
-    }
-
     fvv_trial_timer++;
 
   }
@@ -337,6 +345,10 @@ do_capture()
       // Capture the current position
       trajx[traj_cnt] = X;
       trajy[traj_cnt] = Y;
+
+      recordfx[traj_cnt]=ob->ft.world.x;
+      recordfy[traj_cnt]=ob->ft.world.y;
+      recordfz[traj_cnt]=ob->ft.world.z;
       
       ++traj_count;
     }

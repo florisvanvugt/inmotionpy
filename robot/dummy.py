@@ -36,7 +36,7 @@ from threading import Thread
 def loop():
     global future
     while rshm('quit')!=1:
-        #time.sleep(PERIOD) # wait a little
+        time.sleep(.1*PERIOD)# wait a little
         if time.time()<info.get('next.tick.t',0):
             continue
 
