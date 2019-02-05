@@ -463,8 +463,8 @@ static_ctl_fade(u32 id)
   f64 fade  = ob->fvv_force_fade; // between 1 (full force) and 0 (no force)
   //fade = fade*0.9;                // Exponentially decay force
 
-  f64 pcurx = ob->plg_p1x;
-  f64 pcury = ob->plg_p1y;
+  f64 pcurx = fvv_robot_center_x;
+  f64 pcury = fvv_robot_center_y;
   f64 stiff = ob->plg_stiffness;
   f64 damp  = ob->plg_damping;
 
