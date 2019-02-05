@@ -9,6 +9,7 @@ import time
 import sys
 
 import time
+import numpy as np
 
 
 from threading import Thread
@@ -118,8 +119,10 @@ def update_prediction():
 
 def rshm(v):
     # Read shared memory (pretend to...)
-    return info.get(v,None)
-
+    res = info.get(v,None)
+    if v in ['x','y']:
+        res+=np.random.normal(0,.0002) # add a little noise to make it look even more realistic
+    return res
 
 
 

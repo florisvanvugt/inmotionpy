@@ -308,16 +308,8 @@ move_phase_ctl(u32 id)
 
   
   // Infrastructure for capturing (if we are doing that -- but why not?)
-  if (fvv_trial_phase>4) {
-    int traj_cnt = traj_count;// cast to unsigned just to be sure
-    if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
-      
-      // Capture the current position
-      trajx[traj_cnt] = X;
-      trajy[traj_cnt] = Y;
-      
-      ++traj_count;
-    }
+  if (fvv_capture) {
+    do_capture()
   }
   
   // And dynamics compensation please
@@ -329,6 +321,24 @@ move_phase_ctl(u32 id)
 #endif
 }
 
+
+
+
+
+void
+do_capture()
+/* Capture the current position and add it to the capture array. */
+{
+  int traj_cnt = traj_count;// cast to unsigned just to be sure
+  if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
+    
+    // Capture the current position
+    trajx[traj_cnt] = X;
+    trajy[traj_cnt] = Y;
+    
+    ++traj_count;
+  }
+}
 
 
 
