@@ -31,7 +31,6 @@ future = []
 
 
 
-
 from threading import Thread
 
 def loop():
@@ -50,8 +49,10 @@ def loop():
             xs,ys=info.get('trajx',[]),info.get('trajy',[])
             xs.append(x)
             ys.append(y)
-            wshm('trajx',xs)
-            wshm('trajy',ys)
+            assert len(xs)==len(ys)
+            info['trajx']=xs
+            info['trajy']=ys
+            info['traj_count']=len(xs)
                       
 
 
@@ -188,7 +189,10 @@ def retrieve_trajectory():
     this retrieves the trajectory that was captured.
     """
     xs,ys=rshm('trajx'),rshm('trajy')
+    #print(xs)
+    #print(ys)
     n = rshm('traj_count')
+    #print(n)
     return zip(xs[:n],ys[:n])
     
 
