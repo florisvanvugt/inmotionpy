@@ -547,6 +547,26 @@ def stay_fade(x,y):
     
 
 
+def background_capture():
+    """
+    Initialise capturing but without setting the dedicated controller.
+    This is for use with controllers in pl_uslot.c that internally call do_capture()
+    """
+    wshm('traj_count',0) # define that we are starting capturing from the beginning of the buffer
+    wshm('fvv_capture',1)
+
+
+def stop_background_capture():
+    """
+    Initialise capturing but without setting the dedicated controller.
+    This is for use with controllers in pl_uslot.c that internally call do_capture()
+    """
+    wshm('fvv_capture',0) # signals to stop background capturing
+    return retrieve_trajectory()
+
+    
+
+    
 
 def move_phase():
     """

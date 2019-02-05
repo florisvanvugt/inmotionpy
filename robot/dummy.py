@@ -12,18 +12,47 @@ import time
 import numpy as np
 
 
-from threading import Thread
+PERIOD = .0025 # the period of the main loop (in sec)
 
-def loop():
-    while rshm('quit')!=1:
-        time.sleep(.001)
-        update_prediction()
+
 
 
 info = {'x':0.0,'y':0.0}
 
 stiffness = 0
 damping = 0
+
+
+# This allows us to pre-program some future states for the robot
+# On each pass of the loop, we will take one element of this list,
+# which should be a dict that tells us the desired future state
+# of particular variables.
+future = []
+
+
+
+
+from threading import Thread
+
+def loop():
+    while rshm('quit')!=1:
+        time.sleep(PERIOD) # wait a little
+        
+        if len(future)>0:
+            changes = future.pop(0)
+            for k in changes: # Make the corresponding changes
+                wshm(k,changes[k])
+                #print(k,changes[k])
+
+        # If we are supposed to be capturing, capture!
+        if rshm('fvv_capture'):
+            x,y=rshm('x'),rshm('y')
+            xs,ys=info.get('trajx',[]),info.get('trajy',[])
+            xs.append(x)
+            ys.append(y)
+            wshm('trajx',xs)
+            wshm('trajy',ys)
+                      
 
 
 def status():
@@ -92,6 +121,37 @@ def move_to(x,y,t):
     info['movestart'] = time.time()
     info["movedur"]   = t
 
+    future = preprogram_move_to(x,y,t)
+    
+
+
+def preprogram_move_to(x,y,t):
+    # Now we create some future states that will determine where we predict the robot will go
+    fut = []
+    nsamp = int(t/PERIOD) # how many "periods" there are
+    curpos  = {"x":rshm('x'),"y":rshm('y')} # current position
+    targpos = {"x":x,"y":y} # target position
+    
+    for i in range(nsamp):
+        f = {}
+        # Proportion of move completed (between 0 and 1)
+        tau = i/float(nsamp)
+        #tau = float(t-info['movestart'])/info['movedur']
+
+        # Minimum jerk trajectory
+        posprop = -( 15*pow(tau,4)-6*pow(tau,5) -10*pow(tau,3))
+    
+        for dm in ['x','y']:
+            p1,p2 = curpos[dm],targpos[dm]
+            f[dm]=p1+(p2-p1)*posprop
+        fut.append(f)
+
+    fut.append({"plg_moveto_done":1}) # signal that the move is completed
+    global future
+    future = fut # "launch" this future, which will make it start "playing"
+    #print(future)
+    
+    
     
 def move_is_done():
     movedone = info['movestart']+info['movedur']
@@ -99,22 +159,6 @@ def move_is_done():
 
 
 
-def update_prediction():
-    # Here we shamelessly predict where we will currently be
-    if 'moving' in info and not move_is_done():
-        # Currently moving! Let's predict our position
-
-        t = time.time()
-        for dm in ['x','y']:
-                
-            # Proportion of move completed (between 0 and 1)
-            tau = float(t-info['movestart'])/info['movedur']
-
-            # Minimum jerk trajectory
-            posprop = -( 15*pow(tau,4)-6*pow(tau,5) -10*pow(tau,3))
-            p1,p2 = rshm('plg_p1%s'%dm),rshm('plg_p2%s'%dm)
-            info[dm]= p1+(p2-p1)*posprop
-            
     
 
 def rshm(v):
@@ -125,6 +169,28 @@ def rshm(v):
     return res
 
 
+
+
+
+def background_capture():
+    wshm('traj_count',0)
+    wshm('fvv_capture',1)
+
+
+def stop_background_capture():
+    wshm('fvv_capture',0)
+    return retrieve_trajectory()
+
+
+def retrieve_trajectory():
+    """
+    If you have called start_capture(),
+    this retrieves the trajectory that was captured.
+    """
+    xs,ys=rshm('trajx'),rshm('trajy')
+    n = rshm('traj_count')
+    return zip(xs[:n],ys[:n])
+    
 
 
 print("#\n#\n#\n#\n#\n# YOU ARE USING THE DUMMY ROBOT. THIS WON'T DO ANY ACTUAL MOVEMENT.\n#\n#\n#\n#\n#\n\n\n")

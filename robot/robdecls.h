@@ -726,6 +726,8 @@ typedef struct ob_s {
 
   u32 fvv_vel_low_timer;         // times how long we are on low Y-velocity (below some percentage of the maximum velocity
 
+  u32 fvv_capture;               // whether we should capture or not
+  
   u32 fvv_workspace_enter;       // 0 when outside of workspace, 1 when entered the workspace
   xy fvv_curl_force;	// world forces sent from the curl field controller (for debug)
 
