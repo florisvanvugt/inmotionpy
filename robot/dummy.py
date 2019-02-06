@@ -200,6 +200,8 @@ def rshm(v):
 def background_capture():
     wshm('traj_count',0)
     wshm('fvv_capture',1)
+    for v in ['trajx','trajy','recordfx','recordfy','recordfz']:
+        info[v]=[]
 
 
 def stop_background_capture():
