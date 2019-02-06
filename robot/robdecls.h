@@ -726,6 +726,7 @@ typedef struct ob_s {
   u32 fvv_trial_timer;           // a timer for the move phase (so we can cut off the trial when it takes too long)
 
   u32 fvv_vel_low_timer;         // times how long we are on low Y-velocity (below some percentage of the maximum velocity
+  u32 fvv_subject_move_phase;    // a flag to indicate that this is the subject's active move phase
 
   u32 fvv_capture;               // whether we should capture or not
   

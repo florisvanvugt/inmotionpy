@@ -283,6 +283,67 @@ do_capture()
 
 
 void
+subject_move_phase()
+{
+  /* 
+     This piece of code is for when the subject is actively moving.
+     We keep track of the maximum velocity, as well as the distance
+     traveled, and we may set the ob->fvv_move_done flag when
+     the subject has been below some proportion of peak velocity
+     for a sufficient amount of time.
+  */
+  if (ob->fvv_subject_move_phase) {
+    if (! (ob->fvv_move_done)) {
+      // PHASE = moving
+      fvv_vel = sqrt(pow(vX,2)+pow(vY,2));
+      
+      // If we're in the free moving phase, keep track
+      // of the maximum speed. If we're currently faster than
+      // the maximum speed, update it.
+      if (fvv_vel>fvv_max_vel) {
+	fvv_max_vel = fvv_vel;
+	max_vel_prop = vel_prop*fvv_max_vel; // calculate the proportion of the velocity below which we'll stop the trial
+	fvv_vmax_x      = X; 
+	fvv_vmax_y      = Y;
+      }
+
+
+      /* Now, if we have traveled enough distance, then we can
+	 start checking whether the subject has traveled enough distance.*/
+      float dist = sqrt(pow(X-fvv_robot_center_x,2)+
+			pow(Y-fvv_robot_center_y,2));
+      if (dist>(ob->fvv_min_dist)) {
+	
+	// Furthermore, if we are below a particular percentage of the maximum velocity, count time
+	if (fvv_vel<max_vel_prop) {
+	  fvv_vel_low_timer++; // tick
+	} else {
+	  // If we're not below the threshold, reset the counter.
+	  fvv_vel_low_timer = 0; // reset
+	}
+	
+	if (fvv_vel_low_timer>vel_low_duration) {
+	  // If we have been below the threshold-low speed long enough,
+	  // declare it the end of the trial.
+	  ob->fvv_move_done = 1;  // a better way to mark that the movement is completed
+	  ob->fvv_subject_move_phase = 0;
+	  //plg_move_done = 1;
+	  fvv_final_x = X;
+	  fvv_final_y = Y;
+	}
+      }
+      
+      fvv_trial_timer++;
+      
+    }
+  }
+  
+}
+
+
+
+
+void
 move_phase_ctl(u32 id)
 {
   /* 
@@ -291,53 +352,7 @@ move_phase_ctl(u32 id)
      amount and then it sets fvv_trial_phase to 6.
   */
 
-
-  if (! (ob->fvv_move_done)) {
-    //if (fvv_trial_phase==5) {
-    // PHASE = moving
-
-    fvv_vel = sqrt(pow(vX,2)+pow(vY,2));
-
-    // If we're in the free moving phase, keep track
-    // of the maximum speed. If we're currently faster than
-    // the maximum speed, update it.
-    if (fvv_vel>fvv_max_vel) {
-      fvv_max_vel = fvv_vel;
-      max_vel_prop = vel_prop*fvv_max_vel; // calculate the proportion of the velocity below which we'll stop the trial
-      fvv_vmax_x      = X; 
-      fvv_vmax_y      = Y;
-      
-    }
-
-
-    /* Now, if we have traveled enough distance, then we can
-       start checking whether the subject has traveled enough distance.*/
-    float dist = sqrt(pow(X-fvv_robot_center_x,2)+
-		      pow(Y-fvv_robot_center_y,2));
-    if (dist>(ob->fvv_min_dist)) {
-    
-      // Furthermore, if we are below a particular percentage of the maximum velocity, count time
-      if (fvv_vel<max_vel_prop) {
-	fvv_vel_low_timer++; // tick
-      } else {
-	// If we're not below the threshold, reset the counter.
-	fvv_vel_low_timer = 0; // reset
-      }
-      
-      if (fvv_vel_low_timer>vel_low_duration) {
-	// If we have been below the threshold-low speed long enough,
-	// declare it the end of the trial.
-	//fvv_trial_phase = 6; // DEPRECATED this marks that the trial has come to an end!
-	ob->fvv_move_done = 1;  // a better way to mark that the movement is completed
-	//plg_move_done = 1;
-	fvv_final_x = X;
-	fvv_final_y = Y;
-      }
-    }
-    
-    fvv_trial_timer++;
-
-  }
+  subject_move_phase();
 
   // No forces; just free movement
   fX = 0.0;
@@ -378,13 +393,13 @@ zero_ft_nodyncomp(u32 id)
   //#ifdef dyn_comp 
   //dynamics_compensation(fX,fY,3,1.0);
   //# else
-    ob->motor_force.x = fX;
-    ob->motor_force.y = fY;
+  ob->motor_force.x  = fX;
+  ob->motor_force.y  = fY;
   ob->motor_torque.s = 0.0;
   ob->motor_torque.e = 0.0;
-  ob->motor_volts.s = 0.0;
-  ob->motor_volts.e = 0.0;
-    //#endif
+  ob->motor_volts.s  = 0.0;
+  ob->motor_volts.e  = 0.0;
+  //#endif
   
 }
 
@@ -524,6 +539,8 @@ void
 curl_ctl(u32 id)
 {
 
+  subject_move_phase();
+  
   f64 curl;
   f64 damp;
   
@@ -533,13 +550,15 @@ curl_ctl(u32 id)
   fX =  ( curl * (vY) );
   fY = -( curl * (vX) );
 
+  do_capture();
+  
   #ifdef dyn_comp 
   dynamics_compensation(fX,fY,3,1.0);
 # else
   ob->motor_force.x = fX;
   ob->motor_force.y = fY;
 #endif
-
+  
   ob->fvv_curl_force.x = ob->motor_force.x;
   ob->fvv_curl_force.y = ob->motor_force.y;
   
@@ -580,10 +599,12 @@ viscous_force_field(u32 id)
 
 
 
-// Adding force channel; added by Ananda (Sept 20) following old Gribble's utils.tcl
+// Adding force channel; added by Ananda (Sept 20) following Gribble's utils.tcl
 
 void force_channel(u32 id)
 {
+  subject_move_phase();
+  
   f64 x1 = ob->plg_p1x;
   f64 y1 = ob->plg_p1y;
   f64 x2 = ob->plg_p2x;
@@ -625,6 +646,9 @@ void force_channel(u32 id)
     fX = f_norm * cos(phi);
     fY = f_norm * sin(phi);
   }
+
+  do_capture();
+  
   #ifdef dyn_comp 
     	dynamics_compensation(fX,fY,3,1.0);
 	# else
