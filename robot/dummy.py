@@ -52,15 +52,24 @@ def loop():
 
         # If we are supposed to be capturing, capture!
         if rshm('fvv_capture'):
-            x,y=rshm('x'),rshm('y')
-            xs,ys=info.get('trajx',[]),info.get('trajy',[])
-            xs.append(x)
-            ys.append(y)
-            assert len(xs)==len(ys)
-            info['trajx']=xs
-            info['trajy']=ys
-            info['traj_count']=len(xs)
-                      
+
+            def append_to(c,r):
+                """ Add the current value of some variable in shared memory,
+                named c, to an array, stored in the shared memory under variable
+                name r."""
+                v = rshm(c)
+                arr = info.get(r,[])
+                arr.append(v)
+                info[r]=arr
+                return len(arr)
+
+            for (c,r) in [('x','trajx'),
+                          ('y','trajy'),
+                          ('ft_world_x','recordfx'),
+                          ('ft_world_y','recordfy'),
+                          ('ft_world_z','recordfz')]:
+                info['traj_count']=append_to(c,r)
+            
 
 
 def status():
@@ -176,7 +185,12 @@ def rshm(v):
     # Read shared memory (pretend to...)
     res = info.get(v,None)
     if v in ['x','y']:
-        res+=np.random.normal(0,.0002) # add a little noise to make it look even more realistic
+        return res+np.random.normal(0,.0002) # add a little noise to make it look even more realistic
+
+    # For forces, just pretend that they are random
+    if v in ['ft_world_x','ft_world_y','ft_world_z']:
+        return np.random.normal(0,1) # add a little noise to make it look even more realistic
+    
     return res
 
 
@@ -190,7 +204,7 @@ def background_capture():
 
 def stop_background_capture():
     wshm('fvv_capture',0)
-    return retrieve_trajectory()
+    return retrieve_captured()
 
 
 def retrieve_trajectory():
@@ -205,6 +219,26 @@ def retrieve_trajectory():
     #print(n)
     return zip(xs[:n],ys[:n])
     
+
+
+def retrieve_forces():
+    """
+    Retrieve captured forces.
+    """
+    fx,fy,fz=rshm('recordfx'),rshm('recordfy'),rshm('recordfz')
+    n = rshm('traj_count')
+    return zip(fx[:n],fy[:n],fz[:n])
+    
+
+def retrieve_captured():
+    """ Retrieve captured trajectory and
+    captured forces."""
+    n = rshm('traj_count')
+    xs,ys,fx,fy,fz = rshm('trajx'),rshm('trajy'),rshm('recordfx'),rshm('recordfy'),rshm('recordfz')
+    return zip(xs[:n],ys[:n],fx[:n],fy[:n],fz[:n])
+
+
+
 
 
 print("#\n#\n#\n#\n#\n# YOU ARE USING THE DUMMY ROBOT. THIS WON'T DO ANY ACTUAL MOVEMENT.\n#\n#\n#\n#\n#\n\n\n")

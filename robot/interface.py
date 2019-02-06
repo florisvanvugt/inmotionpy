@@ -562,7 +562,7 @@ def stop_background_capture():
     This is for use with controllers in pl_uslot.c that internally call do_capture()
     """
     wshm('fvv_capture',0) # signals to stop background capturing
-    return retrieve_trajectory()
+    return retrieve_captured()
 
     
 
@@ -718,9 +718,21 @@ def retrieve_trajectory():
     return zip(xs[:n],ys[:n])
     
 
+def retrieve_forces():
+    """
+    Retrieve captured forces.
+    """
+    fx,fy,fz=rshm('recordfx'),rshm('recordfy'),rshm('recordfz')
+    n = rshm('traj_count')
+    return zip(fx[:n],fy[:n],fz[:n])
+    
 
-
-
+def retrieve_captured():
+    """ Retrieve captured trajectory and
+    captured forces."""
+    n = rshm('traj_count')
+    xs,ys,fx,fy,fz = rshm('trajx'),rshm('trajy'),rshm('recordfx'),rshm('recordfy'),rshm('recordfz')
+    return zip(xs[:n],ys[:n],fx[:n],fy[:n],fz[:n])
 
 
 
