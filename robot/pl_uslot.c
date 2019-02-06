@@ -419,11 +419,17 @@ void movetopt(u32 id)
   f64 timenow = (f64)(ob->i - ob->plg_counterstart) / (f64)ob->Hz;
 
   ob->plg_moveto_done = 0;
-  if (timenow<0.0 || timenow>ob->plg_movetime) {
+  if (timenow>ob->plg_movetime) {
+    //if (timenow<0.0 || timenow>ob->plg_movetime) {
     //    fX = 0.0;
     //    fY = 0.0;
-    fX = ob->plg_last_fX * 0.90; // gradually reduce the force towards zero
-    fY = ob->plg_last_fY * 0.90;
+    /* Essentially, switch to a hold controller when the movement is done.*/
+    stiff = ob->plg_stiffness;
+    damp = ob->plg_damping;
+    fX = (-stiff*(X-ob->plg_p2x) - damp*(vX));
+    fY = (-stiff*(Y-ob->plg_p2y) - damp*(vY));
+    //fX = ob->plg_last_fX * 0.90; // gradually reduce the force towards zero
+    //fY = ob->plg_last_fY * 0.90;
     ob->plg_moveto_done = 1;
   }
   else {
