@@ -90,6 +90,10 @@ def launch():
     load()
     
 
+def dump_shm():
+    return info
+
+
 def controller(n):
     print("Controller %d"%n)
     info['controller']=n
