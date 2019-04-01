@@ -48,7 +48,7 @@ def loop():
                 wshm(k,changes[k])
                 #print(k,changes[k])
             if len(future)==0:
-                print("Exhausted future program.")
+                print("Dummy: Exhausted future program.")
 
         # If we are supposed to be capturing, capture!
         if rshm('fvv_capture'):
