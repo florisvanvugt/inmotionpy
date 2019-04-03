@@ -118,6 +118,14 @@ If you want to access arrays, you need to specify which element of an array you 
 
 
 
+### Dummy robot
+For development purposes, you can use a dummy robot instead of the real robot. This has the advantage that you can develop code at your own computer, away from the actual robot.
+The way it works is that instead of `import robot.interface` you do `import robot.dummy`. The rest is completely the same as if you were using a real robot.
+If you have a GUI, you can furthermore create a little Tk popup window with `robot.popup(master)` where `master` is the Tk root window. This popup window will show the position of the simulated robot in real time.
+
+
+
+
 ### Under the hood
 
 The shared memory system itself in Python is quite easy thanks to the module `sysv_ipc` ([doc](http://semanchuk.com/philip/PythonIpc/)). It allows you to access the chunk of memory and read or write data with a particular offset. The tricky thing is to find out where in that chunk particular variables are, because you can't call them by name but only by byte offset. In other words, you need to figure out how C stores its objects. It would have been ideal if the shared memory were allocated in a more structured fashion (i.e. to have specifications where particular variables are to be found in the shared memory chunk). Since we don't have that, one solution is to have a middle-man C script that we can talk to that will give us these variables or write to them on demand. But in order to move towards the specification-approach I mentioned before, I decided for the following "intermediate" solution. 

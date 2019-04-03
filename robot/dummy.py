@@ -31,6 +31,18 @@ future = []
 
 
 
+PYTHON3 = (sys.version_info > (3, 0))
+if PYTHON3: # this really is tested on Python 3 so please use that
+    from tkinter import *
+
+else: # python2
+    print("## WARNING: don't use Python 2. This code is designed for Python 3.")
+    from Tkinter import * # use for python2
+
+
+
+
+
 from threading import Thread
 
 def loop():
@@ -75,6 +87,56 @@ def loop():
 def status():
     return ""
 
+
+
+def update_popup():
+    global popupinfo
+    while not rshm('quit'):
+        rx,ry=rshm('x'),rshm('y')
+        if rx and ry:
+            bbox = position_to_circle((rx,ry))
+            popupinfo['canvas'].coords(popupinfo['robotpos'],*bbox)
+            t = '{:0.2f},{:0.2f}'.format(rx,ry)
+            popupinfo['canvas'].itemconfigure(popupinfo['postext'],text=t)
+            popupinfo['canvas'].coords(popupinfo['postext'],*bbox[:2])
+        time.sleep(.1) # update rate for the dummy window
+
+POPUP_W,POPUP_H=400,200
+POPUPCX,POPUPCY=POPUP_W/2,POPUP_H/2
+POPUP_MAGNIF=500
+POPUP_POS_RAD = 5 # radius in pixels of the marker for the current robot position
+
+def rob2popup(pos):
+    """ Convert robot coordinates to popup coordinates """
+    x,y=pos
+    return int((x*POPUP_MAGNIF)+POPUPCX),int((-y*POPUP_MAGNIF)+POPUPCY)
+
+def position_to_circle(pos):
+    x,y=rob2popup(pos)
+    return x-POPUP_POS_RAD,y-POPUP_POS_RAD,x+POPUP_POS_RAD,y+POPUP_POS_RAD
+
+def popup(master):
+    global popupinfo
+    window = Toplevel(master)
+    #window.geometry('{}x{}'.format(POPUP_W,POPUP_H))
+    window.title('Dummy robot sneak peek')
+    canvas = Canvas(window, width=POPUP_W,height=POPUP_H,bg='black')
+    canvas.pack()
+
+    # Make a center marker
+    bbox = position_to_circle((0,0))
+    canvas.create_oval(bbox,fill='gray')
+    canvas.create_line(POPUPCX,0,POPUPCX,POPUP_H, fill="gray", dash=(4, 4))
+    canvas.create_line(0,POPUPCY,POPUP_W,POPUPCY, fill="gray", dash=(4, 4))
+
+    # Make a marker for the current robot position, and a text label as well
+    robotpos = canvas.create_oval([0,0,0,0],fill='red')
+    txt = canvas.create_text(0,0,text='hello',fill='blue')
+    popupinfo = {'window':window,
+                 'canvas':canvas,
+                 'robotpos':robotpos,
+                 'postext':txt}
+    Thread(target=update_popup).start()
 
 def load():
     print("Loading robot...")
