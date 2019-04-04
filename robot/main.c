@@ -596,7 +596,11 @@ main_init(void)
 
     // jitter thresholds
     ob->times.ns_delta_tick_thresh = 120;	// % of irate
-    ob->times.ns_delta_sample_thresh = 10;	// % of irate
+    ob->times.ns_delta_sample_thresh = 25;	// % of irate
+    /* FVV 20190404 changed sample_thresh to 25% (from 10%) to account for longer loop times.
+       25% still seems acceptable.
+       We noticed that sample time was currently about .3 ms, which is more than 10% of the loop time (.25 ms)
+    */
 
     // TODO: delete h1 = gethrtime();
     // TODO: delete h2 = gethrtime();
@@ -1200,13 +1204,19 @@ do_time_after_sample()
     // TODO: delete ob->times.time_after_sample = gethrtime();
     ob->times.time_after_sample = rt_timer_tsc2ns(rt_timer_tsc());
     ob->times.time_delta_sample = ob->times.time_after_sample - ob->times.time_before_sample;
+    /* time_delta_sample measures the time that all the loop processing took (in ns)*/
 
     ob->times.ns_delta_sample = (u32)ob->times.time_delta_sample;
 
+    /* ns_max_delta_sample keeps track of the *longest* time that a loop ever took */
     if (ob->times.ns_max_delta_sample < ob->times.ns_delta_sample)
-	    ob->times.ns_max_delta_sample = ob->times.ns_delta_sample;
+      ob->times.ns_max_delta_sample = ob->times.ns_delta_sample;
+
+    /* Check if this loop took too long */
+    /* ns_delta_sample_thresh sets how long a sample processing is allowed to take,
+       as a percentage of the desired loop time (irate) */
     if (ob->times.ns_delta_sample >
-		   (ob->times.ns_delta_sample_thresh * ob->irate / 100)) {
+	(ob->times.ns_delta_sample_thresh * ob->irate / 100)) {
 	dpr(0, "after_sample: warning: slow sample.  time = %d ms, i = %d ticks\n",
 			ob->times.ms_since_start, ob->i);
 	dpr(0, "t0 = %d  t1 = %d \n",

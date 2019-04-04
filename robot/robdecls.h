@@ -309,26 +309,27 @@ typedef struct robot_s {
 // time vars
 
 typedef struct time_s {
-    hrtime_t time_at_start;
-    hrtime_t time_before_sample;
-    hrtime_t time_after_sample;
-    hrtime_t time_before_last_sample;
-    hrtime_t time_after_last_sample;
-    hrtime_t time_delta_sample;
-    hrtime_t time_delta_tick;
-    hrtime_t time_delta_call;
-    hrtime_t time_since_start;
-
-    u32 ns_delta_call;
-    u32 ns_delta_tick;
-    u32 ns_delta_tick_thresh;
-    u32 ns_delta_sample;
-    u32 ns_delta_sample_thresh;
-    u32 ms_since_start;
-    u32 sec;
-
-    u32 ns_max_delta_tick;
-    u32 ns_max_delta_sample;
+  /* FVV 20190404 changed the data type for the variables below from hrtime_t to SRTIME, following Xenomai docs.*/
+  SRTIME time_at_start;
+  SRTIME time_before_sample;
+  SRTIME time_after_sample;
+  SRTIME time_before_last_sample;
+  SRTIME time_after_last_sample;
+  SRTIME time_delta_sample;
+  SRTIME time_delta_tick;
+  SRTIME time_delta_call;
+  SRTIME time_since_start;
+  
+  u32 ns_delta_call;
+  u32 ns_delta_tick;
+  u32 ns_delta_tick_thresh;
+  u32 ns_delta_sample;
+  u32 ns_delta_sample_thresh;
+  u32 ms_since_start;
+  u32 sec;
+  
+  u32 ns_max_delta_tick;
+  u32 ns_max_delta_sample;
 } Timev;
 
 // data that gets copied to ob atomically, when you set go
