@@ -312,7 +312,7 @@ uei_ain_read(void)
     for (boardi = 0; boardi < daq->n_ueidaq_boards; boardi++) {
 	// TODO: delete if (!PD_IS_MF(daq->subdevid[phandle]))
 	if (!(daq->adapter_type[boardi] & atMF))
-		continue;
+	  continue;
 
 	AIHandle = daq->ain_handle[boardi];
 
@@ -324,22 +324,23 @@ uei_ain_read(void)
 	daq->ain_ret = _PdAInGetSamples(AIHandle, daq->ain_cl_size,
 	   ain, &daq->ain_got_samples);
 
+	/* FVV todo, we could make this dpr() style debug code */
 	if (daq->ain_got_samples != daq->ain_cl_size) {
-	    prf(&(ob->eofifo),
-		    "pd_ain_get_samples: failed, samples != cl_size, "
-		    "count = %d, wanted = %d, ret = %d, got = %d\n",
-		    boardi, ob->samplenum, daq->ain_cl_size,
-		    daq->ain_ret, daq->ain_got_samples);
-	    do_error(ERR_UEI_NSAMPLES);
+	  dpr(0,
+	      "pd_ain_get_samples: failed, samples != cl_size, "
+	      "boardi = %d, wanted = %d, ret = %d, got = %d\n",
+	      boardi, ob->samplenum, daq->ain_cl_size,
+	      daq->ain_ret, daq->ain_got_samples);
+	  do_error(ERR_UEI_NSAMPLES);
 	}
 
 	if (daq->ain_ret <= 0) {
-	    prf(&(ob->eofifo),
-		    "pd_ain_get_samples: failed, ret <= 0, "
-		    "boardi = %d count = %d, wanted = %d, ret = %d, got = %d\n",
-		    boardi, ob->samplenum, daq->ain_cl_size,
-		    daq->ain_ret, daq->ain_got_samples);
-	    do_error(ERR_UEI_RET);
+	  dpr(0,
+	      "pd_ain_get_samples: failed, ret <= 0, "
+	      "boardi = %d count = %d, wanted = %d, ret = %d, got = %d\n",
+	      boardi, ob->samplenum, daq->ain_cl_size,
+	      daq->ain_ret, daq->ain_got_samples);
+	  do_error(ERR_UEI_RET);
 	}
 
 	uei_raw_to_volts(ain, ainvolts);

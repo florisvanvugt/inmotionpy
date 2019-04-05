@@ -230,7 +230,9 @@ s pfotest 5.0
 
 # don't set Hz, damp, and stiff directly, set these and then go.
 # this way, they get set atomically, between cycles.
-s restart_Hz 400
+#s restart_Hz 400
+s restart_Hz 200
+# FVV 20190405 changed the above value in a desperate attempt to remove jolting movements
 s restart_ovsample 1
 s restart_damp 5.0
 s restart_stiff 100.0

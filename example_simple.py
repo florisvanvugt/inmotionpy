@@ -1,7 +1,7 @@
 
 import time
-#import robot.interface as robot
-import robot.dummy as robot
+import robot.interface as robot
+#import robot.dummy as robot
 
 
 robot.load()

@@ -263,7 +263,7 @@ do_capture()
 {
   if (ob->fvv_capture) {
     int traj_cnt = traj_count;// cast to unsigned just to be sure
-    if (traj_count<=TRAJECTORY_BUFFER_SIZE) {
+    if (traj_cnt<=TRAJECTORY_BUFFER_SIZE) {
       
       // Capture the current position
       trajx[traj_cnt] = X;
@@ -718,10 +718,10 @@ trajectory_reproduce(u32 id)
   if (traj_count<=traj_n_samps) {
     // If we are still active replaying the trajectory (haven't finished yet)
     f64 attractx   = trajx[traj_cnt];
-    f64 estimatevx = (trajx[traj_cnt+1]-trajx[traj_cnt])*400.0; // estimate vX (400 Hz is sampling rate)
+    f64 estimatevx = (trajx[traj_cnt+1]-trajx[traj_cnt])*ob->Hz; // estimate vX (400 Hz is sampling rate)
     fX = replay_stiffness*(attractx-X)+replay_damping*(estimatevx-vX);
     f64 attracty   = trajy[traj_cnt];
-    f64 estimatevy = (trajy[traj_cnt+1]-trajy[traj_cnt])*400.0;
+    f64 estimatevy = (trajy[traj_cnt+1]-trajy[traj_cnt])*ob->Hz;  
     fY = replay_stiffness*(attracty-Y)+replay_damping*(estimatevy-vY);
     ++traj_count;
   } else {

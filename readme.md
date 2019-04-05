@@ -313,3 +313,17 @@ And same for elbow.
 20180605 Resetting encoder values
 
 ../simple.robot/captured_20180307_17h16m23.json
+
+
+
+
+## Debugging
+Can be useful for taking a look at the error messages:
+
+```
+cat /proc/xenomai/registry/native/pipes/crob_error | tee ~/crob_error.txt 
+```
+
+Make sure when you quit this `cat`, use Ctrl+C, not Ctrl+Z (which will zombie and cause you to need to reboot).
+
+Debugging is handled in `dpr()` in `write.c`. Each message has an associated debug level and you can control how much is printed using the `ob->debug_level` variable (higher means less output)

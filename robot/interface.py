@@ -254,6 +254,7 @@ def controller(n):
 
     tslot_go = rshm('slot_go')
     if tslot_go>0: # if we are currently changing slots...?
+        print("Slot change ongoing, rescheduling...")
         time.sleep(.01)
 	# reschedule myself in 10 ms
 	# puts "movebox2, rescheduling..."

@@ -70,9 +70,11 @@ dpr(s32 level, const s8 *format, ...)
     //syslog(LOG_INFO,"ob->i %d.\n",ob->i); 
     //syslog(LOG_INFO,"ob->Hz %f.\n",ob->Hz); 
 
+    /* Don't show messages that have a higher level than the current debug level */
     if (level > ob->debug_level)
       return;
-    if (level >= 1) {
+    /* For messages with debug level > 1, only show them once a second */
+    if (level >= 1) { // FVV changed from 1 to 99
       if (ob->Hz && ob->i) {
 	if (ob->i % ob->Hz != 0)
 	  return;
@@ -99,6 +101,10 @@ dpr(s32 level, const s8 *format, ...)
     } else {
       dpr1("              ");
     }
+    /* TODO: we could print here the actual rt time - because what it prints
+       above is the loop time, not all that informative for debugging within-trials */
+    dpr1("%d ns ",rt_timer_tsc2ns(rt_timer_tsc()));
+    
     int i;
     for (i=0; i<=level; i++) 
       dpr1("-");

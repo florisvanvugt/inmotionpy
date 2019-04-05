@@ -691,6 +691,7 @@ restart_init(void)
 void
 shm_copy_commands(void)
 {
+  dpr(4, "shm_copy_commands\n");
   // restart will start cleanly.
   if (ob->restart.go) {
     dpr(1, "restarting thread\n");
@@ -741,12 +742,13 @@ shm_copy_commands(void)
 static void
 one_sample(void) {
 
+ 
   // in debug mode, print tick once a second.
-  if ((ob->i % ob->Hz) == 0) {
-    dpr(2, "one_sample: top, i = %d, samples = %d, "
-    "time since start = %d ms\n",
-    ob->i, ob->samplenum, ob->times.ms_since_start);
-  }
+  //if (1) { //if ((ob->i % ob->Hz) == 0) {
+  dpr(2, "one_sample: top, i = %d, acquisition board samples = %d, "
+      "time since start = %d ms\n",
+      ob->i, ob->samplenum, ob->times.ms_since_start);
+  //}
   
   do_time_before_sample();
   
@@ -786,6 +788,14 @@ one_sample(void) {
   }
   
   do_time_after_sample();
+
+  dpr(0,"robot status: slot_fnid=%d x=%f y=%f vx=%f vy=%f motor.fx=%f motor.fy=%f ft.x=%f ft.y=%f\n",
+      ob->slot[0].fnid,
+      ob->pos.x,ob->pos.y,
+      ob->vel.x,ob->vel.y,
+      ob->motor_force.x,ob->motor_force.y,
+      rob->ft.world.x,rob->ft.world.y
+      );
   
   // put a newline to tcfifo every ntickfifo samples.
   // you read from this tick fifo as a sample timer in user space.
@@ -854,7 +864,8 @@ main_loop(void)
 void
 do_time_before_sample()
 {
-
+  /* Do basic timekeeping before the sample processing starts. 
+     This entails capturing the current time stamp */
     dpr(4, "do_time_before_sample\n");
     ob->times.time_before_last_sample = ob->times.time_before_sample;
     // TODO: delete ob->times.time_before_sample = gethrtime();
