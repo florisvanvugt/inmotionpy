@@ -539,8 +539,8 @@ def stay_fade(x,y):
         return
     
     wshm("fvv_force_fade",1.0) # This starts at 1.0 but exponentially decays to infinitely small
-    wshm("plg_p1x",x)
-    wshm("plg_p1y",y)
+    wshm("fvv_robot_center_x",x)
+    wshm("fvv_robot_center_y",y)
     wshm("plg_stiffness",stiffness)
     wshm("plg_damping",damping)
     controller(5)  # static_ctl_fade
