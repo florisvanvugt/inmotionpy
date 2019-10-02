@@ -789,6 +789,7 @@ one_sample(void) {
   
   do_time_after_sample();
 
+  /* For debug only
   dpr(0,"robot status: slot_fnid=%d x=%f y=%f vx=%f vy=%f motor.fx=%f motor.fy=%f ft.x=%f ft.y=%f\n",
       ob->slot[0].fnid,
       ob->pos.x,ob->pos.y,
@@ -796,6 +797,7 @@ one_sample(void) {
       ob->motor_force.x,ob->motor_force.y,
       rob->ft.world.x,rob->ft.world.y
       );
+  */
   
   // put a newline to tcfifo every ntickfifo samples.
   // you read from this tick fifo as a sample timer in user space.
