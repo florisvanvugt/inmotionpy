@@ -1,12 +1,18 @@
 
 import time
 import pygame
-from Tkinter import * # use for python2
-#from ttk import *
 
-import tkMessageBox
-import tkFileDialog
-#from tkinter import * # use for python3
+# use for Python2
+#from Tkinter import * # use for python2
+#from ttk import *
+#import tkMessageBox
+#import tkFileDialog
+
+from tkinter import * # use for python3
+from tkinter import messagebox as tkMessageBox
+from tkinter import filedialog as tkFileDialog
+
+
 import numpy as np
 import random
 import datetime
