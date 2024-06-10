@@ -17,7 +17,7 @@ PERIOD = .0025 # the period of the main loop (in sec)
 
 
 
-info = {'x':0.0,'y':0.0}
+info = {'x':0.0,'y':0.0,'quit':0}
 
 stiffness = 0
 damping = 0
@@ -81,7 +81,7 @@ def loop():
                           ('ft_world_y','recordfy'),
                           ('ft_world_z','recordfz')]:
                 info['traj_count']=append_to(c,r)
-            
+    print("Bailed out of dummy loop.")
 
 
 def status():
@@ -91,7 +91,8 @@ def status():
 
 def update_popup():
     global popupinfo
-    while not rshm('quit'):
+    global info
+    while rshm('quit')!=1:
         rx,ry=rshm('x'),rshm('y')
         if rx and ry:
             bbox = position_to_circle((rx,ry))
@@ -99,7 +100,9 @@ def update_popup():
             t = '{:0.2f},{:0.2f}'.format(rx,ry)
             popupinfo['canvas'].itemconfigure(popupinfo['postext'],text=t)
             popupinfo['canvas'].coords(popupinfo['postext'],*bbox[:2])
-        time.sleep(.1) # update rate for the dummy window
+        time.sleep(.01) # determines the update rate for the dummy window
+        ##print("Quit = {}".format(rshm('quit')))
+    print("Bailing out of popup.")
 
 POPUP_W,POPUP_H=400,200
 POPUPCX,POPUPCY=POPUP_W/2,POPUP_H/2
@@ -136,7 +139,12 @@ def popup(master):
                  'canvas':canvas,
                  'robotpos':robotpos,
                  'postext':txt}
+
+    global popup_toplevel
+    popup_toplevel=window
+    info['popup']=True
     Thread(target=update_popup).start()
+    
 
 def load():
     print("Loading robot...")
@@ -145,7 +153,9 @@ def load():
 
 def unload():
     print("Unloading robot...")
-    info['quit']=1
+    wshm('quit',1)
+    if info['popup']:
+        popup_toplevel.destroy()
 
 def launch():
     print("Launching robot...")
